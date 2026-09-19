@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#111111"
+    >
+
+    <meta
+        name="description"
+        content="Твой персональный тренер по отжиманиям"
+    >
+
+    <link
+        rel="icon"
+        href="icon.svg"
+    >
+
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="icon.svg"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Push-Up"
+    >
+
+    <title>Push-Up Coach</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css?v=5"
+    >
+
+</head>
+
+<body>
+
+    <header class="app-header">
+
+        <div>
+
+            <div class="app-title">
+                Push-Up Coach
+            </div>
+
+            <div class="app-subtitle">
+                Твой персональный тренер
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="app-container">
+
+
+        <section
+            id="screenHome"
+            class="screen"
+        >
+
+            <section class="today-card">
+
+                <div class="today-label">
+                    СЕГОДНЯ
+                </div>
+
+                <h1 id="homeWorkoutTitle">
+                    Тренировка
+                </h1>
+
+
+                <div class="workout-info">
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Хват
+                        </span>
+
+                        <strong id="homeGrip">
+                            Обычный
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Подходы
+                        </span>
+
+                        <strong id="homeSets">
+                            3 × 5
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Отдых
+                        </span>
+
+                        <strong id="homeRest">
+                            90 сек
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div
+                    id="homeReason"
+                    class="home-reason hidden"
+                ></div>
+
+
+                <button
+                    class="primary-button"
+                    id="startWorkout"
+                >
+                    Начать тренировку
+                </button>
+
+
+                <button
+                    class="secondary-button hidden"
+                    id="continueWorkout"
+                >
+                    Продолжить тренировку
+                </button>
+
+            </section>
+
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Твой прогресс
+                </div>
+
+
+                <div class="progress-grid">
+
+
+                    <div class="stat">
+
+                        <strong id="maxPushups">
+                            10
+                        </strong>
+
+                        <span>
+                            стартовый максимум
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat">
+
+                        <strong id="currentWeight">
+                            82 кг
+                        </strong>
+
+                        <span>
+                            текущий вес
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+
+            <section class="menu-card">
+
+
+                <button
+                    class="menu-button"
+                    id="programButton"
+                >
+
+                    <span>
+                        📅
+                    </span>
+
+                    <span>
+                        Программа
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="menu-button"
+                    id="progressButton"
+                >
+
+                    <span>
+                        📈
+                    </span>
+
+                    <span>
+                        Прогресс
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="menu-button"
+                    id="historyButton"
+                >
+
+                    <span>
+                        📊
+                    </span>
+
+                    <span>
+                        История
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="menu-button"
+                    id="settingsButton"
+                >
+
+                    <span>
+                        ⚙️
+                    </span>
+
+                    <span>
+                        Настройки
+                    </span>
+
+                </button>
+
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenWorkout"
+            class="screen"
+            hidden
+        >
+
+            <section class="today-card">
+
+
+                <div class="today-label">
+                    ТРЕНИРОВКА
+                </div>
+
+
+                <h1 id="workoutGrip">
+                    Обычный хват
+                </h1>
+
+
+                <div class="workout-info">
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Подход
+                        </span>
+
+                        <strong id="currentSet">
+                            1 / 3
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            План
+                        </span>
+
+                        <strong id="plannedReps">
+                            5
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Отдых
+                        </span>
+
+                        <strong id="workoutRest">
+                            90 сек
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div
+                    id="workoutStatus"
+                    class="workout-status"
+                    aria-live="polite"
+                >
+                    Сделай 5 чистых повторений
+                </div>
+
+
+
+                <div
+                    id="repControls"
+                    class="rep-controls"
+                >
+
+
+                    <button
+                        class="rep-button"
+                        id="minusRep"
+                        aria-label="Уменьшить количество повторений"
+                    >
+                        −
+                    </button>
+
+
+                    <div class="rep-display">
+
+
+                        <div class="rep-label">
+                            ФАКТ
+                        </div>
+
+
+                        <div
+                            id="actualReps"
+                            class="rep-value"
+                        >
+                            5
+                        </div>
+
+
+                    </div>
+
+
+                    <button
+                        class="rep-button"
+                        id="plusRep"
+                        aria-label="Увеличить количество повторений"
+                    >
+                        +
+                    </button>
+
+
+                </div>
+
+
+
+                <button
+                    class="secondary-button danger-button"
+                    id="failedSet"
+                >
+                    Не смог выполнить
+                </button>
+
+
+                <button
+                    class="primary-button"
+                    id="completeSet"
+                >
+                    Готово
+                </button>
+
+
+
+                <div
+                    id="restControls"
+                    class="rest-controls hidden"
+                >
+
+                    <button
+                        class="secondary-button"
+                        id="skipRest"
+                    >
+                        Пропустить отдых
+                    </button>
+
+
+                    <button
+                        class="secondary-button"
+                        id="addRest"
+                    >
+                        +30 секунд
+                    </button>
+
+                </div>
+
+
+
+                <button
+                    class="exit-button"
+                    id="exitWorkout"
+                >
+                    Выйти из тренировки
+                </button>
+
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenDone"
+            class="screen"
+            hidden
+        >
+
+            <section class="today-card">
+
+
+                <div class="today-label">
+                    ГОТОВО
+                </div>
+
+
+                <h1>
+                    Тренировка завершена
+                </h1>
+
+
+                <div class="workout-info">
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Подходы
+                        </span>
+
+                        <strong id="doneSets">
+                            3
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            План
+                        </span>
+
+                        <strong id="donePlanned">
+                            15
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span class="info-label">
+                            Факт
+                        </span>
+
+                        <strong id="doneActual">
+                            15
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="difficulty-section">
+
+                    <div class="difficulty-question">
+                        Как было?
+                    </div>
+
+                    <div class="difficulty-grid">
+
+                        <button
+                            class="difficulty-button"
+                            data-level="easy"
+                        >
+                            Легко
+                        </button>
+
+                        <button
+                            class="difficulty-button"
+                            data-level="normal"
+                        >
+                            Нормально
+                        </button>
+
+                        <button
+                            class="difficulty-button"
+                            data-level="hard"
+                        >
+                            Тяжело
+                        </button>
+
+                        <button
+                            class="difficulty-button"
+                            data-level="very_hard"
+                        >
+                            Очень тяжело
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="result-list" id="doneResults">
+                </div>
+
+
+
+                <button
+                    class="primary-button"
+                    id="doneHome"
+                >
+                    На главную
+                </button>
+
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenProgress"
+            class="screen"
+            hidden
+        >
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Сила
+                </div>
+
+                <div class="progress-grid">
+
+                    <div class="stat">
+                        <strong id="strengthStart">—</strong>
+                        <span>начал</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong id="strengthNow">—</strong>
+                        <span>сейчас</span>
+                    </div>
+
+                </div>
+
+                <div
+                    id="strengthDelta"
+                    class="delta-line"
+                ></div>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Вес
+                </div>
+
+                <div class="progress-grid">
+
+                    <div class="stat">
+                        <strong id="weightStart">—</strong>
+                        <span>начало</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong id="weightNow">—</strong>
+                        <span>сейчас</span>
+                    </div>
+
+                </div>
+
+                <div
+                    id="weightDelta"
+                    class="delta-line"
+                ></div>
+
+                <div id="weightChartContainer"></div>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    По хватам
+                </div>
+
+                <div
+                    id="gripProgress"
+                    class="grip-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <button
+                    class="secondary-button"
+                    id="progressBack"
+                >
+                    Назад
+                </button>
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenHistory"
+            class="screen"
+            hidden
+        >
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    История тренировок
+                </div>
+
+                <div id="historyList">
+                </div>
+
+                <button
+                    class="secondary-button"
+                    id="historyBack"
+                >
+                    Назад
+                </button>
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenProgram"
+            class="screen"
+            hidden
+        >
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Программа
+                </div>
+
+                <p class="program-summary">
+                    Пройдено:
+                    <strong id="programProgress">0 / 72</strong>
+                </p>
+
+                <div id="programList"></div>
+
+                <button
+                    class="secondary-button"
+                    id="programBack"
+                >
+                    Назад
+                </button>
+
+            </section>
+
+        </section>
+
+
+
+        <section
+            id="screenSettings"
+            class="screen"
+            hidden
+        >
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Настройки
+                </div>
+
+
+                <label class="setting-row">
+
+                    <span>
+                        Вес
+                    </span>
+
+                    <input
+                        id="weightInput"
+                        type="number"
+                        inputmode="decimal"
+                        min="30"
+                        max="250"
+                        step="0.1"
+                    >
+
+                </label>
+
+
+                <button
+                    class="primary-button"
+                    id="saveSettings"
+                >
+                    Сохранить
+                </button>
+
+
+                <button
+                    class="secondary-button hidden"
+                    id="installApp"
+                >
+                    📲 Установить приложение
+                </button>
+
+
+                <button
+                    class="secondary-button"
+                    id="resetProgress"
+                >
+                    Сбросить прогресс
+                </button>
+
+
+                <button
+                    class="secondary-button"
+                    id="settingsBack"
+                >
+                    Назад
+                </button>
+
+
+            </section>
+
+        </section>
+
+
+    </main>
+
+
+    <script src="storage.js?v=5"></script>
+    <script src="program.js?v=5"></script>
+    <script src="workout.js?v=5"></script>
+    <script src="ui.js?v=5"></script>
+    <script src="app.js?v=5"></script>
+
+</body>
+
+</html>
