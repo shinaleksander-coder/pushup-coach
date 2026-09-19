@@ -16,6 +16,9 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     background: #f2f2f2;
     color: #111;
+
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
 }
 
 
@@ -48,7 +51,12 @@ input:focus-visible {
     z-index: 100;
     background: #111;
     color: white;
-    padding: 16px 18px;
+
+    padding-top: calc(16px + env(safe-area-inset-top, 0));
+    padding-bottom: 16px;
+    padding-left: calc(18px + env(safe-area-inset-left, 0));
+    padding-right: calc(18px + env(safe-area-inset-right, 0));
+
     display: flex;
     align-items: center;
     gap: 14px;
@@ -108,7 +116,11 @@ input:focus-visible {
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
-    padding: 16px;
+
+    padding-top: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+    padding-left: calc(16px + env(safe-area-inset-left, 0));
+    padding-right: calc(16px + env(safe-area-inset-right, 0));
 }
 
 
@@ -357,7 +369,12 @@ input:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+
+    padding-top: calc(20px + env(safe-area-inset-top, 0));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    padding-left: calc(20px + env(safe-area-inset-left, 0));
+    padding-right: calc(20px + env(safe-area-inset-right, 0));
+
     z-index: 1000;
     overflow-y: auto;
 }
@@ -541,7 +558,12 @@ input:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+
+    padding-top: calc(20px + env(safe-area-inset-top, 0));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    padding-left: calc(20px + env(safe-area-inset-left, 0));
+    padding-right: calc(20px + env(safe-area-inset-right, 0));
+
     z-index: 2000;
     overflow-y: auto;
 }
@@ -584,6 +606,52 @@ input:focus-visible {
 }
 
 
+.welcome-form {
+    margin-bottom: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #eee;
+}
+
+
+.welcome-field {
+    display: block;
+    margin-bottom: 14px;
+}
+
+
+.welcome-field:last-child {
+    margin-bottom: 0;
+}
+
+
+.welcome-field span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0.65;
+}
+
+
+.welcome-field input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e5e5;
+    border-radius: 14px;
+    font-size: 16px;
+    background: #fafafa;
+    color: #111;
+    transition: border-color 0.15s;
+}
+
+
+.welcome-field input:focus {
+    outline: none;
+    border-color: #111;
+    background: #fff;
+}
+
+
 .welcome-features {
     margin-bottom: 24px;
 }
@@ -604,9 +672,13 @@ input:focus-visible {
 
 
 .welcome-feature-icon {
-    font-size: 26px;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
     flex-shrink: 0;
+    font-size: 24px;
+    line-height: 1;
 }
 
 
@@ -1138,6 +1210,84 @@ input:focus-visible {
 
 
 /* ========================= */
+/* SPLASH */
+/* ========================= */
+
+
+.splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #111;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+
+    z-index: 5000;
+    transition: opacity 0.6s ease;
+}
+
+
+.splash.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+.splash-content {
+    text-align: center;
+    animation: splashIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+
+@keyframes splashIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+.splash-logo {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 22px;
+    background: #fff;
+    color: #111;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 900;
+    letter-spacing: -3px;
+}
+
+
+.splash-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+
+.splash-author {
+    font-size: 13px;
+    opacity: 0.5;
+}
+
+
+/* ========================= */
 /* DARK MODE */
 /* ========================= */
 
@@ -1278,160 +1428,6 @@ input:focus-visible {
         color: #111;
     }
 
-}
-
-
-@media (min-width: 601px) {
-
-    body {
-        padding-top: 20px;
-    }
-
-
-    .app-header {
-        border-radius: 20px 20px 0 0;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-}
-/* ========================================= */
-/* V1.2 — SPLASH                             */
-/* ========================================= */
-
-
-.splash {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #111;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5000;
-    transition: opacity 0.6s ease;
-}
-
-
-.splash.fade-out {
-    opacity: 0;
-    pointer-events: none;
-}
-
-
-.splash-content {
-    text-align: center;
-    animation: splashIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-
-@keyframes splashIn {
-    from {
-        opacity: 0;
-        transform: scale(0.92);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-
-.splash-logo {
-    width: 96px;
-    height: 96px;
-    margin: 0 auto 22px;
-    background: #fff;
-    color: #111;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: -3px;
-}
-
-
-.splash-name {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-
-.splash-author {
-    font-size: 13px;
-    opacity: 0.5;
-}
-
-
-/* ========================================= */
-/* V1.2 — WELCOME FORM                       */
-/* ========================================= */
-
-
-.welcome-form {
-    margin-bottom: 22px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid #eee;
-}
-
-
-.welcome-field {
-    display: block;
-    margin-bottom: 14px;
-}
-
-
-.welcome-field:last-child {
-    margin-bottom: 0;
-}
-
-
-.welcome-field span {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    opacity: 0.65;
-}
-
-
-.welcome-field input {
-    width: 100%;
-    padding: 14px 16px;
-    border: 2px solid #e5e5e5;
-    border-radius: 14px;
-    font-size: 16px;
-    background: #fafafa;
-    color: #111;
-    transition: border-color 0.15s;
-}
-
-
-.welcome-field input:focus {
-    outline: none;
-    border-color: #111;
-    background: #fff;
-}
-
-
-.welcome-feature-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    flex-shrink: 0;
-    font-size: 24px;
-    line-height: 1;
-}
-
-
-@media (prefers-color-scheme: dark) {
 
     .welcome-field input {
         background: #2a2a2a;
@@ -1448,6 +1444,22 @@ input:focus-visible {
 
     .welcome-form {
         border-color: #333;
+    }
+
+}
+
+
+@media (min-width: 601px) {
+
+    body {
+        padding-top: 20px;
+    }
+
+
+    .app-header {
+        border-radius: 20px 20px 0 0;
+        max-width: 600px;
+        margin: 0 auto;
     }
 
 }
