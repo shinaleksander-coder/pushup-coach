@@ -279,6 +279,18 @@ function finishWorkout() {
         0
     );
 
+    // Максимум в одном подходе за эту тренировку
+    const bestThisWorkout = workoutResults.reduce(
+        (max, r) => Math.max(max, Number(r.actual)),
+        0
+    );
+
+    // Максимум за все предыдущие тренировки
+    const previousMax = getPreviousMax();
+
+    const isNewRecord =
+        bestThisWorkout > previousMax && previousMax > 0;
+
     const finishedAt = Date.now();
 
     const workoutRecord = {
@@ -297,6 +309,7 @@ function finishWorkout() {
 
         totalPlanned,
         totalActual,
+        bestSet: bestThisWorkout,
         results: workoutResults
     };
 
@@ -310,8 +323,24 @@ function finishWorkout() {
     startedAt = 0;
     workout = null;
 
-    renderDoneScreen(workoutRecord, saved);
+    renderDoneScreen(workoutRecord, saved, isNewRecord);
     showScreen("screenDone");
+}
+
+
+function getPreviousMax() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    let max = 0;
+
+    history.forEach(record => {
+        record.results?.forEach(r => {
+            const a = Number(r.actual);
+            if (a > max) max = a;
+        });
+    });
+
+    return max;
 }
 
 

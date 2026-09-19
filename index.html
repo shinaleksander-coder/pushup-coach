@@ -57,24 +57,36 @@
 
     <title>Push-Up Coach</title>
 
-    <link
+  <link
         rel="stylesheet"
-        href="styles.css?v=5"
+        href="styles.css?v=10"
     >
 
 </head>
+
 
 <body>
 
     <header class="app-header">
 
-        <div>
+        <button
+            class="back-button hidden"
+            id="globalBack"
+            aria-label="Назад"
+        >
+            ←
+        </button>
+
+        <div class="app-header-text">
 
             <div class="app-title">
                 Push-Up Coach
             </div>
 
-            <div class="app-subtitle">
+            <div
+                class="app-subtitle"
+                id="appSubtitle"
+            >
                 Твой персональный тренер
             </div>
 
@@ -198,7 +210,7 @@
                     <div class="stat">
 
                         <strong id="currentWeight">
-                            82 кг
+                            —
                         </strong>
 
                         <span>
@@ -304,6 +316,20 @@
                 <h1 id="workoutGrip">
                     Обычный хват
                 </h1>
+
+
+                <button
+                    class="grip-visual"
+                    id="gripVisual"
+                    type="button"
+                    aria-label="Показать схему хвата"
+                ></button>
+
+
+                <div
+                    id="workoutRecord"
+                    class="workout-record hidden"
+                ></div>
 
 
                 <div class="workout-info">
@@ -481,6 +507,12 @@
                 <h1>
                     Тренировка завершена
                 </h1>
+
+
+                <div
+                    id="doneRecordBadge"
+                    class="record-badge hidden"
+                ></div>
 
 
                 <div class="workout-info">
@@ -665,18 +697,6 @@
 
             </section>
 
-
-            <section class="progress-card">
-
-                <button
-                    class="secondary-button"
-                    id="progressBack"
-                >
-                    Назад
-                </button>
-
-            </section>
-
         </section>
 
 
@@ -693,15 +713,12 @@
                     История тренировок
                 </div>
 
+                <p class="history-hint">
+                    Нажми на запись, чтобы отредактировать
+                </p>
+
                 <div id="historyList">
                 </div>
-
-                <button
-                    class="secondary-button"
-                    id="historyBack"
-                >
-                    Назад
-                </button>
 
             </section>
 
@@ -728,13 +745,6 @@
 
                 <div id="programList"></div>
 
-                <button
-                    class="secondary-button"
-                    id="programBack"
-                >
-                    Назад
-                </button>
-
             </section>
 
         </section>
@@ -757,6 +767,23 @@
                 <label class="setting-row">
 
                     <span>
+                        Имя
+                    </span>
+
+                    <input
+                        id="nameInput"
+                        type="text"
+                        maxlength="30"
+                        autocomplete="given-name"
+                        placeholder="Как тебя зовут"
+                    >
+
+                </label>
+
+
+                <label class="setting-row">
+
+                    <span>
                         Вес
                     </span>
 
@@ -767,6 +794,7 @@
                         min="30"
                         max="250"
                         step="0.1"
+                        placeholder="кг"
                     >
 
                 </label>
@@ -790,19 +818,75 @@
 
                 <button
                     class="secondary-button"
-                    id="resetProgress"
+                    id="shareApp"
                 >
-                    Сбросить прогресс
+                    🔗 Поделиться приложением
                 </button>
 
 
                 <button
                     class="secondary-button"
-                    id="settingsBack"
+                    id="showWelcomeAgain"
                 >
-                    Назад
+                    👋 Показать инструкцию
                 </button>
 
+
+                <button
+                    class="secondary-button"
+                    id="resetProgress"
+                >
+                    Сбросить прогресс
+                </button>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    О приложении
+                </div>
+
+                <div class="about-grid">
+
+                    <div class="about-row">
+                        <span>Версия</span>
+                        <strong>1.2</strong>
+                    </div>
+
+                    <div class="about-row">
+                        <span>Имя</span>
+                        <strong id="aboutName">—</strong>
+                    </div>
+
+                    <div class="about-row">
+                        <span>Тренировок пройдено</span>
+                        <strong id="aboutWorkouts">0</strong>
+                    </div>
+
+                    <div class="about-row">
+                        <span>Первая тренировка</span>
+                        <strong id="aboutFirstDate">—</strong>
+                    </div>
+
+                    <div class="about-row">
+                        <span>Автор</span>
+                        <strong>Александр Шин</strong>
+                    </div>
+
+                </div>
+
+                <p class="about-note">
+                    Push-Up Coach — персональный тренер
+                    по отжиманиям. Программа на 24 недели
+                    с автоматической адаптацией нагрузки.
+                </p>
+
+                <p class="about-credit">
+                    Разработано Александром Шин
+                    совместно с DeepSeek.
+                </p>
 
             </section>
 
@@ -812,11 +896,301 @@
     </main>
 
 
-    <script src="storage.js?v=5"></script>
-    <script src="program.js?v=5"></script>
-    <script src="workout.js?v=5"></script>
-    <script src="ui.js?v=5"></script>
-    <script src="app.js?v=5"></script>
+
+    <div
+        id="gripModal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+    >
+
+        <div class="modal-content">
+
+            <div
+                id="gripModalVisual"
+                class="grip-modal-visual"
+            ></div>
+
+            <h2
+                id="gripModalTitle"
+                class="modal-title"
+            >
+                Хват
+            </h2>
+
+            <p
+                id="gripModalText"
+                class="modal-text"
+            ></p>
+
+            <button
+                class="primary-button"
+                id="gripModalClose"
+            >
+                Понятно
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <div
+        id="historyModal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+    >
+
+        <div class="modal-content modal-wide">
+
+            <h2 class="modal-title">
+                Редактировать тренировку
+            </h2>
+
+            <div
+                id="historyEditInfo"
+                class="edit-info"
+            ></div>
+
+            <div class="edit-section-label">
+                Сложность
+            </div>
+
+            <div class="difficulty-grid">
+
+                <button
+                    class="edit-difficulty-button"
+                    data-level="easy"
+                >
+                    Легко
+                </button>
+
+                <button
+                    class="edit-difficulty-button"
+                    data-level="normal"
+                >
+                    Нормально
+                </button>
+
+                <button
+                    class="edit-difficulty-button"
+                    data-level="hard"
+                >
+                    Тяжело
+                </button>
+
+                <button
+                    class="edit-difficulty-button"
+                    data-level="very_hard"
+                >
+                    Очень тяжело
+                </button>
+
+            </div>
+
+            <div class="edit-section-label">
+                Подходы
+            </div>
+
+            <div
+                id="historyEditSets"
+                class="edit-sets"
+            ></div>
+
+            <button
+                class="primary-button"
+                id="historyEditSave"
+            >
+                Сохранить
+            </button>
+
+            <button
+                class="secondary-button"
+                id="historyEditCancel"
+            >
+                Отмена
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <div
+        id="welcomeOverlay"
+        class="welcome-overlay hidden"
+    >
+
+        <div class="welcome-card">
+
+            <div class="welcome-brand">
+
+                <div class="welcome-brand-icon">
+                    💪
+                </div>
+
+                <div class="welcome-brand-title">
+                    Push-Up Coach
+                </div>
+
+                <div class="welcome-brand-subtitle">
+                    Персональный тренер по отжиманиям
+                </div>
+
+            </div>
+
+
+            <div class="welcome-form">
+
+                <label class="welcome-field">
+
+                    <span>
+                        Как тебя зовут?
+                    </span>
+
+                    <input
+                        id="welcomeName"
+                        type="text"
+                        maxlength="30"
+                        autocomplete="given-name"
+                        placeholder="Александр"
+                    >
+
+                </label>
+
+
+                <label class="welcome-field">
+
+                    <span>
+                        Твой вес, кг
+                    </span>
+
+                    <input
+                        id="welcomeWeight"
+                        type="number"
+                        inputmode="decimal"
+                        min="30"
+                        max="250"
+                        step="0.1"
+                        placeholder="например, 82"
+                    >
+
+                </label>
+
+            </div>
+
+
+            <div class="welcome-features">
+
+                <div class="welcome-feature">
+                    <div class="welcome-feature-icon">
+                        📅
+                    </div>
+                    <div class="welcome-feature-text">
+                        <strong>24-недельная программа</strong>
+                        <span>От простых 3×5 до продвинутых вариаций</span>
+                    </div>
+                </div>
+
+
+                <div class="welcome-feature">
+                    <div class="welcome-feature-icon">
+                        🧠
+                    </div>
+                    <div class="welcome-feature-text">
+                        <strong>Умный тренер</strong>
+                        <span>Сам подбирает нагрузку по твоей сложности</span>
+                    </div>
+                </div>
+
+
+                <div class="welcome-feature">
+                    <div class="welcome-feature-icon">
+                        ⏰
+                    </div>
+                    <div class="welcome-feature-text">
+                        <strong>Таймер отдыха</strong>
+                        <span>Продолжает работать между сессиями</span>
+                    </div>
+                </div>
+
+
+                <div class="welcome-feature">
+                    <div class="welcome-feature-icon">
+                        📈
+                    </div>
+                    <div class="welcome-feature-text">
+                        <strong>Прогресс</strong>
+                        <span>История, вес, рекорды по каждому хвату</span>
+                    </div>
+                </div>
+
+
+                <div class="welcome-feature">
+                    <div class="welcome-feature-icon">
+                        ✋
+                    </div>
+                    <div class="welcome-feature-text">
+                        <strong>Подсказки</strong>
+                        <span>Схемы хватов прямо на экране тренировки</span>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <button
+                class="primary-button"
+                id="welcomeStart"
+            >
+                Начать
+            </button>
+
+
+            <div class="welcome-footer">
+                Автор: Александр Шин
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div
+        id="splash"
+        class="splash"
+    >
+
+        <div class="splash-content">
+
+            <div class="splash-logo">
+                PC
+            </div>
+
+            <div class="splash-name">
+                Push-Up Coach
+            </div>
+
+            <div class="splash-author">
+                Александр Шин
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <script src="storage.js?v=10"></script>
+    <script src="grips.js?v=10"></script>
+    <script src="program.js?v=10"></script>
+    <script src="workout.js?v=10"></script>
+    <script src="ui.js?v=10"></script>
+    <script src="app.js?v=10"></script>
 
 </body>
 

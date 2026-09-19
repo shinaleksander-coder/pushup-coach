@@ -80,12 +80,10 @@ function getNextWorkout() {
         return { ...base, reason: "Контрольный тест на максимум" };
     }
 
-    // Разгрузочная неделя (6-я в блоке) — движок не применяем
     if (base.week % 6 === 0) {
         return { ...base, reason: "Разгрузочная неделя" };
     }
 
-    // Последняя НЕтестовая тренировка с тем же хватом
     let previous = null;
     for (let i = history.length - 1; i >= 0; i--) {
         const r = history[i];
@@ -105,7 +103,6 @@ function getNextWorkout() {
 
     const diff = previous.difficulty || "normal";
 
-    // Якорь — план прошлой тренировки
     const anchor = Number(previous.plannedReps) || base.reps;
 
     let reps;
@@ -123,12 +120,10 @@ function getNextWorkout() {
         reps = anchor + 1;
         reason = "Было легко — добавляем повтор";
     } else {
-        // normal: следуем программе, но не теряем набранное
         reps = Math.max(base.reps, anchor);
         reason = "Нормально — идём по программе";
     }
 
-    // Коридор от базы: −3 .. +5
     reps = Math.max(base.reps - 3, Math.min(base.reps + 5, reps));
     reps = Math.max(3, reps);
 

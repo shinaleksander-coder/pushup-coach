@@ -6,6 +6,25 @@
 
 const screens = document.querySelectorAll(".screen");
 
+const SCREEN_TITLES = {
+    screenHome: "Твой персональный тренер",
+    screenWorkout: "Тренировка",
+    screenDone: "Тренировка завершена",
+    screenProgress: "Прогресс",
+    screenHistory: "История",
+    screenProgram: "Программа",
+    screenSettings: "Настройки"
+};
+
+
+let editingHistoryIndex = -1;
+let editingHistoryDraft = null;
+
+
+/* =========================================
+   ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+   ========================================= */
+
 
 function showScreen(id) {
 
@@ -13,7 +32,113 @@ function showScreen(id) {
         screen.hidden = screen.id !== id;
     });
 
+    const backButton = document.getElementById("globalBack");
+
+    if (id === "screenHome") {
+        backButton.classList.add("hidden");
+    } else {
+        backButton.classList.remove("hidden");
+    }
+
+    const subtitle = document.getElementById("appSubtitle");
+
+    if (subtitle) {
+        subtitle.textContent =
+            SCREEN_TITLES[id] || "Твой персональный тренер";
+    }
+
     window.scrollTo(0, 0);
+}
+
+
+/* =========================================
+   ПРИВЕТСТВИЕ
+   ========================================= */
+
+
+function showWelcome() {
+
+    const nameInput = document.getElementById("welcomeName");
+    const weightInput = document.getElementById("welcomeWeight");
+
+    if (nameInput) {
+        nameInput.value =
+            settings.name && settings.name !== "Спортсмен"
+                ? settings.name
+                : "";
+    }
+
+    if (weightInput) {
+        weightInput.value = settings.weight || "";
+    }
+
+    document
+        .getElementById("welcomeOverlay")
+        .classList.remove("hidden");
+}
+
+
+function hideWelcome() {
+    document
+        .getElementById("welcomeOverlay")
+        .classList.add("hidden");
+}
+
+
+function showWelcomeOnFirstLaunch() {
+
+    const shown = loadJSON(STORAGE_KEYS.welcomeShown, false);
+
+    if (!shown) {
+        showWelcome();
+    }
+}
+
+
+function showWelcomeAgain() {
+    showWelcome();
+}
+
+
+/* =========================================
+   ЗАПИСЬ ВЕСА
+   ========================================= */
+
+
+// Обновляет историю веса при первом задании
+// или при изменении.
+// Перезаписывает полностью, если старые данные — это
+// дефолтные 82 кг из старой версии.
+function updateWeightHistory(newWeight, weightWasEmpty) {
+
+    if (newWeight === null || newWeight === undefined) {
+        return;
+    }
+
+    const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
+
+    const hasOnlyDefaults =
+        wh.length > 0 && wh.every(x => x.weight === 82);
+
+    if (weightWasEmpty || hasOnlyDefaults) {
+
+        saveJSON(STORAGE_KEYS.weightHistory, [{
+            date: new Date().toISOString(),
+            weight: newWeight
+        }]);
+
+        return;
+    }
+
+    const last = wh[wh.length - 1];
+
+    if (!last || last.weight !== newWeight) {
+        wh.push({
+            date: new Date().toISOString(),
+            weight: newWeight
+        });
+        saveJSON(STORAGE_KEYS.weightHistory, wh);
+    }
 }
 
 
@@ -71,7 +196,9 @@ function renderHome() {
     }
 
     document.getElementById("currentWeight").textContent =
-        `${settings.weight} кг`;
+        settings.weight
+            ? `${settings.weight} кг`
+            : "не указан";
 
     renderMaxPushups();
 
@@ -108,6 +235,46 @@ function renderMaxPushups() {
 
 
 /* =========================================
+   РЕКОРД
+   ========================================= */
+
+
+function getRecord() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    let max = 0;
+
+    history.forEach(record => {
+        record.results?.forEach(r => {
+            const a = Number(r.actual);
+            if (a > max) max = a;
+        });
+    });
+
+    return max;
+}
+
+
+function renderWorkoutRecord() {
+
+    const recordEl = document.getElementById("workoutRecord");
+
+    if (!recordEl) return;
+
+    const record = getRecord();
+
+    if (record > 0) {
+        recordEl.textContent = `🏆 Рекорд: ${record} повторений`;
+        recordEl.classList.remove("hidden");
+    } else {
+        recordEl.textContent = "";
+        recordEl.classList.add("hidden");
+    }
+}
+
+
+/* =========================================
    ЭКРАН ТРЕНИРОВКИ
    ========================================= */
 
@@ -124,6 +291,19 @@ function renderWorkoutScreen() {
         : `${workout.grip} хват`;
 
     restEl.textContent = `${workout.rest} сек`;
+
+    renderGripVisual(workout.grip);
+    renderWorkoutRecord();
+}
+
+
+function renderGripVisual(grip) {
+
+    const container = document.getElementById("gripVisual");
+
+    if (!container) return;
+
+    container.innerHTML = getGripSVG(grip);
 }
 
 
@@ -195,11 +375,38 @@ function updateTimer() {
 
 
 /* =========================================
+   МОДАЛКА ХВАТА
+   ========================================= */
+
+
+function openGripModal() {
+
+    if (!workout) return;
+
+    document.getElementById("gripModalVisual").innerHTML =
+        getGripSVG(workout.grip);
+
+    document.getElementById("gripModalTitle").textContent =
+        workout.grip + " хват";
+
+    document.getElementById("gripModalText").textContent =
+        getGripDescription(workout.grip);
+
+    document.getElementById("gripModal").classList.remove("hidden");
+}
+
+
+function closeGripModal() {
+    document.getElementById("gripModal").classList.add("hidden");
+}
+
+
+/* =========================================
    ЭКРАН РЕЗУЛЬТАТА
    ========================================= */
 
 
-function renderDoneScreen(record, saved) {
+function renderDoneScreen(record, saved, isNewRecord) {
 
     document.getElementById("doneSets").textContent =
         record.results.length;
@@ -209,6 +416,17 @@ function renderDoneScreen(record, saved) {
 
     document.getElementById("doneActual").textContent =
         record.totalActual;
+
+    const badge = document.getElementById("doneRecordBadge");
+
+    if (isNewRecord && record.bestSet) {
+        badge.textContent =
+            `🏆 Новый рекорд: ${record.bestSet} повторений`;
+        badge.classList.remove("hidden");
+    } else {
+        badge.textContent = "";
+        badge.classList.add("hidden");
+    }
 
     document
         .querySelectorAll(".difficulty-button")
@@ -269,10 +487,15 @@ function renderHistory() {
         very_hard: "очень тяжело"
     };
 
-    [...history].reverse().forEach(record => {
+    [...history].reverse().forEach((record, reversedIndex) => {
+
+        const originalIndex =
+            history.length - 1 - reversedIndex;
 
         const item = document.createElement("div");
         item.className = "history-item";
+
+        item.dataset.index = originalIndex;
 
         const date = new Date(record.date);
 
@@ -299,10 +522,176 @@ function renderHistory() {
                 Факт: ${record.totalActual} из ${record.totalPlanned}
                 ${diffText ? " · " + diffText : ""}
             </div>
+            <div class="history-edit-icon">
+                ✏️
+            </div>
         `;
+
+        item.addEventListener("click", () => {
+            openHistoryEdit(originalIndex);
+        });
 
         list.appendChild(item);
     });
+}
+
+
+function openHistoryEdit(index) {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    if (!history[index]) return;
+
+    editingHistoryIndex = index;
+
+    editingHistoryDraft = JSON.parse(
+        JSON.stringify(history[index])
+    );
+
+    const record = editingHistoryDraft;
+
+    const date = new Date(record.date);
+
+    const title = record.isTest
+        ? `Тест · ${record.grip}`
+        : `${record.grip} хват`;
+
+    const subtitle = record.week
+        ? `Неделя ${record.week} · День ${record.day}`
+        : "";
+
+    document.getElementById("historyEditInfo").innerHTML = `
+        <div class="edit-date">
+            ${date.toLocaleString("ru-RU")}
+        </div>
+        <div class="edit-title">
+            ${title}
+        </div>
+        ${subtitle
+            ? `<div class="edit-subtitle">${subtitle}</div>`
+            : ""}
+    `;
+
+
+    document
+        .querySelectorAll(".edit-difficulty-button")
+        .forEach(btn => {
+            btn.classList.toggle(
+                "selected",
+                btn.dataset.level === record.difficulty
+            );
+        });
+
+
+    renderEditSets();
+
+    document.getElementById("historyModal")
+        .classList.remove("hidden");
+}
+
+
+function renderEditSets() {
+
+    const container = document.getElementById("historyEditSets");
+
+    container.innerHTML = "";
+
+    editingHistoryDraft.results.forEach((result, i) => {
+
+        const row = document.createElement("div");
+        row.className = "edit-set-row";
+
+        row.innerHTML = `
+            <span class="edit-set-label">
+                Подход ${result.set}
+            </span>
+            <button
+                class="edit-set-button"
+                data-action="minus"
+                data-index="${i}"
+            >
+                −
+            </button>
+            <span class="edit-set-value">
+                ${result.actual}
+            </span>
+            <button
+                class="edit-set-button"
+                data-action="plus"
+                data-index="${i}"
+            >
+                +
+            </button>
+        `;
+
+        container.appendChild(row);
+    });
+
+    container
+        .querySelectorAll(".edit-set-button")
+        .forEach(btn => {
+            btn.addEventListener("click", () => {
+
+                const i = Number(btn.dataset.index);
+                const action = btn.dataset.action;
+
+                const current =
+                    editingHistoryDraft.results[i].actual;
+
+                if (action === "minus" && current > 0) {
+                    editingHistoryDraft.results[i].actual =
+                        current - 1;
+                }
+
+                if (action === "plus") {
+                    editingHistoryDraft.results[i].actual =
+                        current + 1;
+                }
+
+                renderEditSets();
+            });
+        });
+}
+
+
+function closeHistoryEdit() {
+
+    editingHistoryIndex = -1;
+    editingHistoryDraft = null;
+
+    document.getElementById("historyModal")
+        .classList.add("hidden");
+}
+
+
+function saveHistoryEdit() {
+
+    if (editingHistoryIndex < 0 || !editingHistoryDraft) {
+        return;
+    }
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    editingHistoryDraft.totalActual =
+        editingHistoryDraft.results.reduce(
+            (sum, r) => sum + Number(r.actual),
+            0
+        );
+
+    editingHistoryDraft.bestSet =
+        editingHistoryDraft.results.reduce(
+            (max, r) => Math.max(max, Number(r.actual)),
+            0
+        );
+
+    history[editingHistoryIndex] = editingHistoryDraft;
+
+    saveJSON(STORAGE_KEYS.history, history);
+
+    closeHistoryEdit();
+
+    renderHistory();
+    renderHome();
 }
 
 
@@ -373,34 +762,74 @@ function renderProgram() {
 
 
 function renderSettings() {
-    document.getElementById("weightInput").value = settings.weight;
+
+    document.getElementById("nameInput").value =
+        settings.name && settings.name !== "Спортсмен"
+            ? settings.name
+            : "";
+
+    document.getElementById("weightInput").value =
+        settings.weight || "";
+
+    renderAbout();
+}
+
+
+function renderAbout() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    document.getElementById("aboutName").textContent =
+        settings.name || "—";
+
+    document.getElementById("aboutWorkouts").textContent =
+        history.length;
+
+    if (history.length === 0) {
+        document.getElementById("aboutFirstDate").textContent = "—";
+        return;
+    }
+
+    const first = new Date(history[0].date);
+
+    document.getElementById("aboutFirstDate").textContent =
+        first.toLocaleDateString("ru-RU");
 }
 
 
 function saveSettings() {
 
-    const input = document.getElementById("weightInput");
-    const weight = Number(input.value);
+    const nameInput = document.getElementById("nameInput");
+    const weightInput = document.getElementById("weightInput");
 
-    if (!Number.isFinite(weight) || weight < 30 || weight > 250) {
-        alert("Введите корректный вес от 30 до 250 кг.");
-        return;
+    const name =
+        nameInput.value.trim() || "Спортсмен";
+
+    const weightStr = weightInput.value.trim();
+
+    const weightWasEmpty =
+        settings.weight === null || settings.weight === undefined;
+
+    let weight = null;
+
+    if (weightStr !== "") {
+        weight = Number(weightStr);
+
+        if (!Number.isFinite(weight) ||
+            weight < 30 || weight > 250) {
+            alert("Введите корректный вес от 30 до 250 кг, либо оставьте поле пустым.");
+            return;
+        }
+
+        weight = Math.round(weight * 10) / 10;
     }
 
-    settings.weight = Math.round(weight * 10) / 10;
+    settings.name = name;
+    settings.weight = weight;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
-    const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, []);
-    const last = weightHistory[weightHistory.length - 1];
-
-    if (!last || last.weight !== settings.weight) {
-        weightHistory.push({
-            date: new Date().toISOString(),
-            weight: settings.weight
-        });
-        saveJSON(STORAGE_KEYS.weightHistory, weightHistory);
-    }
+    updateWeightHistory(weight, weightWasEmpty);
 
     renderHome();
     showScreen("screenHome");
@@ -429,6 +858,37 @@ function resetProgress() {
     ensureWeightHistory();
     renderHome();
     showScreen("screenHome");
+}
+
+
+function shareApp() {
+
+    const url = window.location.href;
+
+    if (navigator.share) {
+
+        navigator
+            .share({
+                title: "Push-Up Coach",
+                text: "Персональный тренер по отжиманиям",
+                url
+            })
+            .catch(() => {});
+
+        return;
+    }
+
+    if (navigator.clipboard) {
+
+        navigator.clipboard
+            .writeText(url)
+            .then(() => alert("Ссылка скопирована."))
+            .catch(() => alert("Ссылка: " + url));
+
+        return;
+    }
+
+    alert("Ссылка: " + url);
 }
 
 
@@ -579,21 +1039,30 @@ function renderProgress() {
             : "Нет данных";
 
 
-    const startWeight = weightHistory[0]?.weight ?? settings.weight;
-    const nowWeight = weightHistory.length
-        ? weightHistory[weightHistory.length - 1].weight
-        : settings.weight;
+    const startWeight =
+        weightHistory[0]?.weight ?? settings.weight;
+
+    const nowWeight =
+        weightHistory.length
+            ? weightHistory[weightHistory.length - 1].weight
+            : settings.weight;
 
     document.getElementById("weightStart").textContent =
-        `${startWeight} кг`;
+        startWeight ? `${startWeight} кг` : "—";
 
     document.getElementById("weightNow").textContent =
-        `${nowWeight} кг`;
+        nowWeight ? `${nowWeight} кг` : "—";
 
-    const wDelta = Math.round((nowWeight - startWeight) * 10) / 10;
+    if (startWeight && nowWeight) {
+        const wDelta =
+            Math.round((nowWeight - startWeight) * 10) / 10;
 
-    document.getElementById("weightDelta").textContent =
-        formatDelta(wDelta, "кг");
+        document.getElementById("weightDelta").textContent =
+            formatDelta(wDelta, "кг");
+    } else {
+        document.getElementById("weightDelta").textContent =
+            "Нет данных";
+    }
 
 
     document.getElementById("weightChartContainer").innerHTML =
@@ -633,10 +1102,14 @@ function ensureWeightHistory() {
 
     if (wh && wh.length > 0) return;
 
-    saveJSON(STORAGE_KEYS.weightHistory, [{
-        date: new Date().toISOString(),
-        weight: settings.weight
-    }]);
+    if (settings.weight) {
+        saveJSON(STORAGE_KEYS.weightHistory, [{
+            date: new Date().toISOString(),
+            weight: settings.weight
+        }]);
+    } else {
+        saveJSON(STORAGE_KEYS.weightHistory, []);
+    }
 }
 
 

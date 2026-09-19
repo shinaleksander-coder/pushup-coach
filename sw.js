@@ -4,26 +4,22 @@
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v6";
+const CACHE_NAME = "pushup-coach-v13";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=5",
-    "./storage.js?v=5",
-    "./program.js?v=5",
-    "./workout.js?v=5",
-    "./ui.js?v=5",
-    "./app.js?v=5",
+    "./styles.css?v=10",
+    "./storage.js?v=10",
+    "./grips.js?v=10",
+    "./program.js?v=10",
+    "./workout.js?v=10",
+    "./ui.js?v=10",
+    "./app.js?v=10",
     "./manifest.json",
     "./icon.svg"
 ];
-
-
-/* =========================================
-   УСТАНОВКА
-   ========================================= */
 
 
 self.addEventListener("install", event => {
@@ -36,11 +32,6 @@ self.addEventListener("install", event => {
             .then(() => self.skipWaiting())
     );
 });
-
-
-/* =========================================
-   АКТИВАЦИЯ
-   ========================================= */
 
 
 self.addEventListener("activate", event => {
@@ -61,19 +52,12 @@ self.addEventListener("activate", event => {
 });
 
 
-/* =========================================
-   ПЕРЕХВАТ ЗАПРОСОВ
-   Стратегия: cache-first с fallback на сеть.
-   ========================================= */
-
-
 self.addEventListener("fetch", event => {
 
     if (event.request.method !== "GET") return;
 
     const url = new URL(event.request.url);
 
-    // Не кэшируем сторонние запросы
     if (url.origin !== self.location.origin) return;
 
     event.respondWith(
@@ -101,7 +85,6 @@ self.addEventListener("fetch", event => {
                 })
                 .catch(() => {
 
-                    // Офлайн и нет в кэше — отдаём главную
                     if (event.request.mode === "navigate") {
                         return caches.match("./index.html");
                     }

@@ -8,7 +8,10 @@ const STORAGE_KEYS = {
     history: "workoutHistory",
     activeWorkout: "activeWorkout",
     settings: "appSettings",
-    weightHistory: "weightHistory"
+    weightHistory: "weightHistory",
+    installDismissed: "installDismissed",
+    welcomeShown: "welcomeShown",
+    migrationV12: "migrationV12"
 };
 
 
@@ -48,7 +51,8 @@ function removeStorage(key) {
 
 
 const defaultSettings = {
-    weight: 82
+    name: "Спортсмен",
+    weight: null
 };
 
 
