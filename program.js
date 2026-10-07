@@ -63,6 +63,29 @@ const PROGRAM = buildProgram();
 
 
 /* =========================================
+   УТИЛИТЫ
+   ========================================= */
+
+
+// Средний фактический результат по подходам,
+// округлённый до целого.
+function getEffectiveReps(record) {
+
+    if (!record || !Array.isArray(record.results) ||
+        record.results.length === 0) {
+        return 0;
+    }
+
+    const sum = record.results.reduce(
+        (acc, r) => acc + Number(r.actual),
+        0
+    );
+
+    return Math.round(sum / record.results.length);
+}
+
+
+/* =========================================
    ТРЕНИРОВОЧНЫЙ ДВИЖОК
    ========================================= */
 
@@ -84,26 +107,46 @@ function getNextWorkout() {
         return { ...base, reason: "Разгрузочная неделя" };
     }
 
-    let previous = null;
-    for (let i = history.length - 1; i >= 0; i--) {
-        const r = history[i];
-        if (r.grip === base.grip && !r.isTest) {
-            previous = r;
-            break;
-        }
-    }
+    // Все нетestовые тренировки того же хвата
+    const sameGrip = history.filter(
+        r => r.grip === base.grip && !r.isTest
+    );
 
-    if (!previous) {
+    if (sameGrip.length === 0) {
         return { ...base, reason: "Старт блока" };
     }
 
-    const allDone = previous.results.every(
+    // Последняя тренировка этого хвата
+    const prev = sameGrip[sameGrip.length - 1];
+
+    // Фактический уровень прошлой тренировки
+    const prevEffective = getEffectiveReps(prev);
+
+    // Недавний максимум: лучший средний результат
+    // за последние 5 тренировок этого хвата
+    const recent = sameGrip.slice(-5);
+
+    let recentBest = 0;
+    recent.forEach(r => {
+        const e = getEffectiveReps(r);
+        if (e > recentBest) recentBest = e;
+    });
+
+    // Якорь = максимум из:
+    //   • базы программы
+    //   • фактического уровня прошлой тренировки
+    //   • недавнего максимума минус 1
+    const anchor = Math.max(
+        base.reps,
+        prevEffective,
+        recentBest > 0 ? recentBest - 1 : 0
+    );
+
+    const allDone = prev.results.every(
         r => Number(r.actual) >= Number(r.planned)
     );
 
-    const diff = previous.difficulty || "normal";
-
-    const anchor = Number(previous.plannedReps) || base.reps;
+    const diff = prev.difficulty || "normal";
 
     let reps;
     let reason;
@@ -120,12 +163,12 @@ function getNextWorkout() {
         reps = anchor + 1;
         reason = "Было легко — добавляем повтор";
     } else {
-        reps = Math.max(base.reps, anchor);
-        reason = "Нормально — идём по программе";
+        reps = anchor;
+        reason = "Идём на твоём уровне";
     }
 
-    reps = Math.max(base.reps - 3, Math.min(base.reps + 5, reps));
-    reps = Math.max(3, reps);
+    // Не опускаемся ниже базы − 3 и не ниже 3
+    reps = Math.max(3, Math.max(base.reps - 3, reps));
 
     return { ...base, reps, reason };
 }
