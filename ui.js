@@ -17,8 +17,8 @@ const SCREEN_TITLES = {
 
 
 const ACHIEVEMENTS = [
-    { id: "first", icon: "🎯", title: "Первая тренировка", desc: "Программа началась", check: (h, max) => h.length >= 1 },
-    { id: "week1", icon: "📅", title: "Первая неделя", desc: "3 тренировки позади", check: (h, max) => h.filter(r => !r.isExtra).length >= 3 },
+    { id: "first", icon: "🎯", title: "Первая тренировка", desc: "Программа началась", check: (h, max) => h.filter(r => !r.isExtra).length >= 1 },
+    { id: "week1", icon: "📅", title: "Первая неделя", desc: "Первая неделя программы пройдена", check: (h, max) => h.filter(r => !r.isExtra).length >= (getActiveConfig().daysPerWeek || 3) },
     { id: "ten", icon: "🔟", title: "10 тренировок", desc: "Уже не новичок", check: (h, max) => h.filter(r => !r.isExtra).length >= 10 },
     { id: "twentyfive", icon: "💪", title: "25 тренировок", desc: "Четверть пути", check: (h, max) => h.filter(r => !r.isExtra).length >= 25 },
     { id: "fifty", icon: "🚀", title: "50 тренировок", desc: "Больше половины программы", check: (h, max) => h.filter(r => !r.isExtra).length >= 50 },
@@ -965,11 +965,9 @@ function renderProgramList() {
     const planRecords = history.filter(r => !r.isExtra);
     const extras = history.filter(r => r.isExtra);
 
-    // Главная строка: плановые / плановые.
     document.getElementById("programProgress").textContent =
         `${stats.planDone} / ${stats.planTotal}`;
 
-    // Доп. строка: сколько extras и общее.
     const extrasEl = document.getElementById("programExtras");
 
     if (stats.extrasCount > 0) {
@@ -1061,7 +1059,6 @@ function renderProgramList() {
         if (isDone) cls += " done";
         if (isCurrent) cls += " current";
 
-        // Считаем extras в этой неделе
         const weekExtras = extras.filter(r => r.week === week);
         const extraRow = weekExtras.length > 0
             ? `<div class="program-week-extras">+${weekExtras.length} доп</div>`
@@ -1230,7 +1227,7 @@ function shareApp() {
 function exportData() {
 
     const data = {
-        version: "1.5.1",
+        version: "1.5.2",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),
