@@ -1,6 +1,6 @@
 /* =========================================
    PROGRAM.JS
-   24-недельная программа + умный движок.
+   Режимы программы + умный движок.
    ========================================= */
 
 
@@ -12,45 +12,100 @@ const PROGRAM_GRIPS = [
 ];
 
 
-function buildProgram() {
+const BLOCK_WEEKS = 6;
+
+
+/* =========================================
+   ПРЕСЕТЫ РЕЖИМОВ
+   ========================================= */
+
+
+const PROGRAM_MODES = {
+
+    base: {
+        weeks: 24,
+        daysPerWeek: 3,
+        sets: 3,
+        repBase: 5,
+        repGrowth: 1,
+        repCeil: 9,
+        rest: 90
+    },
+
+    strength: {
+        weeks: 24,
+        daysPerWeek: 3,
+        sets: 4,
+        repBase: 6,
+        repGrowth: 1,
+        repCeil: 11,
+        rest: 90
+    }
+
+};
+
+
+/* =========================================
+   ГЕНЕРАТОР
+   ========================================= */
+
+
+function buildProgram(config) {
+
+    const weeks = config.weeks || 24;
+    const daysPerWeek = config.daysPerWeek || 3;
+    const sets = config.sets || 3;
+    const repBase = config.repBase || 5;
+    const repGrowth =
+        config.repGrowth !== undefined ? config.repGrowth : 1;
+    const repCeil = config.repCeil || repBase + 6;
+    const rest = config.rest || 90;
 
     const program = [];
+    const total = weeks * daysPerWeek;
 
-    for (let i = 0; i < 72; i++) {
+    for (let i = 0; i < total; i++) {
 
-        const week = Math.floor(i / 3);
-        const dayInWeek = i % 3;
+        const week = Math.floor(i / daysPerWeek);
+        const dayInWeek = i % daysPerWeek;
 
-        const block = Math.floor(week / 6);
-        const weekInBlock = week % 6;
+        const block = Math.floor(week / BLOCK_WEEKS);
+        const weekInBlock = week % BLOCK_WEEKS;
 
-        const isTestWeek = weekInBlock === 5;
+        const isTestWeek = weekInBlock === BLOCK_WEEKS - 1;
         const isTest = isTestWeek && dayInWeek === 0;
 
-        let sets, reps, rest;
+        let s = sets;
+        let r;
+        let rt = rest;
 
         if (isTest) {
-            sets = 1;
-            reps = 0;
-            rest = 180;
+            s = 1;
+            r = 0;
+            rt = 180;
         } else if (isTestWeek) {
-            sets = 3;
-            reps = 5;
-            rest = 90;
+            s = sets;
+            r = repBase;
+            rt = rest;
         } else {
-            sets = 3;
-            reps = 5 + weekInBlock;
-            rest = 90;
+            s = sets;
+            r = Math.min(
+                repCeil,
+                repBase + weekInBlock * repGrowth
+            );
         }
+
+        const grip =
+            PROGRAM_GRIPS[block % PROGRAM_GRIPS.length];
 
         program.push({
             index: i,
             week: week + 1,
             day: dayInWeek + 1,
-            grip: PROGRAM_GRIPS[block],
-            sets,
-            reps,
-            rest,
+            grip,
+            sets: s,
+            reps: r,
+            rest: rt,
             isTest
         });
     }
@@ -59,7 +114,48 @@ function buildProgram() {
 }
 
 
-const PROGRAM = buildProgram();
+function getActiveConfig() {
+
+    const mode = settings.programMode || "base";
+
+    if (mode === "custom") {
+
+        const sets = clamp(settings.customSets, 2, 6, 3);
+        const repBase = clamp(settings.customRepBase, 3, 20, 5);
+        const growth = clamp(settings.customGrowth, 0, 2, 1);
+        const days = clamp(settings.customDays, 2, 7, 3);
+
+        return {
+            weeks: 24,
+            daysPerWeek: days,
+            sets: sets,
+            repBase: repBase,
+            repGrowth: growth,
+            repCeil: Math.min(25, repBase + 6),
+            rest: 90
+        };
+    }
+
+    return PROGRAM_MODES[mode] || PROGRAM_MODES.base;
+}
+
+
+function clamp(value, min, max, fallback) {
+
+    const n = Number(value);
+
+    if (!Number.isFinite(n)) return fallback;
+
+    return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+
+let PROGRAM = buildProgram(getActiveConfig());
+
+
+function rebuildProgram() {
+    PROGRAM = buildProgram(getActiveConfig());
+}
 
 
 /* =========================================
@@ -83,12 +179,37 @@ function getEffectiveReps(record) {
 }
 
 
-// Сколько ПЛАНОВЫХ сессий пройдено.
-// Дополнительные (isExtra) не считаются.
-function getProgramIndex() {
+/* =========================================
+   СТАТИСТИКА
+   ========================================= */
+
+
+function getProgramStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    return history.filter(r => !r.isExtra).length;
+
+    const planDone =
+        history.filter(r => !r.isExtra).length;
+
+    const extrasCount =
+        history.filter(r => r.isExtra).length;
+
+    const planTotal = PROGRAM.length;
+
+    // Общее количество тренировок за курс:
+    // 72 плановых + N доп, которые пользователь уже сделал.
+    const total = planTotal + extrasCount;
+
+    // Сколько всего пройдено (плановые + extras).
+    const completed = planDone + extrasCount;
+
+    return {
+        planDone,
+        planTotal,
+        extrasCount,
+        completed,
+        total
+    };
 }
 
 
@@ -97,8 +218,6 @@ function getProgramIndex() {
    ========================================= */
 
 
-// Основная логика. history передаётся явно,
-// чтобы её можно было использовать и для симуляции.
 function getNextWorkoutFor(history, forceRepeatLast) {
 
     const programIndex =
@@ -147,6 +266,8 @@ function getNextWorkoutFor(history, forceRepeatLast) {
         return { ...base, reason: "Разгрузочная неделя" };
     }
 
+    // В фильтр попадают и плановые, и extras.
+    // Дополнительные тренировки подтягивают нагрузку.
     const sameGrip = history.filter(
         r => r.grip === base.grip && !r.isTest
     );
@@ -219,10 +340,11 @@ function getNextWorkout(forceRepeatLast) {
 }
 
 
-// Прогноз будущих тренировок. Идёт от текущей
-// позиции и до конца программы. Для каждой
-// тренировки считает оптимальный план
-// (предполагая «нормально» и полное выполнение).
+/* =========================================
+   ПРОГНОЗ
+   ========================================= */
+
+
 function predictFutureWorkouts() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -233,7 +355,7 @@ function predictFutureWorkouts() {
     const predictions = [];
 
     const remaining = PROGRAM.length - programIndex;
-    const limit = Math.min(remaining, 60);
+    const limit = Math.min(remaining, 100);
 
     for (let i = 0; i < limit; i++) {
 
@@ -251,8 +373,6 @@ function predictFutureWorkouts() {
             isTest: next.isTest
         });
 
-        // Записываем «идеальную» тренировку
-        // в виртуальную историю
         virtual.push({
             week: next.week,
             day: next.day,

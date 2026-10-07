@@ -221,7 +221,7 @@ function renderHome() {
 function renderMaxPushups() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    let maxPushups = 10;
+    let maxPushups = 0;
 
     history.forEach(record => {
         record.results?.forEach(result => {
@@ -232,7 +232,8 @@ function renderMaxPushups() {
         });
     });
 
-    document.getElementById("maxPushups").textContent = maxPushups;
+    document.getElementById("maxPushups").textContent =
+        maxPushups > 0 ? maxPushups : "—";
 }
 
 
@@ -902,70 +903,145 @@ function saveHistoryEdit() {
 
 
 /* =========================================
-   ПРОГРАММА (живая, с прогнозом)
+   ПРОГРАММА
    ========================================= */
 
 
 function renderProgram() {
+    renderProgramModeButtons();
+    renderCustomConfig();
+    renderProgramList();
+}
+
+
+function renderProgramModeButtons() {
+
+    const currentMode = settings.programMode || "base";
+
+    document
+        .querySelectorAll(".mode-button")
+        .forEach(btn => {
+            btn.classList.toggle(
+                "active",
+                btn.dataset.mode === currentMode
+            );
+        });
+}
+
+
+function renderCustomConfig() {
+
+    const card = document.getElementById("customConfig");
+    if (!card) return;
+
+    const isCustom = (settings.programMode || "base") === "custom";
+
+    if (isCustom) {
+        card.classList.remove("hidden");
+    } else {
+        card.classList.add("hidden");
+    }
+
+    document.getElementById("customDays").value =
+        settings.customDays || 3;
+
+    document.getElementById("customSets").value =
+        settings.customSets || 3;
+
+    document.getElementById("customRepBase").value =
+        settings.customRepBase || 5;
+
+    document.getElementById("customGrowth").value =
+        settings.customGrowth !== undefined
+            ? settings.customGrowth
+            : 1;
+}
+
+
+function renderProgramList() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const programRecords = history.filter(r => !r.isExtra);
-    const completed = programRecords.length;
-    const total = PROGRAM.length;
+    const stats = getProgramStats();
+    const planRecords = history.filter(r => !r.isExtra);
+    const extras = history.filter(r => r.isExtra);
 
+    // Главная строка: плановые / плановые.
     document.getElementById("programProgress").textContent =
-        `${completed} / ${total}`;
+        `${stats.planDone} / ${stats.planTotal}`;
 
-    // Прогноз на будущее — для отображения плана
-    // с учётом текущего уровня пользователя.
+    // Доп. строка: сколько extras и общее.
+    const extrasEl = document.getElementById("programExtras");
+
+    if (stats.extrasCount > 0) {
+        extrasEl.textContent =
+            `+${stats.extrasCount} доп · всего ${stats.completed} из ${stats.total}`;
+        extrasEl.classList.remove("hidden");
+    } else {
+        extrasEl.textContent = "";
+        extrasEl.classList.add("hidden");
+    }
+
     const predictions = predictFutureWorkouts();
+    const daysPerWeek = getActiveConfig().daysPerWeek || 3;
+    const totalWeeks = Math.ceil(PROGRAM.length / daysPerWeek);
 
     let html = "";
     let currentBlock = -1;
 
-    for (let week = 1; week <= 24; week++) {
+    for (let week = 1; week <= totalWeeks; week++) {
 
-        const block = Math.floor((week - 1) / 6);
+        const block = Math.floor((week - 1) / BLOCK_WEEKS);
 
         if (block !== currentBlock) {
             currentBlock = block;
-            html += `<div class="program-block-title">Блок ${block + 1} · ${PROGRAM_GRIPS[block]} хват</div>`;
+            const grip =
+                PROGRAM_GRIPS[block % PROGRAM_GRIPS.length];
+            html += `<div class="program-block-title">Блок ${block + 1} · ${grip} хват</div>`;
         }
 
-        const startIndex = (week - 1) * 3;
-        const endIndex = startIndex + 3;
+        const startIndex = (week - 1) * daysPerWeek;
+        const endIndex = startIndex + daysPerWeek;
 
         const doneInWeek = Math.max(
             0,
-            Math.min(3, completed - startIndex)
+            Math.min(daysPerWeek, stats.planDone - startIndex)
         );
 
         const isCurrent =
-            completed >= startIndex && completed < endIndex;
+            stats.planDone >= startIndex &&
+            stats.planDone < endIndex;
 
-        const isDone = completed >= endIndex;
+        const isDone = stats.planDone >= endIndex;
 
         const template = PROGRAM[startIndex];
+        if (!template) continue;
 
         let planText;
 
         if (isDone) {
 
-            const weekRecords = programRecords.slice(startIndex, endIndex);
+            const weekRecords =
+                planRecords.slice(startIndex, endIndex);
 
-            const avgReps = Math.round(
-                weekRecords.reduce(
-                    (sum, r) => sum + getEffectiveReps(r), 0
-                ) / weekRecords.length
-            );
+            if (weekRecords.length > 0) {
+                const avgReps = Math.round(
+                    weekRecords.reduce(
+                        (sum, r) => sum + getEffectiveReps(r), 0
+                    ) / weekRecords.length
+                );
 
-            planText = template.isTest
-                ? "тест"
-                : `${template.sets}×${avgReps}`;
+                planText = template.isTest
+                    ? "тест"
+                    : `${template.sets}×${avgReps}`;
+            } else {
+                planText = template.isTest
+                    ? "тест"
+                    : `${template.sets}×${template.reps}`;
+            }
 
         } else {
 
-            const predIndex = startIndex - completed;
+            const predIndex = startIndex - stats.planDone;
             const pred = predictions[Math.max(0, predIndex)];
 
             if (pred) {
@@ -985,6 +1061,12 @@ function renderProgram() {
         if (isDone) cls += " done";
         if (isCurrent) cls += " current";
 
+        // Считаем extras в этой неделе
+        const weekExtras = extras.filter(r => r.week === week);
+        const extraRow = weekExtras.length > 0
+            ? `<div class="program-week-extras">+${weekExtras.length} доп</div>`
+            : "";
+
         html += `
             <div class="${cls}">
                 <div>
@@ -994,9 +1076,10 @@ function renderProgram() {
                     <div class="program-week-info">
                         ${info}
                     </div>
+                    ${extraRow}
                 </div>
                 <div class="program-week-progress">
-                    ${doneInWeek} / 3
+                    ${doneInWeek} / ${daysPerWeek}
                 </div>
             </div>
         `;
@@ -1023,9 +1106,6 @@ function renderSettings() {
 
     document.getElementById("voiceInput").checked =
         settings.voiceCountdown !== false;
-
-    document.getElementById("frequencyInput").value =
-        settings.workoutsPerWeek || 3;
 
     renderAbout();
 }
@@ -1058,7 +1138,6 @@ function saveSettings() {
     const nameInput = document.getElementById("nameInput");
     const weightInput = document.getElementById("weightInput");
     const voiceInput = document.getElementById("voiceInput");
-    const frequencyInput = document.getElementById("frequencyInput");
 
     const name = nameInput.value.trim() || "Спортсмен";
 
@@ -1079,15 +1158,9 @@ function saveSettings() {
         weight = Math.round(weight * 10) / 10;
     }
 
-    let freq = Number(frequencyInput.value);
-    if (!Number.isFinite(freq) || freq < 2 || freq > 7) {
-        freq = 3;
-    }
-
     settings.name = name;
     settings.weight = weight;
     settings.voiceCountdown = voiceInput.checked;
-    settings.workoutsPerWeek = freq;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -1157,7 +1230,7 @@ function shareApp() {
 function exportData() {
 
     const data = {
-        version: "1.4",
+        version: "1.5.1",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),

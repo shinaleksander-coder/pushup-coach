@@ -106,6 +106,98 @@ document.getElementById("achievementModal")
 
 
 /* =========================================
+   РЕЖИМ ПРОГРАММЫ
+   ========================================= */
+
+
+document
+    .querySelectorAll(".mode-button")
+    .forEach(btn => {
+        btn.addEventListener("click", () => {
+
+            const mode = btn.dataset.mode;
+
+            if (mode !== "custom") {
+
+                const history =
+                    loadJSON(STORAGE_KEYS.history, []);
+
+                const programIndex =
+                    history.filter(r => !r.isExtra).length;
+
+                const currentTotal = PROGRAM.length;
+
+                const newConfig =
+                    PROGRAM_MODES[mode] || PROGRAM_MODES.base;
+
+                const newTotal =
+                    newConfig.weeks * newConfig.daysPerWeek;
+
+                if (programIndex > 0 &&
+                    newTotal !== currentTotal &&
+                    !confirm(
+                        `Сменить режим?\n\n` +
+                        `Это изменит будущие тренировки. ` +
+                        `Прошлые останутся без изменений.`
+                    )) {
+                    return;
+                }
+            }
+
+            settings.programMode = mode;
+            saveJSON(STORAGE_KEYS.settings, settings);
+
+            rebuildProgram();
+
+            renderProgram();
+            renderHome();
+        });
+    });
+
+
+document.getElementById("saveCustom")
+    .addEventListener("click", () => {
+
+        const days = Number(
+            document.getElementById("customDays").value
+        );
+
+        const sets = Number(
+            document.getElementById("customSets").value
+        );
+
+        const repBase = Number(
+            document.getElementById("customRepBase").value
+        );
+
+        const growth = Number(
+            document.getElementById("customGrowth").value
+        );
+
+        if (!Number.isFinite(repBase) ||
+            repBase < 3 || repBase > 20) {
+            alert("Старт повторов: от 3 до 20.");
+            return;
+        }
+
+        settings.customDays = days;
+        settings.customSets = sets;
+        settings.customRepBase = repBase;
+        settings.customGrowth = growth;
+        settings.programMode = "custom";
+
+        saveJSON(STORAGE_KEYS.settings, settings);
+
+        rebuildProgram();
+
+        renderProgram();
+        renderHome();
+
+        alert("Индивидуальная программа применена.");
+    });
+
+
+/* =========================================
    ПРИВЕТСТВИЕ
    ========================================= */
 
@@ -387,6 +479,8 @@ document.addEventListener("visibilitychange", () => {
 migrateToV12();
 ensureWeightHistory();
 
+rebuildProgram();
+
 checkAchievements(true);
 
 renderHome();
@@ -394,4 +488,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.4 запущен");
+console.log("Push-Up Coach v1.5 запущен");

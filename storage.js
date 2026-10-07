@@ -55,7 +55,13 @@ const defaultSettings = {
     name: "Спортсмен",
     weight: null,
     voiceCountdown: true,
-    workoutsPerWeek: 3
+
+    programMode: "base",
+
+    customDays: 3,
+    customSets: 3,
+    customRepBase: 5,
+    customGrowth: 1
 };
 
 

@@ -59,7 +59,7 @@
 
     <link
         rel="stylesheet"
-        href="styles.css?v=15"
+        href="styles.css?v=17"
     >
 
 </head>
@@ -102,20 +102,11 @@
 
             <section class="today-card">
 
-                <div class="today-label">
-                    СЕГОДНЯ
-                </div>
+                <div class="today-label">СЕГОДНЯ</div>
 
-                <h1 id="homeWorkoutTitle">
-                    Тренировка
-                </h1>
+                <h1 id="homeWorkoutTitle">Тренировка</h1>
 
-
-                <div
-                    id="homeFreezeBanner"
-                    class="freeze-banner hidden"
-                ></div>
-
+                <div id="homeFreezeBanner" class="freeze-banner hidden"></div>
 
                 <div class="workout-info">
 
@@ -136,39 +127,19 @@
 
                 </div>
 
+                <div id="homeCompare" class="home-compare hidden"></div>
 
-                <div
-                    id="homeCompare"
-                    class="home-compare hidden"
-                ></div>
+                <div id="homeReason" class="home-reason hidden"></div>
 
-
-                <div
-                    id="homeReason"
-                    class="home-reason hidden"
-                ></div>
-
-
-                <button
-                    class="primary-button"
-                    id="startWorkout"
-                >
+                <button class="primary-button" id="startWorkout">
                     Начать тренировку
                 </button>
 
-
-                <button
-                    class="secondary-button hidden"
-                    id="continueWorkout"
-                >
+                <button class="secondary-button hidden" id="continueWorkout">
                     Продолжить тренировку
                 </button>
 
-
-                <button
-                    class="secondary-button extra-button"
-                    id="extraWorkout"
-                >
+                <button class="secondary-button extra-button" id="extraWorkout">
                     ➕ Дополнительная тренировка
                 </button>
 
@@ -178,15 +149,13 @@
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    Твой прогресс
-                </div>
+                <div class="section-title">Твой прогресс</div>
 
                 <div class="progress-grid">
 
                     <div class="stat">
-                        <strong id="maxPushups">10</strong>
-                        <span>стартовый максимум</span>
+                        <strong id="maxPushups">—</strong>
+                        <span>личный рекорд</span>
                     </div>
 
                     <div class="stat">
@@ -232,13 +201,9 @@
 
             <section class="today-card">
 
-                <div class="today-label">
-                    ТРЕНИРОВКА
-                </div>
+                <div class="today-label">ТРЕНИРОВКА</div>
 
-                <h1 id="workoutGrip">
-                    Обычный хват
-                </h1>
+                <h1 id="workoutGrip">Обычный хват</h1>
 
                 <button
                     class="grip-visual"
@@ -247,10 +212,7 @@
                     aria-label="Показать схему хвата"
                 ></button>
 
-                <div
-                    id="workoutRecord"
-                    class="workout-record hidden"
-                ></div>
+                <div id="workoutRecord" class="workout-record hidden"></div>
 
                 <div class="workout-info">
 
@@ -304,17 +266,11 @@
 
                 </div>
 
-                <button
-                    class="secondary-button danger-button"
-                    id="failedSet"
-                >
+                <button class="secondary-button danger-button" id="failedSet">
                     Не смог выполнить
                 </button>
 
-                <button
-                    class="primary-button"
-                    id="completeSet"
-                >
+                <button class="primary-button" id="completeSet">
                     Готово
                 </button>
 
@@ -344,16 +300,11 @@
 
             <section class="today-card">
 
-                <div class="today-label">
-                    ГОТОВО
-                </div>
+                <div class="today-label">ГОТОВО</div>
 
                 <h1>Тренировка завершена</h1>
 
-                <div
-                    id="doneRecordBadge"
-                    class="record-badge hidden"
-                ></div>
+                <div id="doneRecordBadge" class="record-badge hidden"></div>
 
                 <div class="workout-info">
 
@@ -376,9 +327,7 @@
 
                 <div class="difficulty-section">
 
-                    <div class="difficulty-question">
-                        Как было?
-                    </div>
+                    <div class="difficulty-question">Как было?</div>
 
                     <div class="difficulty-grid">
 
@@ -458,9 +407,7 @@
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    Объём по неделям
-                </div>
+                <div class="section-title">Объём по неделям</div>
 
                 <div id="volumeChartContainer"></div>
 
@@ -490,9 +437,7 @@
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    История тренировок
-                </div>
+                <div class="section-title">История тренировок</div>
 
                 <p class="history-hint">
                     Нажми на запись, чтобы отредактировать
@@ -510,11 +455,94 @@
 
             <section class="progress-card">
 
+                <div class="section-title">Режим программы</div>
+
+                <div class="mode-selector">
+
+                    <button class="mode-button" data-mode="base">
+                        <span class="mode-button-title">Базовая</span>
+                        <span class="mode-button-desc">3 подхода · 24 недели</span>
+                    </button>
+
+                    <button class="mode-button" data-mode="strength">
+                        <span class="mode-button-title">Усиленная</span>
+                        <span class="mode-button-desc">4 подхода · больше объёма</span>
+                    </button>
+
+                    <button class="mode-button" data-mode="custom">
+                        <span class="mode-button-title">Своя</span>
+                        <span class="mode-button-desc">настроить вручную</span>
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <section id="customConfig" class="progress-card hidden">
+
+                <div class="section-title">Индивидуальные настройки</div>
+
+                <label class="setting-row">
+                    <span>Дней в неделю</span>
+                    <select id="customDays">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </label>
+
+                <label class="setting-row">
+                    <span>Подходов</span>
+                    <select id="customSets">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                </label>
+
+                <label class="setting-row">
+                    <span>Старт, повторов</span>
+                    <input
+                        id="customRepBase"
+                        type="number"
+                        min="3"
+                        max="20"
+                        step="1"
+                    >
+                </label>
+
+                <label class="setting-row">
+                    <span>Рост в неделю</span>
+                    <select id="customGrowth">
+                        <option value="0">без роста</option>
+                        <option value="1">+1 повтор</option>
+                        <option value="2">+2 повтора</option>
+                    </select>
+                </label>
+
+                <button class="primary-button" id="saveCustom">
+                    Применить
+                </button>
+
+            </section>
+
+
+
+            <section class="progress-card">
+
                 <div class="section-title">Программа</div>
 
                 <p class="program-summary">
                     Пройдено:
                     <strong id="programProgress">0 / 72</strong>
+                    <span id="programExtras" class="program-extras hidden"></span>
                 </p>
 
                 <div id="programList"></div>
@@ -552,18 +580,6 @@
                         step="0.1"
                         placeholder="кг"
                     >
-                </label>
-
-                <label class="setting-row">
-                    <span>Тренировок в неделю</span>
-                    <select id="frequencyInput">
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                    </select>
                 </label>
 
                 <label class="setting-row">
@@ -617,7 +633,7 @@
 
                     <div class="about-row">
                         <span>Версия</span>
-                        <strong>1.4</strong>
+                        <strong>1.5</strong>
                     </div>
 
                     <div class="about-row">
@@ -662,29 +678,20 @@
 
 
     <div id="gripModal" class="modal hidden" role="dialog" aria-modal="true">
-
         <div class="modal-content">
-
             <div id="gripModalVisual" class="grip-modal-visual"></div>
-
             <h2 id="gripModalTitle" class="modal-title">Хват</h2>
-
             <p id="gripModalText" class="modal-text"></p>
-
             <button class="primary-button" id="gripModalClose">
                 Понятно
             </button>
-
         </div>
-
     </div>
 
 
 
     <div id="historyModal" class="modal hidden" role="dialog" aria-modal="true">
-
         <div class="modal-content modal-wide">
-
             <h2 class="modal-title">Редактировать тренировку</h2>
 
             <div id="historyEditInfo" class="edit-info"></div>
@@ -692,23 +699,18 @@
             <div class="edit-section-label">Сложность</div>
 
             <div class="difficulty-grid">
-
                 <button class="edit-difficulty-button" data-level="easy">
                     Легко
                 </button>
-
                 <button class="edit-difficulty-button" data-level="normal">
                     Нормально
                 </button>
-
                 <button class="edit-difficulty-button" data-level="hard">
                     Тяжело
                 </button>
-
                 <button class="edit-difficulty-button" data-level="very_hard">
                     Очень тяжело
                 </button>
-
             </div>
 
             <div class="edit-section-label">Подходы</div>
@@ -722,37 +724,26 @@
             <button class="secondary-button" id="historyEditCancel">
                 Отмена
             </button>
-
         </div>
-
     </div>
 
 
 
     <div id="achievementModal" class="modal hidden" role="dialog" aria-modal="true">
-
         <div class="modal-content achievement-modal-content">
-
-            <div id="achievementModalIcon" class="achievement-modal-icon">
-                🏆
-            </div>
-
+            <div id="achievementModalIcon" class="achievement-modal-icon">🏆</div>
             <h2 id="achievementModalTitle" class="modal-title">
                 Достижение
             </h2>
-
             <p
                 id="achievementModalText"
                 class="modal-text"
                 style="text-align:center"
             ></p>
-
             <button class="primary-button" id="achievementModalClose">
                 Класс
             </button>
-
         </div>
-
     </div>
 
 
@@ -765,16 +756,13 @@
 
                 <div class="welcome-brand-icon">💪</div>
 
-                <div class="welcome-brand-title">
-                    Push-Up Coach
-                </div>
+                <div class="welcome-brand-title">Push-Up Coach</div>
 
                 <div class="welcome-brand-subtitle">
                     Персональный тренер по отжиманиям
                 </div>
 
             </div>
-
 
             <div class="welcome-form">
 
@@ -803,14 +791,13 @@
 
             </div>
 
-
             <div class="welcome-features">
 
                 <div class="welcome-feature">
                     <div class="welcome-feature-icon">📅</div>
                     <div class="welcome-feature-text">
                         <strong>24-недельная программа</strong>
-                        <span>От простых 3×5 до продвинутых вариаций</span>
+                        <span>Три режима: базовая, усиленная, своя</span>
                     </div>
                 </div>
 
@@ -848,11 +835,9 @@
 
             </div>
 
-
             <button class="primary-button" id="welcomeStart">
                 Начать
             </button>
-
 
             <div class="welcome-footer">
                 Автор: Александр Шин
@@ -880,12 +865,12 @@
 
 
 
-    <script src="storage.js?v=15"></script>
-    <script src="grips.js?v=15"></script>
-    <script src="program.js?v=15"></script>
-    <script src="workout.js?v=15"></script>
-    <script src="ui.js?v=15"></script>
-    <script src="app.js?v=15"></script>
+    <script src="storage.js?v=17"></script>
+    <script src="grips.js?v=17"></script>
+    <script src="program.js?v=17"></script>
+    <script src="workout.js?v=17"></script>
+    <script src="ui.js?v=17"></script>
+    <script src="app.js?v=17"></script>
 
 </body>
 
