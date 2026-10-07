@@ -59,7 +59,7 @@
 
     <link
         rel="stylesheet"
-        href="styles.css?v=14"
+        href="styles.css?v=15"
     >
 
 </head>
@@ -98,10 +98,7 @@
     <main class="app-container">
 
 
-        <section
-            id="screenHome"
-            class="screen"
-        >
+        <section id="screenHome" class="screen">
 
             <section class="today-card">
 
@@ -122,45 +119,20 @@
 
                 <div class="workout-info">
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Хват
-                        </span>
-
-                        <strong id="homeGrip">
-                            Обычный
-                        </strong>
-
+                        <span class="info-label">Хват</span>
+                        <strong id="homeGrip">Обычный</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Подходы
-                        </span>
-
-                        <strong id="homeSets">
-                            3 × 5
-                        </strong>
-
+                        <span class="info-label">Подходы</span>
+                        <strong id="homeSets">3 × 5</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Отдых
-                        </span>
-
-                        <strong id="homeRest">
-                            90 сек
-                        </strong>
-
+                        <span class="info-label">Отдых</span>
+                        <strong id="homeRest">90 сек</strong>
                     </div>
-
 
                 </div>
 
@@ -192,6 +164,14 @@
                     Продолжить тренировку
                 </button>
 
+
+                <button
+                    class="secondary-button extra-button"
+                    id="extraWorkout"
+                >
+                    ➕ Дополнительная тренировка
+                </button>
+
             </section>
 
 
@@ -202,35 +182,17 @@
                     Твой прогресс
                 </div>
 
-
                 <div class="progress-grid">
 
-
                     <div class="stat">
-
-                        <strong id="maxPushups">
-                            10
-                        </strong>
-
-                        <span>
-                            стартовый максимум
-                        </span>
-
+                        <strong id="maxPushups">10</strong>
+                        <span>стартовый максимум</span>
                     </div>
 
-
                     <div class="stat">
-
-                        <strong id="currentWeight">
-                            —
-                        </strong>
-
-                        <span>
-                            текущий вес
-                        </span>
-
+                        <strong id="currentWeight">—</strong>
+                        <span>текущий вес</span>
                     </div>
-
 
                 </div>
 
@@ -240,70 +202,25 @@
 
             <section class="menu-card">
 
-
-                <button
-                    class="menu-button"
-                    id="programButton"
-                >
-
-                    <span>
-                        📅
-                    </span>
-
-                    <span>
-                        Программа
-                    </span>
-
+                <button class="menu-button" id="programButton">
+                    <span>📅</span>
+                    <span>Программа</span>
                 </button>
 
-
-                <button
-                    class="menu-button"
-                    id="progressButton"
-                >
-
-                    <span>
-                        📈
-                    </span>
-
-                    <span>
-                        Прогресс
-                    </span>
-
+                <button class="menu-button" id="progressButton">
+                    <span>📈</span>
+                    <span>Прогресс</span>
                 </button>
 
-
-                <button
-                    class="menu-button"
-                    id="historyButton"
-                >
-
-                    <span>
-                        📊
-                    </span>
-
-                    <span>
-                        История
-                    </span>
-
+                <button class="menu-button" id="historyButton">
+                    <span>📊</span>
+                    <span>История</span>
                 </button>
 
-
-                <button
-                    class="menu-button"
-                    id="settingsButton"
-                >
-
-                    <span>
-                        ⚙️
-                    </span>
-
-                    <span>
-                        Настройки
-                    </span>
-
+                <button class="menu-button" id="settingsButton">
+                    <span>⚙️</span>
+                    <span>Настройки</span>
                 </button>
-
 
             </section>
 
@@ -311,24 +228,17 @@
 
 
 
-        <section
-            id="screenWorkout"
-            class="screen"
-            hidden
-        >
+        <section id="screenWorkout" class="screen" hidden>
 
             <section class="today-card">
-
 
                 <div class="today-label">
                     ТРЕНИРОВКА
                 </div>
 
-
                 <h1 id="workoutGrip">
                     Обычный хват
                 </h1>
-
 
                 <button
                     class="grip-visual"
@@ -337,58 +247,29 @@
                     aria-label="Показать схему хвата"
                 ></button>
 
-
                 <div
                     id="workoutRecord"
                     class="workout-record hidden"
                 ></div>
 
-
                 <div class="workout-info">
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Подход
-                        </span>
-
-                        <strong id="currentSet">
-                            1 / 3
-                        </strong>
-
+                        <span class="info-label">Подход</span>
+                        <strong id="currentSet">1 / 3</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            План
-                        </span>
-
-                        <strong id="plannedReps">
-                            5
-                        </strong>
-
+                        <span class="info-label">План</span>
+                        <strong id="plannedReps">5</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Отдых
-                        </span>
-
-                        <strong id="workoutRest">
-                            90 сек
-                        </strong>
-
+                        <span class="info-label">Отдых</span>
+                        <strong id="workoutRest">90 сек</strong>
                     </div>
-
 
                 </div>
-
-
 
                 <div
                     id="workoutStatus"
@@ -398,13 +279,7 @@
                     Сделай 5 чистых повторений
                 </div>
 
-
-
-                <div
-                    id="repControls"
-                    class="rep-controls"
-                >
-
+                <div id="repControls" class="rep-controls">
 
                     <button
                         class="rep-button"
@@ -414,25 +289,10 @@
                         −
                     </button>
 
-
                     <div class="rep-display">
-
-
-                        <div class="rep-label">
-                            ФАКТ
-                        </div>
-
-
-                        <div
-                            id="actualReps"
-                            class="rep-value"
-                        >
-                            5
-                        </div>
-
-
+                        <div class="rep-label">ФАКТ</div>
+                        <div id="actualReps" class="rep-value">5</div>
                     </div>
-
 
                     <button
                         class="rep-button"
@@ -442,10 +302,7 @@
                         +
                     </button>
 
-
                 </div>
-
-
 
                 <button
                     class="secondary-button danger-button"
@@ -454,7 +311,6 @@
                     Не смог выполнить
                 </button>
 
-
                 <button
                     class="primary-button"
                     id="completeSet"
@@ -462,39 +318,21 @@
                     Готово
                 </button>
 
+                <div id="restControls" class="rest-controls hidden">
 
-
-                <div
-                    id="restControls"
-                    class="rest-controls hidden"
-                >
-
-                    <button
-                        class="secondary-button"
-                        id="skipRest"
-                    >
+                    <button class="secondary-button" id="skipRest">
                         Пропустить отдых
                     </button>
 
-
-                    <button
-                        class="secondary-button"
-                        id="addRest"
-                    >
+                    <button class="secondary-button" id="addRest">
                         +30 секунд
                     </button>
 
                 </div>
 
-
-
-                <button
-                    class="exit-button"
-                    id="exitWorkout"
-                >
+                <button class="exit-button" id="exitWorkout">
                     Выйти из тренировки
                 </button>
-
 
             </section>
 
@@ -502,75 +340,39 @@
 
 
 
-        <section
-            id="screenDone"
-            class="screen"
-            hidden
-        >
+        <section id="screenDone" class="screen" hidden>
 
             <section class="today-card">
-
 
                 <div class="today-label">
                     ГОТОВО
                 </div>
 
-
-                <h1>
-                    Тренировка завершена
-                </h1>
-
+                <h1>Тренировка завершена</h1>
 
                 <div
                     id="doneRecordBadge"
                     class="record-badge hidden"
                 ></div>
 
-
                 <div class="workout-info">
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Подходы
-                        </span>
-
-                        <strong id="doneSets">
-                            3
-                        </strong>
-
+                        <span class="info-label">Подходы</span>
+                        <strong id="doneSets">3</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            План
-                        </span>
-
-                        <strong id="donePlanned">
-                            15
-                        </strong>
-
+                        <span class="info-label">План</span>
+                        <strong id="donePlanned">15</strong>
                     </div>
 
-
                     <div class="info-item">
-
-                        <span class="info-label">
-                            Факт
-                        </span>
-
-                        <strong id="doneActual">
-                            15
-                        </strong>
-
+                        <span class="info-label">Факт</span>
+                        <strong id="doneActual">15</strong>
                     </div>
-
 
                 </div>
-
 
                 <div class="difficulty-section">
 
@@ -580,31 +382,19 @@
 
                     <div class="difficulty-grid">
 
-                        <button
-                            class="difficulty-button"
-                            data-level="easy"
-                        >
+                        <button class="difficulty-button" data-level="easy">
                             Легко
                         </button>
 
-                        <button
-                            class="difficulty-button"
-                            data-level="normal"
-                        >
+                        <button class="difficulty-button" data-level="normal">
                             Нормально
                         </button>
 
-                        <button
-                            class="difficulty-button"
-                            data-level="hard"
-                        >
+                        <button class="difficulty-button" data-level="hard">
                             Тяжело
                         </button>
 
-                        <button
-                            class="difficulty-button"
-                            data-level="very_hard"
-                        >
+                        <button class="difficulty-button" data-level="very_hard">
                             Очень тяжело
                         </button>
 
@@ -612,19 +402,11 @@
 
                 </div>
 
+                <div class="result-list" id="doneResults"></div>
 
-                <div class="result-list" id="doneResults">
-                </div>
-
-
-
-                <button
-                    class="primary-button"
-                    id="doneHome"
-                >
+                <button class="primary-button" id="doneHome">
                     На главную
                 </button>
-
 
             </section>
 
@@ -632,69 +414,47 @@
 
 
 
-        <section
-            id="screenProgress"
-            class="screen"
-            hidden
-        >
+        <section id="screenProgress" class="screen" hidden>
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    Сила
-                </div>
+                <div class="section-title">Сила</div>
 
                 <div class="progress-grid">
-
                     <div class="stat">
                         <strong id="strengthStart">—</strong>
                         <span>начал</span>
                     </div>
-
                     <div class="stat">
                         <strong id="strengthNow">—</strong>
                         <span>сейчас</span>
                     </div>
-
                 </div>
 
-                <div
-                    id="strengthDelta"
-                    class="delta-line"
-                ></div>
+                <div id="strengthDelta" class="delta-line"></div>
 
             </section>
 
-
             <section class="progress-card">
 
-                <div class="section-title">
-                    Вес
-                </div>
+                <div class="section-title">Вес</div>
 
                 <div class="progress-grid">
-
                     <div class="stat">
                         <strong id="weightStart">—</strong>
                         <span>начало</span>
                     </div>
-
                     <div class="stat">
                         <strong id="weightNow">—</strong>
                         <span>сейчас</span>
                     </div>
-
                 </div>
 
-                <div
-                    id="weightDelta"
-                    class="delta-line"
-                ></div>
+                <div id="weightDelta" class="delta-line"></div>
 
                 <div id="weightChartContainer"></div>
 
             </section>
-
 
             <section class="progress-card">
 
@@ -706,31 +466,19 @@
 
             </section>
 
-
             <section class="progress-card">
 
-                <div class="section-title">
-                    По хватам
-                </div>
+                <div class="section-title">По хватам</div>
 
-                <div
-                    id="gripProgress"
-                    class="grip-grid"
-                ></div>
+                <div id="gripProgress" class="grip-grid"></div>
 
             </section>
 
-
             <section class="progress-card">
 
-                <div class="section-title">
-                    Достижения
-                </div>
+                <div class="section-title">Достижения</div>
 
-                <div
-                    id="achievementsList"
-                    class="achievements-grid"
-                ></div>
+                <div id="achievementsList" class="achievements-grid"></div>
 
             </section>
 
@@ -738,11 +486,7 @@
 
 
 
-        <section
-            id="screenHistory"
-            class="screen"
-            hidden
-        >
+        <section id="screenHistory" class="screen" hidden>
 
             <section class="progress-card">
 
@@ -754,8 +498,7 @@
                     Нажми на запись, чтобы отредактировать
                 </p>
 
-                <div id="historyList">
-                </div>
+                <div id="historyList"></div>
 
             </section>
 
@@ -763,17 +506,11 @@
 
 
 
-        <section
-            id="screenProgram"
-            class="screen"
-            hidden
-        >
+        <section id="screenProgram" class="screen" hidden>
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    Программа
-                </div>
+                <div class="section-title">Программа</div>
 
                 <p class="program-summary">
                     Пройдено:
@@ -788,42 +525,24 @@
 
 
 
-        <section
-            id="screenSettings"
-            class="screen"
-            hidden
-        >
+        <section id="screenSettings" class="screen" hidden>
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    Настройки
-                </div>
-
+                <div class="section-title">Настройки</div>
 
                 <label class="setting-row">
-
-                    <span>
-                        Имя
-                    </span>
-
+                    <span>Имя</span>
                     <input
                         id="nameInput"
                         type="text"
                         maxlength="30"
-                        autocomplete="given-name"
                         placeholder="Как тебя зовут"
                     >
-
                 </label>
 
-
                 <label class="setting-row">
-
-                    <span>
-                        Вес
-                    </span>
-
+                    <span>Вес</span>
                     <input
                         id="weightInput"
                         type="number"
@@ -833,63 +552,44 @@
                         step="0.1"
                         placeholder="кг"
                     >
-
                 </label>
-
 
                 <label class="setting-row">
-
-                    <span>
-                        Голосовой отсчёт
-                    </span>
-
-                    <input
-                        id="voiceInput"
-                        type="checkbox"
-                    >
-
+                    <span>Тренировок в неделю</span>
+                    <select id="frequencyInput">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
                 </label>
 
+                <label class="setting-row">
+                    <span>Голосовой отсчёт</span>
+                    <input id="voiceInput" type="checkbox">
+                </label>
 
-                <button
-                    class="primary-button"
-                    id="saveSettings"
-                >
+                <button class="primary-button" id="saveSettings">
                     Сохранить
                 </button>
 
-
-                <button
-                    class="secondary-button hidden"
-                    id="installApp"
-                >
+                <button class="secondary-button hidden" id="installApp">
                     📲 Установить приложение
                 </button>
 
-
-                <button
-                    class="secondary-button"
-                    id="shareApp"
-                >
+                <button class="secondary-button" id="shareApp">
                     🔗 Поделиться приложением
                 </button>
 
-
-                <button
-                    class="secondary-button"
-                    id="exportData"
-                >
+                <button class="secondary-button" id="exportData">
                     💾 Сохранить данные (бэкап)
                 </button>
 
-
-                <button
-                    class="secondary-button"
-                    id="importData"
-                >
+                <button class="secondary-button" id="importData">
                     📥 Загрузить данные из файла
                 </button>
-
 
                 <input
                     id="importFile"
@@ -898,19 +598,11 @@
                     style="display:none"
                 >
 
-
-                <button
-                    class="secondary-button"
-                    id="showWelcomeAgain"
-                >
+                <button class="secondary-button" id="showWelcomeAgain">
                     👋 Показать инструкцию
                 </button>
 
-
-                <button
-                    class="secondary-button"
-                    id="resetProgress"
-                >
+                <button class="secondary-button" id="resetProgress">
                     Сбросить прогресс
                 </button>
 
@@ -919,15 +611,13 @@
 
             <section class="progress-card">
 
-                <div class="section-title">
-                    О приложении
-                </div>
+                <div class="section-title">О приложении</div>
 
                 <div class="about-grid">
 
                     <div class="about-row">
                         <span>Версия</span>
-                        <strong>1.3</strong>
+                        <strong>1.4</strong>
                     </div>
 
                     <div class="about-row">
@@ -967,41 +657,21 @@
 
         </section>
 
-
     </main>
 
 
 
-    <div
-        id="gripModal"
-        class="modal hidden"
-        role="dialog"
-        aria-modal="true"
-    >
+    <div id="gripModal" class="modal hidden" role="dialog" aria-modal="true">
 
         <div class="modal-content">
 
-            <div
-                id="gripModalVisual"
-                class="grip-modal-visual"
-            ></div>
+            <div id="gripModalVisual" class="grip-modal-visual"></div>
 
-            <h2
-                id="gripModalTitle"
-                class="modal-title"
-            >
-                Хват
-            </h2>
+            <h2 id="gripModalTitle" class="modal-title">Хват</h2>
 
-            <p
-                id="gripModalText"
-                class="modal-text"
-            ></p>
+            <p id="gripModalText" class="modal-text"></p>
 
-            <button
-                class="primary-button"
-                id="gripModalClose"
-            >
+            <button class="primary-button" id="gripModalClose">
                 Понятно
             </button>
 
@@ -1011,80 +681,45 @@
 
 
 
-    <div
-        id="historyModal"
-        class="modal hidden"
-        role="dialog"
-        aria-modal="true"
-    >
+    <div id="historyModal" class="modal hidden" role="dialog" aria-modal="true">
 
         <div class="modal-content modal-wide">
 
-            <h2 class="modal-title">
-                Редактировать тренировку
-            </h2>
+            <h2 class="modal-title">Редактировать тренировку</h2>
 
-            <div
-                id="historyEditInfo"
-                class="edit-info"
-            ></div>
+            <div id="historyEditInfo" class="edit-info"></div>
 
-            <div class="edit-section-label">
-                Сложность
-            </div>
+            <div class="edit-section-label">Сложность</div>
 
             <div class="difficulty-grid">
 
-                <button
-                    class="edit-difficulty-button"
-                    data-level="easy"
-                >
+                <button class="edit-difficulty-button" data-level="easy">
                     Легко
                 </button>
 
-                <button
-                    class="edit-difficulty-button"
-                    data-level="normal"
-                >
+                <button class="edit-difficulty-button" data-level="normal">
                     Нормально
                 </button>
 
-                <button
-                    class="edit-difficulty-button"
-                    data-level="hard"
-                >
+                <button class="edit-difficulty-button" data-level="hard">
                     Тяжело
                 </button>
 
-                <button
-                    class="edit-difficulty-button"
-                    data-level="very_hard"
-                >
+                <button class="edit-difficulty-button" data-level="very_hard">
                     Очень тяжело
                 </button>
 
             </div>
 
-            <div class="edit-section-label">
-                Подходы
-            </div>
+            <div class="edit-section-label">Подходы</div>
 
-            <div
-                id="historyEditSets"
-                class="edit-sets"
-            ></div>
+            <div id="historyEditSets" class="edit-sets"></div>
 
-            <button
-                class="primary-button"
-                id="historyEditSave"
-            >
+            <button class="primary-button" id="historyEditSave">
                 Сохранить
             </button>
 
-            <button
-                class="secondary-button"
-                id="historyEditCancel"
-            >
+            <button class="secondary-button" id="historyEditCancel">
                 Отмена
             </button>
 
@@ -1094,26 +729,15 @@
 
 
 
-    <div
-        id="achievementModal"
-        class="modal hidden"
-        role="dialog"
-        aria-modal="true"
-    >
+    <div id="achievementModal" class="modal hidden" role="dialog" aria-modal="true">
 
         <div class="modal-content achievement-modal-content">
 
-            <div
-                id="achievementModalIcon"
-                class="achievement-modal-icon"
-            >
+            <div id="achievementModalIcon" class="achievement-modal-icon">
                 🏆
             </div>
 
-            <h2
-                id="achievementModalTitle"
-                class="modal-title"
-            >
+            <h2 id="achievementModalTitle" class="modal-title">
                 Достижение
             </h2>
 
@@ -1123,10 +747,7 @@
                 style="text-align:center"
             ></p>
 
-            <button
-                class="primary-button"
-                id="achievementModalClose"
-            >
+            <button class="primary-button" id="achievementModalClose">
                 Класс
             </button>
 
@@ -1136,18 +757,13 @@
 
 
 
-    <div
-        id="welcomeOverlay"
-        class="welcome-overlay hidden"
-    >
+    <div id="welcomeOverlay" class="welcome-overlay hidden">
 
         <div class="welcome-card">
 
             <div class="welcome-brand">
 
-                <div class="welcome-brand-icon">
-                    💪
-                </div>
+                <div class="welcome-brand-icon">💪</div>
 
                 <div class="welcome-brand-title">
                     Push-Up Coach
@@ -1163,28 +779,17 @@
             <div class="welcome-form">
 
                 <label class="welcome-field">
-
-                    <span>
-                        Как тебя зовут?
-                    </span>
-
+                    <span>Как тебя зовут?</span>
                     <input
                         id="welcomeName"
                         type="text"
                         maxlength="30"
-                        autocomplete="given-name"
                         placeholder="Александр"
                     >
-
                 </label>
 
-
                 <label class="welcome-field">
-
-                    <span>
-                        Твой вес, кг
-                    </span>
-
+                    <span>Твой вес, кг</span>
                     <input
                         id="welcomeWeight"
                         type="number"
@@ -1194,7 +799,6 @@
                         step="0.1"
                         placeholder="например, 82"
                     >
-
                 </label>
 
             </div>
@@ -1203,53 +807,39 @@
             <div class="welcome-features">
 
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        📅
-                    </div>
+                    <div class="welcome-feature-icon">📅</div>
                     <div class="welcome-feature-text">
                         <strong>24-недельная программа</strong>
                         <span>От простых 3×5 до продвинутых вариаций</span>
                     </div>
                 </div>
 
-
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        🧠
-                    </div>
+                    <div class="welcome-feature-icon">🧠</div>
                     <div class="welcome-feature-text">
                         <strong>Умный тренер</strong>
                         <span>Сам подбирает нагрузку по твоей сложности</span>
                     </div>
                 </div>
 
-
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        ⏰
-                    </div>
+                    <div class="welcome-feature-icon">⏰</div>
                     <div class="welcome-feature-text">
                         <strong>Таймер отдыха</strong>
                         <span>Продолжает работать между сессиями</span>
                     </div>
                 </div>
 
-
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        📈
-                    </div>
+                    <div class="welcome-feature-icon">📈</div>
                     <div class="welcome-feature-text">
                         <strong>Прогресс</strong>
                         <span>История, вес, объём, рекорды по хватам</span>
                     </div>
                 </div>
 
-
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">
-                        🏆
-                    </div>
+                    <div class="welcome-feature-icon">🏆</div>
                     <div class="welcome-feature-text">
                         <strong>Достижения</strong>
                         <span>Вехи, которые держат мотивацию</span>
@@ -1259,10 +849,7 @@
             </div>
 
 
-            <button
-                class="primary-button"
-                id="welcomeStart"
-            >
+            <button class="primary-button" id="welcomeStart">
                 Начать
             </button>
 
@@ -1277,24 +864,15 @@
 
 
 
-    <div
-        id="splash"
-        class="splash"
-    >
+    <div id="splash" class="splash">
 
         <div class="splash-content">
 
-            <div class="splash-logo">
-                PC
-            </div>
+            <div class="splash-logo">PC</div>
 
-            <div class="splash-name">
-                Push-Up Coach
-            </div>
+            <div class="splash-name">Push-Up Coach</div>
 
-            <div class="splash-author">
-                Александр Шин
-            </div>
+            <div class="splash-author">Александр Шин</div>
 
         </div>
 
@@ -1302,12 +880,12 @@
 
 
 
-    <script src="storage.js?v=14"></script>
-    <script src="grips.js?v=14"></script>
-    <script src="program.js?v=14"></script>
-    <script src="workout.js?v=14"></script>
-    <script src="ui.js?v=14"></script>
-    <script src="app.js?v=14"></script>
+    <script src="storage.js?v=15"></script>
+    <script src="grips.js?v=15"></script>
+    <script src="program.js?v=15"></script>
+    <script src="workout.js?v=15"></script>
+    <script src="ui.js?v=15"></script>
+    <script src="app.js?v=15"></script>
 
 </body>
 

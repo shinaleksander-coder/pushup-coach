@@ -17,76 +17,18 @@ const SCREEN_TITLES = {
 
 
 const ACHIEVEMENTS = [
-    {
-        id: "first",
-        icon: "🎯",
-        title: "Первая тренировка",
-        desc: "Программа началась",
-        check: (h, max) => h.length >= 1
-    },
-    {
-        id: "week1",
-        icon: "📅",
-        title: "Первая неделя",
-        desc: "3 тренировки позади",
-        check: (h, max) => h.length >= 3
-    },
-    {
-        id: "ten",
-        icon: "🔟",
-        title: "10 тренировок",
-        desc: "Уже не новичок",
-        check: (h, max) => h.length >= 10
-    },
-    {
-        id: "twentyfive",
-        icon: "💪",
-        title: "25 тренировок",
-        desc: "Четверть пути",
-        check: (h, max) => h.length >= 25
-    },
-    {
-        id: "fifty",
-        icon: "🚀",
-        title: "50 тренировок",
-        desc: "Больше половины программы",
-        check: (h, max) => h.length >= 50
-    },
-    {
-        id: "record10",
-        icon: "⭐",
-        title: "Рекорд 10",
-        desc: "10 повторов в подходе",
-        check: (h, max) => max >= 10
-    },
-    {
-        id: "record15",
-        icon: "🌟",
-        title: "Рекорд 15",
-        desc: "15 повторов в подходе",
-        check: (h, max) => max >= 15
-    },
-    {
-        id: "record20",
-        icon: "🏅",
-        title: "Рекорд 20",
-        desc: "20 повторов в подходе",
-        check: (h, max) => max >= 20
-    },
-    {
-        id: "record25",
-        icon: "👑",
-        title: "Рекорд 25",
-        desc: "25 повторов в подходе",
-        check: (h, max) => max >= 25
-    },
-    {
-        id: "first_test",
-        icon: "🎓",
-        title: "Первый тест",
-        desc: "Тест на максимум пройден",
-        check: (h, max) => h.some(r => r.isTest)
-    }
+    { id: "first", icon: "🎯", title: "Первая тренировка", desc: "Программа началась", check: (h, max) => h.length >= 1 },
+    { id: "week1", icon: "📅", title: "Первая неделя", desc: "3 тренировки позади", check: (h, max) => h.filter(r => !r.isExtra).length >= 3 },
+    { id: "ten", icon: "🔟", title: "10 тренировок", desc: "Уже не новичок", check: (h, max) => h.filter(r => !r.isExtra).length >= 10 },
+    { id: "twentyfive", icon: "💪", title: "25 тренировок", desc: "Четверть пути", check: (h, max) => h.filter(r => !r.isExtra).length >= 25 },
+    { id: "fifty", icon: "🚀", title: "50 тренировок", desc: "Больше половины программы", check: (h, max) => h.filter(r => !r.isExtra).length >= 50 },
+    { id: "record10", icon: "⭐", title: "Рекорд 10", desc: "10 повторов в подходе", check: (h, max) => max >= 10 },
+    { id: "record15", icon: "🌟", title: "Рекорд 15", desc: "15 повторов в подходе", check: (h, max) => max >= 15 },
+    { id: "record20", icon: "🏅", title: "Рекорд 20", desc: "20 повторов в подходе", check: (h, max) => max >= 20 },
+    { id: "record25", icon: "👑", title: "Рекорд 25", desc: "25 повторов в подходе", check: (h, max) => max >= 25 },
+    { id: "first_test", icon: "🎓", title: "Первый тест", desc: "Тест на максимум пройден", check: (h, max) => h.some(r => r.isTest) },
+    { id: "extra", icon: "➕", title: "Сверх плана", desc: "Первая дополнительная тренировка", check: (h, max) => h.some(r => r.isExtra) },
+    { id: "extra5", icon: "🔥", title: "Рвение", desc: "5 дополнительных тренировок", check: (h, max) => h.filter(r => r.isExtra).length >= 5 }
 ];
 
 
@@ -96,7 +38,7 @@ let achievementQueue = [];
 
 
 /* =========================================
-   ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+   ЭКРАНЫ
    ========================================= */
 
 
@@ -171,7 +113,7 @@ function showWelcomeAgain() {
 
 
 /* =========================================
-   ЗАПИСЬ ВЕСА
+   ВЕС
    ========================================= */
 
 
@@ -295,7 +237,7 @@ function renderMaxPushups() {
 
 
 /* =========================================
-   БАННЕР ЗАМОРОЗКИ
+   ЗАМОРОЗКА
    ========================================= */
 
 
@@ -329,16 +271,10 @@ function renderFreezeBanner() {
             Можно продолжить по программе или повторить последнюю.
         </div>
         <div class="freeze-actions">
-            <button
-                class="freeze-button freeze-continue"
-                id="freezeContinue"
-            >
+            <button class="freeze-button freeze-continue" id="freezeContinue">
                 Продолжить
             </button>
-            <button
-                class="freeze-button freeze-repeat"
-                id="freezeRepeat"
-            >
+            <button class="freeze-button freeze-repeat" id="freezeRepeat">
                 Повторить
             </button>
         </div>
@@ -392,7 +328,6 @@ function renderCompare() {
     const sign = diff > 0 ? "+" : "";
 
     el.classList.remove("hidden");
-
     el.textContent =
         `📊 Неделю назад: ${weekAgo} · Сейчас: ${nowMax} (${sign}${diff})`;
 }
@@ -475,9 +410,11 @@ function renderWorkoutScreen() {
     const titleEl = document.getElementById("workoutGrip");
     const restEl = document.getElementById("workoutRest");
 
+    const extraMark = isExtraWorkout ? " · доп" : "";
+
     titleEl.textContent = workout.isTest
-        ? `Тест · ${workout.grip}`
-        : `${workout.grip} хват`;
+        ? `Тест · ${workout.grip}${extraMark}`
+        : `${workout.grip} хват${extraMark}`;
 
     restEl.textContent = `${workout.rest} сек`;
 
@@ -588,7 +525,7 @@ function closeGripModal() {
 
 
 /* =========================================
-   ЭКРАН РЕЗУЛЬТАТА
+   РЕЗУЛЬТАТ
    ========================================= */
 
 
@@ -658,8 +595,6 @@ function getUnlockedAchievements() {
 }
 
 
-// silent = true — просто разблокировать без показа модалки
-// (используется при запуске, чтобы подтянуть старые заслуги).
 function checkAchievements(silent) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -772,6 +707,10 @@ function renderHistory() {
         item.className = "history-item";
         item.dataset.index = originalIndex;
 
+        if (record.isExtra) {
+            item.classList.add("history-extra");
+        }
+
         const date = new Date(record.date);
 
         const title = record.isTest
@@ -784,12 +723,16 @@ function renderHistory() {
 
         const diffText = difficultyLabels[record.difficulty] || "";
 
+        const extraTag = record.isExtra
+            ? '<span class="history-extra-tag">доп</span>'
+            : "";
+
         item.innerHTML = `
             <div class="history-date">
                 ${date.toLocaleString("ru-RU")}
             </div>
             <div class="history-main">
-                ${title}
+                ${title} ${extraTag}
             </div>
             <div class="history-total">
                 ${subtitle ? subtitle + " · " : ""}
@@ -829,6 +772,10 @@ function openHistoryEdit(index) {
         ? `Неделя ${record.week} · День ${record.day}`
         : "";
 
+    const extraNote = record.isExtra
+        ? '<div class="edit-subtitle">Дополнительная тренировка</div>'
+        : "";
+
     document.getElementById("historyEditInfo").innerHTML = `
         <div class="edit-date">
             ${date.toLocaleString("ru-RU")}
@@ -839,6 +786,7 @@ function openHistoryEdit(index) {
         ${subtitle
             ? `<div class="edit-subtitle">${subtitle}</div>`
             : ""}
+        ${extraNote}
     `;
 
     document
@@ -954,40 +902,84 @@ function saveHistoryEdit() {
 
 
 /* =========================================
-   ПРОГРАММА
+   ПРОГРАММА (живая, с прогнозом)
    ========================================= */
 
 
 function renderProgram() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const completed = history.length;
+    const programRecords = history.filter(r => !r.isExtra);
+    const completed = programRecords.length;
     const total = PROGRAM.length;
 
     document.getElementById("programProgress").textContent =
         `${completed} / ${total}`;
 
+    // Прогноз на будущее — для отображения плана
+    // с учётом текущего уровня пользователя.
+    const predictions = predictFutureWorkouts();
+
     let html = "";
+    let currentBlock = -1;
 
     for (let week = 1; week <= 24; week++) {
 
+        const block = Math.floor((week - 1) / 6);
+
+        if (block !== currentBlock) {
+            currentBlock = block;
+            html += `<div class="program-block-title">Блок ${block + 1} · ${PROGRAM_GRIPS[block]} хват</div>`;
+        }
+
         const startIndex = (week - 1) * 3;
+        const endIndex = startIndex + 3;
+
         const doneInWeek = Math.max(
             0,
             Math.min(3, completed - startIndex)
         );
 
         const isCurrent =
-            completed >= startIndex &&
-            completed < startIndex + 3;
+            completed >= startIndex && completed < endIndex;
 
-        const isDone = completed >= startIndex + 3;
+        const isDone = completed >= endIndex;
 
         const template = PROGRAM[startIndex];
 
-        const info = template.isTest
-            ? `${template.grip} · тест`
-            : `${template.grip} · ${template.sets}×${template.reps}`;
+        let planText;
+
+        if (isDone) {
+
+            const weekRecords = programRecords.slice(startIndex, endIndex);
+
+            const avgReps = Math.round(
+                weekRecords.reduce(
+                    (sum, r) => sum + getEffectiveReps(r), 0
+                ) / weekRecords.length
+            );
+
+            planText = template.isTest
+                ? "тест"
+                : `${template.sets}×${avgReps}`;
+
+        } else {
+
+            const predIndex = startIndex - completed;
+            const pred = predictions[Math.max(0, predIndex)];
+
+            if (pred) {
+                planText = pred.isTest
+                    ? "тест"
+                    : `${pred.sets}×${pred.reps}`;
+            } else {
+                planText = template.isTest
+                    ? "тест"
+                    : `${template.sets}×${template.reps}`;
+            }
+        }
+
+        const info = `${template.grip} · ${planText}`;
 
         let cls = "program-week";
         if (isDone) cls += " done";
@@ -1032,6 +1024,9 @@ function renderSettings() {
     document.getElementById("voiceInput").checked =
         settings.voiceCountdown !== false;
 
+    document.getElementById("frequencyInput").value =
+        settings.workoutsPerWeek || 3;
+
     renderAbout();
 }
 
@@ -1063,6 +1058,7 @@ function saveSettings() {
     const nameInput = document.getElementById("nameInput");
     const weightInput = document.getElementById("weightInput");
     const voiceInput = document.getElementById("voiceInput");
+    const frequencyInput = document.getElementById("frequencyInput");
 
     const name = nameInput.value.trim() || "Спортсмен";
 
@@ -1083,9 +1079,15 @@ function saveSettings() {
         weight = Math.round(weight * 10) / 10;
     }
 
+    let freq = Number(frequencyInput.value);
+    if (!Number.isFinite(freq) || freq < 2 || freq > 7) {
+        freq = 3;
+    }
+
     settings.name = name;
     settings.weight = weight;
     settings.voiceCountdown = voiceInput.checked;
+    settings.workoutsPerWeek = freq;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -1155,7 +1157,7 @@ function shareApp() {
 function exportData() {
 
     const data = {
-        version: "1.3.1",
+        version: "1.4",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),
@@ -1328,9 +1330,6 @@ function formatDelta(value, unit) {
 }
 
 
-// Общая функция графика. xLabel — необязательная
-// функция, принимающая элемент данных и возвращающая
-// текст подписи. По умолчанию — дата ДД.ММ.
 function renderLineChart(data, options) {
 
     options = options || {};

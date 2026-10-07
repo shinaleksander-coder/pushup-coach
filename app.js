@@ -9,6 +9,9 @@ document.getElementById("startWorkout")
 document.getElementById("continueWorkout")
     .addEventListener("click", continueExistingWorkout);
 
+document.getElementById("extraWorkout")
+    .addEventListener("click", startExtraWorkout);
+
 document.getElementById("minusRep")
     .addEventListener("click", decreaseReps);
 
@@ -384,8 +387,6 @@ document.addEventListener("visibilitychange", () => {
 migrateToV12();
 ensureWeightHistory();
 
-// Тихо разблокируем достижения, которые уже заслужены
-// по прошлым тренировкам (без модалок).
 checkAchievements(true);
 
 renderHome();
@@ -393,4 +394,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.3.1 запущен");
+console.log("Push-Up Coach v1.4 запущен");

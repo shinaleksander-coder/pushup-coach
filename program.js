@@ -1,6 +1,6 @@
 /* =========================================
    PROGRAM.JS
-   24-недельная программа и движок.
+   24-недельная программа + умный движок.
    ========================================= */
 
 
@@ -83,50 +83,61 @@ function getEffectiveReps(record) {
 }
 
 
+// Сколько ПЛАНОВЫХ сессий пройдено.
+// Дополнительные (isExtra) не считаются.
+function getProgramIndex() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    return history.filter(r => !r.isExtra).length;
+}
+
+
 /* =========================================
-   ТРЕНИРОВОЧНЫЙ ДВИЖОК
+   ДВИЖОК
    ========================================= */
 
 
-function getNextWorkout(forceRepeatLast) {
+// Основная логика. history передаётся явно,
+// чтобы её можно было использовать и для симуляции.
+function getNextWorkoutFor(history, forceRepeatLast) {
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
+    const programIndex =
+        history.filter(r => !r.isExtra).length;
 
-    // Если пользователь выбрал «повторить последнюю»
-    // и есть история — используем тот же план.
-    if (forceRepeatLast && history.length > 0) {
+    if (forceRepeatLast && programIndex > 0) {
 
-        const last = history[history.length - 1];
-        const base = PROGRAM[history.length - 1] || null;
+        let last = null;
 
-        // Находим ближайший шаблон из программы
-        // по неделе/дню — или используем саму запись.
-        const template = PROGRAM.find(
-            p => p.week === last.week &&
-                 p.day === last.day &&
-                 p.grip === last.grip
-        ) || base;
-
-        if (template) {
-
-            const reps = getEffectiveReps(last) ||
-                last.plannedReps || template.reps;
-
-            return {
-                ...template,
-                reps,
-                reason: "Повтор последней тренировки"
-            };
+        for (let i = history.length - 1; i >= 0; i--) {
+            if (!history[i].isExtra) {
+                last = history[i];
+                break;
+            }
         }
 
-        return null;
+        if (last) {
+            const template = PROGRAM.find(
+                p => p.week === last.week &&
+                     p.day === last.day &&
+                     p.grip === last.grip
+            ) || PROGRAM[programIndex - 1];
+
+            if (template) {
+                const reps = getEffectiveReps(last) ||
+                    last.plannedReps || template.reps;
+
+                return {
+                    ...template,
+                    reps,
+                    reason: "Повтор последней тренировки"
+                };
+            }
+        }
     }
 
-    const index = history.length;
+    if (programIndex >= PROGRAM.length) return null;
 
-    if (index >= PROGRAM.length) return null;
-
-    const base = PROGRAM[index];
+    const base = PROGRAM[programIndex];
 
     if (base.isTest) {
         return { ...base, reason: "Контрольный тест на максимум" };
@@ -136,7 +147,6 @@ function getNextWorkout(forceRepeatLast) {
         return { ...base, reason: "Разгрузочная неделя" };
     }
 
-    // Все не-тестовые тренировки того же хвата
     const sameGrip = history.filter(
         r => r.grip === base.grip && !r.isTest
     );
@@ -152,6 +162,7 @@ function getNextWorkout(forceRepeatLast) {
     const recent = sameGrip.slice(-5);
 
     let recentBest = 0;
+
     recent.forEach(r => {
         const e = getEffectiveReps(r);
         if (e > recentBest) recentBest = e;
@@ -190,7 +201,6 @@ function getNextWorkout(forceRepeatLast) {
 
     reps = Math.max(3, Math.max(base.reps - 3, reps));
 
-    // Умный отдых: адаптация по прошлой сложности
     let rest = base.rest;
 
     if (diff === "easy" && allDone) {
@@ -200,4 +210,66 @@ function getNextWorkout(forceRepeatLast) {
     }
 
     return { ...base, reps, rest, reason };
+}
+
+
+function getNextWorkout(forceRepeatLast) {
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    return getNextWorkoutFor(history, forceRepeatLast);
+}
+
+
+// Прогноз будущих тренировок. Идёт от текущей
+// позиции и до конца программы. Для каждой
+// тренировки считает оптимальный план
+// (предполагая «нормально» и полное выполнение).
+function predictFutureWorkouts() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const programIndex =
+        history.filter(r => !r.isExtra).length;
+
+    const virtual = [...history];
+    const predictions = [];
+
+    const remaining = PROGRAM.length - programIndex;
+    const limit = Math.min(remaining, 60);
+
+    for (let i = 0; i < limit; i++) {
+
+        const next = getNextWorkoutFor(virtual, false);
+        if (!next) break;
+
+        predictions.push({
+            index: programIndex + i,
+            week: next.week,
+            day: next.day,
+            grip: next.grip,
+            sets: next.sets,
+            reps: next.reps,
+            rest: next.rest,
+            isTest: next.isTest
+        });
+
+        // Записываем «идеальную» тренировку
+        // в виртуальную историю
+        virtual.push({
+            week: next.week,
+            day: next.day,
+            grip: next.grip,
+            plannedReps: next.reps,
+            plannedSets: next.sets,
+            totalActual: next.reps * next.sets,
+            totalPlanned: next.reps * next.sets,
+            results: Array(next.sets).fill(0).map((_, idx) => ({
+                set: idx + 1,
+                planned: next.reps,
+                actual: next.reps
+            })),
+            difficulty: "normal",
+            isTest: next.isTest
+        });
+    }
+
+    return predictions;
 }

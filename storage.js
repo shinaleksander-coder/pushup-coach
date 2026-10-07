@@ -1,6 +1,5 @@
 /* =========================================
    STORAGE.JS
-   Работа с localStorage и настройками.
    ========================================= */
 
 
@@ -55,7 +54,8 @@ function removeStorage(key) {
 const defaultSettings = {
     name: "Спортсмен",
     weight: null,
-    voiceCountdown: true
+    voiceCountdown: true,
+    workoutsPerWeek: 3
 };
 
 

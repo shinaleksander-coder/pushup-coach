@@ -1,6 +1,5 @@
 /* =========================================
    WORKOUT.JS
-   Логика тренировки.
    ========================================= */
 
 
@@ -14,6 +13,7 @@ let remainingSeconds = 0;
 let timerInterval = null;
 let startedAt = 0;
 let lastSpokenSecond = -1;
+let isExtraWorkout = false;
 
 
 /* =========================================
@@ -22,13 +22,56 @@ let lastSpokenSecond = -1;
 
 
 function startNewWorkout() {
+    startWorkoutInternal(false);
+}
+
+
+function startExtraWorkout() {
+    startWorkoutInternal(true);
+}
+
+
+function startWorkoutInternal(isExtra) {
+
+    isExtraWorkout = isExtra === true;
 
     const forceRepeat =
         loadJSON(STORAGE_KEYS.repeatLast, false) === true;
 
     removeStorage(STORAGE_KEYS.repeatLast);
 
-    const next = getNextWorkout(forceRepeat);
+    let next;
+
+    if (isExtraWorkout) {
+
+        const history = loadJSON(STORAGE_KEYS.history, []);
+        const programIndex =
+            history.filter(r => !r.isExtra).length;
+
+        const base =
+            PROGRAM[programIndex] ||
+            PROGRAM[PROGRAM.length - 1];
+
+        if (!base) {
+            alert("Программа завершена.");
+            return;
+        }
+
+        // Движок адаптирует reps
+        const adapted =
+            getNextWorkoutFor(history, false) || base;
+
+        next = {
+            ...base,
+            reps: adapted.reps || base.reps,
+            rest: adapted.rest || base.rest,
+            reason: "Дополнительная тренировка"
+        };
+
+    } else {
+
+        next = getNextWorkout(forceRepeat);
+    }
 
     if (!next) {
         alert("Программа завершена. Отличная работа!");
@@ -64,6 +107,7 @@ function continueExistingWorkout() {
     workout = saved.workout;
     currentSet = Number(saved.currentSet || 0);
     lastSpokenSecond = -1;
+    isExtraWorkout = saved.isExtra === true;
 
     actualReps = Number(
         saved.actualReps ??
@@ -84,24 +128,18 @@ function continueExistingWorkout() {
     const now = Date.now();
 
     if (restEndsAt > now) {
-
         remainingSeconds = Math.max(
             0,
             Math.ceil((restEndsAt - now) / 1000)
         );
-
         showRestControls();
         updateTimer();
         timerInterval = setInterval(tickRestTimer, 250);
-
     } else if (restEndsAt > 0) {
-
         restEndsAt = 0;
         remainingSeconds = 0;
         startSet();
-
     } else {
-
         renderSetScreen();
     }
 }
@@ -275,7 +313,7 @@ function clearRestTimer() {
 
 
 /* =========================================
-   ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+   ЗАВЕРШЕНИЕ
    ========================================= */
 
 
@@ -318,6 +356,7 @@ function finishWorkout() {
         day: workout.day,
         grip: workout.grip,
         isTest: workout.isTest,
+        isExtra: isExtraWorkout,
 
         plannedSets: workout.sets,
         plannedReps: workout.reps,
@@ -337,11 +376,11 @@ function finishWorkout() {
     actualReps = 0;
     startedAt = 0;
     workout = null;
+    isExtraWorkout = false;
 
     renderDoneScreen(workoutRecord, saved, isNewRecord);
     showScreen("screenDone");
 
-    // Проверка достижений (после отрисовки экрана)
     setTimeout(checkAchievements, 100);
 }
 
@@ -389,7 +428,8 @@ function saveActiveWorkout() {
         workoutResults,
         restEndsAt,
         remainingSeconds,
-        startedAt
+        startedAt,
+        isExtra: isExtraWorkout
     };
 
     saveJSON(STORAGE_KEYS.activeWorkout, activeWorkout);
