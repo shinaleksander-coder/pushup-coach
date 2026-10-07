@@ -449,6 +449,10 @@ function renderSetScreen() {
             ? "Тест на максимум. Сделай сколько сможешь."
             : `Сделай ${workout.reps} чистых повторений`;
 
+    document
+        .getElementById("workoutStatus")
+        .classList.remove("countdown-final");
+
     showSetControls();
 }
 
@@ -493,8 +497,17 @@ function updateTimer() {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
 
-    document.getElementById("workoutStatus").textContent =
+    const statusEl = document.getElementById("workoutStatus");
+
+    statusEl.textContent =
         `Отдых: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+    // Подсветка на последних 5 секундах
+    if (remainingSeconds > 0 && remainingSeconds <= 5) {
+        statusEl.classList.add("countdown-final");
+    } else {
+        statusEl.classList.remove("countdown-final");
+    }
 }
 
 
@@ -591,32 +604,46 @@ function renderDoneScreen(record, saved, isNewRecord) {
    ========================================= */
 
 
+// Разблокированные ачивки вычисляются ДИНАМИЧЕСКИ
+// на текущей конфигурации программы.
 function getUnlockedAchievements() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const max = getRecord();
+
+    const unlocked = [];
+
+    ACHIEVEMENTS.forEach(a => {
+        try {
+            if (a.check(history, max)) {
+                unlocked.push(a.id);
+            }
+        } catch (e) { /* пропускаем */ }
+    });
+
+    return unlocked;
+}
+
+
+// "Показанные" модалкой — храним отдельно,
+// чтобы не показывать повторно.
+function getShownAchievements() {
     return loadJSON(STORAGE_KEYS.achievements, []);
 }
 
 
 function checkAchievements(silent) {
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
-    const max = getRecord();
     const unlocked = getUnlockedAchievements();
+    const shown = getShownAchievements();
 
-    const newly = [];
-
-    ACHIEVEMENTS.forEach(a => {
-        if (unlocked.includes(a.id)) return;
-
-        try {
-            if (a.check(history, max)) {
-                newly.push(a);
-            }
-        } catch (e) { /* пропускаем */ }
-    });
+    const newly = ACHIEVEMENTS.filter(a =>
+        unlocked.includes(a.id) && !shown.includes(a.id)
+    );
 
     if (newly.length === 0) return;
 
-    const updated = unlocked.concat(newly.map(a => a.id));
+    const updated = shown.concat(newly.map(a => a.id));
     saveJSON(STORAGE_KEYS.achievements, updated);
 
     if (silent) return;
@@ -1104,6 +1131,12 @@ function renderSettings() {
     document.getElementById("voiceInput").checked =
         settings.voiceCountdown !== false;
 
+    document.getElementById("restInput").value =
+        settings.restOverride === null ||
+        settings.restOverride === undefined
+            ? "program"
+            : String(settings.restOverride);
+
     renderAbout();
 }
 
@@ -1135,6 +1168,7 @@ function saveSettings() {
     const nameInput = document.getElementById("nameInput");
     const weightInput = document.getElementById("weightInput");
     const voiceInput = document.getElementById("voiceInput");
+    const restInput = document.getElementById("restInput");
 
     const name = nameInput.value.trim() || "Спортсмен";
 
@@ -1155,9 +1189,19 @@ function saveSettings() {
         weight = Math.round(weight * 10) / 10;
     }
 
+    let restOverride = null;
+
+    if (restInput.value !== "program") {
+        const n = Number(restInput.value);
+        if (Number.isFinite(n) && n >= 15 && n <= 300) {
+            restOverride = n;
+        }
+    }
+
     settings.name = name;
     settings.weight = weight;
     settings.voiceCountdown = voiceInput.checked;
+    settings.restOverride = restOverride;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -1235,7 +1279,6 @@ async function checkForUpdates() {
     if (!confirmed) return;
 
     try {
-
         if ("serviceWorker" in navigator) {
             const regs =
                 await navigator.serviceWorker.getRegistrations();
@@ -1252,7 +1295,6 @@ async function checkForUpdates() {
         }
 
         location.reload();
-
     } catch (error) {
         console.warn("Ошибка обновления:", error);
         location.reload();
@@ -1268,7 +1310,7 @@ async function checkForUpdates() {
 function exportData() {
 
     const data = {
-        version: "1.5.3",
+        version: "1.6",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),

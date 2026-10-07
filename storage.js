@@ -61,7 +61,11 @@ const defaultSettings = {
     customDays: 3,
     customSets: 3,
     customRepBase: 5,
-    customGrowth: 1
+    customGrowth: 1,
+
+    // null = использовать отдых из программы
+    // число = жёстко заданный отдых в секундах
+    restOverride: null
 };
 
 

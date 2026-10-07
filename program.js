@@ -179,6 +179,17 @@ function getEffectiveReps(record) {
 }
 
 
+// Применяет restOverride поверх любого значения.
+// Если override не задан — возвращает исходное.
+function applyRestOverride(rest) {
+    if (settings.restOverride !== null &&
+        settings.restOverride !== undefined) {
+        return settings.restOverride;
+    }
+    return rest;
+}
+
+
 /* =========================================
    СТАТИСТИКА
    ========================================= */
@@ -196,11 +207,8 @@ function getProgramStats() {
 
     const planTotal = PROGRAM.length;
 
-    // Общее количество тренировок за курс:
-    // 72 плановых + N доп, которые пользователь уже сделал.
     const total = planTotal + extrasCount;
 
-    // Сколько всего пройдено (плановые + extras).
     const completed = planDone + extrasCount;
 
     return {
@@ -248,6 +256,7 @@ function getNextWorkoutFor(history, forceRepeatLast) {
                 return {
                     ...template,
                     reps,
+                    rest: applyRestOverride(template.rest),
                     reason: "Повтор последней тренировки"
                 };
             }
@@ -259,21 +268,31 @@ function getNextWorkoutFor(history, forceRepeatLast) {
     const base = PROGRAM[programIndex];
 
     if (base.isTest) {
-        return { ...base, reason: "Контрольный тест на максимум" };
+        return {
+            ...base,
+            rest: applyRestOverride(base.rest),
+            reason: "Контрольный тест на максимум"
+        };
     }
 
     if (base.week % 6 === 0) {
-        return { ...base, reason: "Разгрузочная неделя" };
+        return {
+            ...base,
+            rest: applyRestOverride(base.rest),
+            reason: "Разгрузочная неделя"
+        };
     }
 
-    // В фильтр попадают и плановые, и extras.
-    // Дополнительные тренировки подтягивают нагрузку.
     const sameGrip = history.filter(
         r => r.grip === base.grip && !r.isTest
     );
 
     if (sameGrip.length === 0) {
-        return { ...base, reason: "Старт блока" };
+        return {
+            ...base,
+            rest: applyRestOverride(base.rest),
+            reason: "Старт блока"
+        };
     }
 
     const prev = sameGrip[sameGrip.length - 1];
@@ -330,7 +349,12 @@ function getNextWorkoutFor(history, forceRepeatLast) {
         rest = Math.min(180, base.rest + 30);
     }
 
-    return { ...base, reps, rest, reason };
+    return {
+        ...base,
+        reps,
+        rest: applyRestOverride(rest),
+        reason
+    };
 }
 
 

@@ -109,6 +109,47 @@ document.getElementById("achievementModal")
 
 
 /* =========================================
+   НАСТРОЙКА ОТДЫХА
+   ========================================= */
+
+
+let lastRestValue = "program";
+
+
+document.getElementById("restInput")
+    .addEventListener("change", event => {
+
+        const newVal = event.target.value;
+
+        if (newVal === "program") {
+            lastRestValue = "program";
+            return;
+        }
+
+        const sec = Number(newVal);
+
+        if (sec < 90) {
+
+            const ok = confirm(
+                `Сократить отдых до ${sec} секунд?\n\n` +
+                `Достаточный отдых между подходами — ` +
+                `это не про «слабость», а про то, ` +
+                `чтобы следующий подход был качественным.\n\n` +
+                `При коротком отдыхе падает объём и растёт риск травмы.\n\n` +
+                `Оставляем на твоё усмотрение — продолжить?`
+            );
+
+            if (!ok) {
+                event.target.value = lastRestValue;
+                return;
+            }
+        }
+
+        lastRestValue = newVal;
+    });
+
+
+/* =========================================
    РЕЖИМ ПРОГРАММЫ
    ========================================= */
 
@@ -517,4 +558,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.5.3 запущен");
+console.log("Push-Up Coach v1.6 запущен");

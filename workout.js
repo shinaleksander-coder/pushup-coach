@@ -12,7 +12,7 @@ let restEndsAt = 0;
 let remainingSeconds = 0;
 let timerInterval = null;
 let startedAt = 0;
-let lastSpokenSecond = -1;
+let lastCountdownSecond = -1;
 let isExtraWorkout = false;
 
 
@@ -57,7 +57,6 @@ function startWorkoutInternal(isExtra) {
             return;
         }
 
-        // Движок адаптирует reps
         const adapted =
             getNextWorkoutFor(history, false) || base;
 
@@ -85,7 +84,7 @@ function startWorkoutInternal(isExtra) {
     restEndsAt = 0;
     remainingSeconds = 0;
     startedAt = Date.now();
-    lastSpokenSecond = -1;
+    lastCountdownSecond = -1;
 
     unlockAudio();
 
@@ -106,7 +105,7 @@ function continueExistingWorkout() {
 
     workout = saved.workout;
     currentSet = Number(saved.currentSet || 0);
-    lastSpokenSecond = -1;
+    lastCountdownSecond = -1;
     isExtraWorkout = saved.isExtra === true;
 
     actualReps = Number(
@@ -162,6 +161,7 @@ function startSet() {
     restEndsAt = 0;
     remainingSeconds = 0;
     actualReps = workout.isTest ? 0 : workout.reps;
+    lastCountdownSecond = -1;
 
     renderSetScreen();
     saveActiveWorkout();
@@ -226,7 +226,7 @@ function enterRestPhase() {
 
     restEndsAt = Date.now() + workout.rest * 1000;
     remainingSeconds = workout.rest;
-    lastSpokenSecond = -1;
+    lastCountdownSecond = -1;
 
     showRestControls();
     updateTimer();
@@ -249,7 +249,7 @@ function tickRestTimer() {
         remainingSeconds = left;
         updateTimer();
         saveActiveWorkout();
-        maybeSpeakCountdown(left);
+        maybeCountdown(left);
     }
 
     if (left <= 0) {
@@ -258,14 +258,32 @@ function tickRestTimer() {
 }
 
 
-function maybeSpeakCountdown(secondsLeft) {
+// Последние 5 секунд: бип + вибро + (опционально) речь.
+function maybeCountdown(secondsLeft) {
 
-    if (!settings.voiceCountdown) return;
     if (secondsLeft < 1 || secondsLeft > 5) return;
-    if (secondsLeft === lastSpokenSecond) return;
+    if (secondsLeft === lastCountdownSecond) return;
 
-    lastSpokenSecond = secondsLeft;
-    speakNumber(secondsLeft);
+    lastCountdownSecond = secondsLeft;
+
+    // Всегда: короткий бип (это работает и в фоне)
+    try {
+        playTick();
+    } catch (e) { /* ignore */ }
+
+    // Вибрация (Android, где поддерживается)
+    try {
+        if (navigator.vibrate) {
+            navigator.vibrate(40);
+        }
+    } catch (e) { /* ignore */ }
+
+    // Если включено — ещё и голос
+    if (settings.voiceCountdown) {
+        try {
+            speakNumber(secondsLeft);
+        } catch (e) { /* ignore */ }
+    }
 }
 
 
@@ -275,7 +293,7 @@ function endRestPhase() {
 
     restEndsAt = 0;
     remainingSeconds = 0;
-    lastSpokenSecond = -1;
+    lastCountdownSecond = -1;
 
     notifyRestFinished();
 
@@ -490,6 +508,37 @@ function unlockAudio() {
 }
 
 
+// Короткий "клик" — 1 сек отсчёта.
+function playTick() {
+
+    if (!audioCtx) return;
+
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = 700;
+
+    gain.gain.value = 0.0001;
+
+    osc.connect(gain).connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    osc.start(now);
+
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+    osc.stop(now + 0.12);
+}
+
+
+// Более длинный сигнал — на "ноль" и по завершении.
 function playBeep() {
 
     if (!audioCtx) return;
@@ -512,10 +561,10 @@ function playBeep() {
 
     osc.start(now);
 
-    gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
 
-    osc.stop(now + 0.3);
+    osc.stop(now + 0.35);
 }
 
 

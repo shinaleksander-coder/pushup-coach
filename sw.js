@@ -1,23 +1,22 @@
 /* =========================================
    SERVICE WORKER
-   Network-first для HTML, cache-first
-   для остального.
+   Network-first для HTML.
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v22";
+const CACHE_NAME = "pushup-coach-v23";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=18",
-    "./storage.js?v=18",
-    "./grips.js?v=18",
-    "./program.js?v=18",
-    "./workout.js?v=18",
-    "./ui.js?v=18",
-    "./app.js?v=18",
+    "./styles.css?v=19",
+    "./storage.js?v=19",
+    "./grips.js?v=19",
+    "./program.js?v=19",
+    "./workout.js?v=19",
+    "./ui.js?v=19",
+    "./app.js?v=19",
     "./manifest.json",
     "./icon.svg"
 ];
@@ -56,7 +55,6 @@ self.addEventListener("fetch", event => {
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
 
-    // HTML — network-first
     if (
         event.request.mode === "navigate" ||
         event.request.destination === "document"
@@ -82,7 +80,6 @@ self.addEventListener("fetch", event => {
         return;
     }
 
-    // Остальное — cache-first
     event.respondWith(
         caches.match(event.request).then(cached => {
             if (cached) return cached;
