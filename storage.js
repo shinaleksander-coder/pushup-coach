@@ -11,7 +11,9 @@ const STORAGE_KEYS = {
     weightHistory: "weightHistory",
     installDismissed: "installDismissed",
     welcomeShown: "welcomeShown",
-    migrationV12: "migrationV12"
+    migrationV12: "migrationV12",
+    achievements: "unlockedAchievements",
+    repeatLast: "repeatLastFlag"
 };
 
 
@@ -52,7 +54,8 @@ function removeStorage(key) {
 
 const defaultSettings = {
     name: "Спортсмен",
-    weight: null
+    weight: null,
+    voiceCountdown: true
 };
 
 

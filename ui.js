@@ -17,8 +17,83 @@ const SCREEN_TITLES = {
 };
 
 
+const ACHIEVEMENTS = [
+    {
+        id: "first",
+        icon: "🎯",
+        title: "Первая тренировка",
+        desc: "Программа началась",
+        check: (h, max) => h.length >= 1
+    },
+    {
+        id: "week1",
+        icon: "📅",
+        title: "Первая неделя",
+        desc: "3 тренировки позади",
+        check: (h, max) => h.length >= 3
+    },
+    {
+        id: "ten",
+        icon: "🔟",
+        title: "10 тренировок",
+        desc: "Уже не новичок",
+        check: (h, max) => h.length >= 10
+    },
+    {
+        id: "twentyfive",
+        icon: "💪",
+        title: "25 тренировок",
+        desc: "Четверть пути",
+        check: (h, max) => h.length >= 25
+    },
+    {
+        id: "fifty",
+        icon: "🚀",
+        title: "50 тренировок",
+        desc: "Больше половины программы",
+        check: (h, max) => h.length >= 50
+    },
+    {
+        id: "record10",
+        icon: "⭐",
+        title: "Рекорд 10",
+        desc: "10 повторов в подходе",
+        check: (h, max) => max >= 10
+    },
+    {
+        id: "record15",
+        icon: "🌟",
+        title: "Рекорд 15",
+        desc: "15 повторов в подходе",
+        check: (h, max) => max >= 15
+    },
+    {
+        id: "record20",
+        icon: "🏅",
+        title: "Рекорд 20",
+        desc: "20 повторов в подходе",
+        check: (h, max) => max >= 20
+    },
+    {
+        id: "record25",
+        icon: "👑",
+        title: "Рекорд 25",
+        desc: "25 повторов в подходе",
+        check: (h, max) => max >= 25
+    },
+    {
+        id: "first_test",
+        icon: "🎓",
+        title: "Первый тест",
+        desc: "Тест на максимум пройден",
+        check: (h, max) => h.some(r => r.isTest)
+    }
+];
+
+
 let editingHistoryIndex = -1;
 let editingHistoryDraft = null;
+let achievementQueue = [];
 
 
 /* =========================================
@@ -86,12 +161,8 @@ function hideWelcome() {
 
 
 function showWelcomeOnFirstLaunch() {
-
     const shown = loadJSON(STORAGE_KEYS.welcomeShown, false);
-
-    if (!shown) {
-        showWelcome();
-    }
+    if (!shown) showWelcome();
 }
 
 
@@ -105,15 +176,9 @@ function showWelcomeAgain() {
    ========================================= */
 
 
-// Обновляет историю веса при первом задании
-// или при изменении.
-// Перезаписывает полностью, если старые данные — это
-// дефолтные 82 кг из старой версии.
 function updateWeightHistory(newWeight, weightWasEmpty) {
 
-    if (newWeight === null || newWeight === undefined) {
-        return;
-    }
+    if (newWeight === null || newWeight === undefined) return;
 
     const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
 
@@ -121,12 +186,10 @@ function updateWeightHistory(newWeight, weightWasEmpty) {
         wh.length > 0 && wh.every(x => x.weight === 82);
 
     if (weightWasEmpty || hasOnlyDefaults) {
-
         saveJSON(STORAGE_KEYS.weightHistory, [{
             date: new Date().toISOString(),
             weight: newWeight
         }]);
-
         return;
     }
 
@@ -156,7 +219,7 @@ function renderHome() {
 
     const preview = activeWorkout
         ? activeWorkout.workout
-        : getNextWorkout();
+        : getNextWorkout(false);
 
     const titleEl = document.getElementById("homeWorkoutTitle");
     const gripEl = document.getElementById("homeGrip");
@@ -164,14 +227,11 @@ function renderHome() {
     const restEl = document.getElementById("homeRest");
 
     if (!preview) {
-
         titleEl.textContent = "Программа завершена";
         gripEl.textContent = "—";
         setsEl.textContent = "—";
         restEl.textContent = "—";
-
     } else {
-
         titleEl.textContent = preview.isTest
             ? `Неделя ${preview.week} · День ${preview.day} — тест`
             : `Неделя ${preview.week} · День ${preview.day}`;
@@ -201,6 +261,8 @@ function renderHome() {
             : "не указан";
 
     renderMaxPushups();
+    renderFreezeBanner();
+    renderCompare();
 
     const startButton = document.getElementById("startWorkout");
     const continueButton = document.getElementById("continueWorkout");
@@ -218,7 +280,6 @@ function renderHome() {
 function renderMaxPushups() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-
     let maxPushups = 10;
 
     history.forEach(record => {
@@ -235,6 +296,137 @@ function renderMaxPushups() {
 
 
 /* =========================================
+   БАННЕР ЗАМОРОЗКИ
+   ========================================= */
+
+
+function renderFreezeBanner() {
+
+    const banner = document.getElementById("homeFreezeBanner");
+    if (!banner) return;
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    if (history.length === 0) {
+        banner.classList.add("hidden");
+        return;
+    }
+
+    const last = new Date(history[history.length - 1].date);
+    const days = Math.floor(
+        (Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
+    if (days < 14) {
+        banner.classList.add("hidden");
+        return;
+    }
+
+    banner.classList.remove("hidden");
+
+    banner.innerHTML = `
+        <div class="freeze-text">
+            Прошло <strong>${days} дней</strong> с последней тренировки.
+            Можно продолжить по программе или повторить последнюю.
+        </div>
+        <div class="freeze-actions">
+            <button
+                class="freeze-button freeze-continue"
+                id="freezeContinue"
+            >
+                Продолжить
+            </button>
+            <button
+                class="freeze-button freeze-repeat"
+                id="freezeRepeat"
+            >
+                Повторить
+            </button>
+        </div>
+    `;
+
+    document.getElementById("freezeContinue")
+        .addEventListener("click", () => {
+            banner.classList.add("hidden");
+        });
+
+    document.getElementById("freezeRepeat")
+        .addEventListener("click", () => {
+            saveJSON(STORAGE_KEYS.repeatLast, true);
+            banner.classList.add("hidden");
+            startNewWorkout();
+        });
+}
+
+
+/* =========================================
+   СРАВНЕНИЕ «НЕДЕЛЮ НАЗАД»
+   ========================================= */
+
+
+function renderCompare() {
+
+    const el = document.getElementById("homeCompare");
+    if (!el) return;
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    if (history.length === 0) {
+        el.classList.add("hidden");
+        return;
+    }
+
+    const nowMax = getRecord();
+    if (nowMax === 0) {
+        el.classList.add("hidden");
+        return;
+    }
+
+    const weekAgo = getStrengthBefore(7);
+
+    if (!weekAgo || weekAgo === nowMax) {
+        el.classList.add("hidden");
+        return;
+    }
+
+    const diff = nowMax - weekAgo;
+    const sign = diff > 0 ? "+" : "";
+
+    el.classList.remove("hidden");
+
+    el.textContent =
+        `📊 Неделю назад: ${weekAgo} · Сейчас: ${nowMax} (${sign}${diff})`;
+}
+
+
+function getStrengthBefore(daysAgo) {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    if (history.length === 0) return null;
+
+    const target =
+        Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+
+    let record = null;
+
+    for (let i = history.length - 1; i >= 0; i--) {
+        const t = new Date(history[i].date).getTime();
+        if (t <= target) { record = history[i]; break; }
+    }
+
+    if (!record) return null;
+
+    let max = 0;
+    record.results?.forEach(r => {
+        const a = Number(r.actual);
+        if (a > max) max = a;
+    });
+
+    return max || null;
+}
+
+
+/* =========================================
    РЕКОРД
    ========================================= */
 
@@ -242,7 +434,6 @@ function renderMaxPushups() {
 function getRecord() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-
     let max = 0;
 
     history.forEach(record => {
@@ -259,7 +450,6 @@ function getRecord() {
 function renderWorkoutRecord() {
 
     const recordEl = document.getElementById("workoutRecord");
-
     if (!recordEl) return;
 
     const record = getRecord();
@@ -300,9 +490,7 @@ function renderWorkoutScreen() {
 function renderGripVisual(grip) {
 
     const container = document.getElementById("gripVisual");
-
     if (!container) return;
-
     container.innerHTML = getGripSVG(grip);
 }
 
@@ -351,7 +539,6 @@ function showRestControls() {
 
 
 function setControlsEnabled(enabled) {
-
     document.getElementById("minusRep").disabled = !enabled;
     document.getElementById("plusRep").disabled = !enabled;
     document.getElementById("completeSet").disabled = !enabled;
@@ -441,7 +628,6 @@ function renderDoneScreen(record, saved, isNewRecord) {
     list.innerHTML = "";
 
     record.results.forEach(result => {
-
         const item = document.createElement("div");
         item.className = "result-item";
 
@@ -460,6 +646,95 @@ function renderDoneScreen(record, saved, isNewRecord) {
         warning.style.opacity = "0.7";
         list.appendChild(warning);
     }
+}
+
+
+/* =========================================
+   ДОСТИЖЕНИЯ
+   ========================================= */
+
+
+function getUnlockedAchievements() {
+    return loadJSON(STORAGE_KEYS.achievements, []);
+}
+
+
+function checkAchievements() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const max = getRecord();
+    const unlocked = getUnlockedAchievements();
+
+    const newly = [];
+
+    ACHIEVEMENTS.forEach(a => {
+        if (unlocked.includes(a.id)) return;
+
+        try {
+            if (a.check(history, max)) {
+                newly.push(a);
+            }
+        } catch (e) { /* пропускаем */ }
+    });
+
+    if (newly.length === 0) return;
+
+    const updated = unlocked.concat(newly.map(a => a.id));
+    saveJSON(STORAGE_KEYS.achievements, updated);
+
+    achievementQueue = newly.slice();
+
+    setTimeout(showNextAchievement, 400);
+}
+
+
+function showNextAchievement() {
+
+    if (achievementQueue.length === 0) return;
+
+    const a = achievementQueue.shift();
+
+    document.getElementById("achievementModalIcon").textContent = a.icon;
+    document.getElementById("achievementModalTitle").textContent = a.title;
+    document.getElementById("achievementModalText").textContent = a.desc;
+
+    document.getElementById("achievementModal")
+        .classList.remove("hidden");
+}
+
+
+function closeAchievementModal() {
+
+    document.getElementById("achievementModal")
+        .classList.add("hidden");
+
+    if (achievementQueue.length > 0) {
+        setTimeout(showNextAchievement, 300);
+    }
+}
+
+
+function renderAchievements() {
+
+    const container = document.getElementById("achievementsList");
+    if (!container) return;
+
+    const unlocked = getUnlockedAchievements();
+
+    container.innerHTML = ACHIEVEMENTS.map(a => {
+        const isUnlocked = unlocked.includes(a.id);
+
+        return `
+            <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}">
+                <div class="achievement-item-icon">
+                    ${isUnlocked ? a.icon : "🔒"}
+                </div>
+                <div class="achievement-item-title">
+                    ${a.title}
+                </div>
+            </div>
+        `;
+    }).join("");
 }
 
 
@@ -489,12 +764,10 @@ function renderHistory() {
 
     [...history].reverse().forEach((record, reversedIndex) => {
 
-        const originalIndex =
-            history.length - 1 - reversedIndex;
+        const originalIndex = history.length - 1 - reversedIndex;
 
         const item = document.createElement("div");
         item.className = "history-item";
-
         item.dataset.index = originalIndex;
 
         const date = new Date(record.date);
@@ -507,8 +780,7 @@ function renderHistory() {
             ? `Неделя ${record.week} · День ${record.day}`
             : "";
 
-        const diffText =
-            difficultyLabels[record.difficulty] || "";
+        const diffText = difficultyLabels[record.difficulty] || "";
 
         item.innerHTML = `
             <div class="history-date">
@@ -539,17 +811,12 @@ function renderHistory() {
 function openHistoryEdit(index) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-
     if (!history[index]) return;
 
     editingHistoryIndex = index;
-
-    editingHistoryDraft = JSON.parse(
-        JSON.stringify(history[index])
-    );
+    editingHistoryDraft = JSON.parse(JSON.stringify(history[index]));
 
     const record = editingHistoryDraft;
-
     const date = new Date(record.date);
 
     const title = record.isTest
@@ -572,7 +839,6 @@ function openHistoryEdit(index) {
             : ""}
     `;
 
-
     document
         .querySelectorAll(".edit-difficulty-button")
         .forEach(btn => {
@@ -581,7 +847,6 @@ function openHistoryEdit(index) {
                 btn.dataset.level === record.difficulty
             );
         });
-
 
     renderEditSets();
 
@@ -593,7 +858,6 @@ function openHistoryEdit(index) {
 function renderEditSets() {
 
     const container = document.getElementById("historyEditSets");
-
     container.innerHTML = "";
 
     editingHistoryDraft.results.forEach((result, i) => {
@@ -634,7 +898,6 @@ function renderEditSets() {
 
                 const i = Number(btn.dataset.index);
                 const action = btn.dataset.action;
-
                 const current =
                     editingHistoryDraft.results[i].actual;
 
@@ -655,20 +918,15 @@ function renderEditSets() {
 
 
 function closeHistoryEdit() {
-
     editingHistoryIndex = -1;
     editingHistoryDraft = null;
-
-    document.getElementById("historyModal")
-        .classList.add("hidden");
+    document.getElementById("historyModal").classList.add("hidden");
 }
 
 
 function saveHistoryEdit() {
 
-    if (editingHistoryIndex < 0 || !editingHistoryDraft) {
-        return;
-    }
+    if (editingHistoryIndex < 0 || !editingHistoryDraft) return;
 
     const history = loadJSON(STORAGE_KEYS.history, []);
 
@@ -685,11 +943,9 @@ function saveHistoryEdit() {
         );
 
     history[editingHistoryIndex] = editingHistoryDraft;
-
     saveJSON(STORAGE_KEYS.history, history);
 
     closeHistoryEdit();
-
     renderHistory();
     renderHome();
 }
@@ -771,6 +1027,9 @@ function renderSettings() {
     document.getElementById("weightInput").value =
         settings.weight || "";
 
+    document.getElementById("voiceInput").checked =
+        settings.voiceCountdown !== false;
+
     renderAbout();
 }
 
@@ -801,22 +1060,20 @@ function saveSettings() {
 
     const nameInput = document.getElementById("nameInput");
     const weightInput = document.getElementById("weightInput");
+    const voiceInput = document.getElementById("voiceInput");
 
-    const name =
-        nameInput.value.trim() || "Спортсмен";
-
-    const weightStr = weightInput.value.trim();
+    const name = nameInput.value.trim() || "Спортсмен";
 
     const weightWasEmpty =
         settings.weight === null || settings.weight === undefined;
 
+    const weightStr = weightInput.value.trim();
     let weight = null;
 
     if (weightStr !== "") {
         weight = Number(weightStr);
 
-        if (!Number.isFinite(weight) ||
-            weight < 30 || weight > 250) {
+        if (!Number.isFinite(weight) || weight < 30 || weight > 250) {
             alert("Введите корректный вес от 30 до 250 кг, либо оставьте поле пустым.");
             return;
         }
@@ -826,6 +1083,7 @@ function saveSettings() {
 
     settings.name = name;
     settings.weight = weight;
+    settings.voiceCountdown = voiceInput.checked;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -843,7 +1101,8 @@ function resetProgress() {
         "Это удалит:\n" +
         "• всю историю тренировок\n" +
         "• текущую активную тренировку\n" +
-        "• историю веса\n\n" +
+        "• историю веса\n" +
+        "• достижения\n\n" +
         "Программа начнётся с Недели 1, Дня 1."
     );
 
@@ -852,6 +1111,7 @@ function resetProgress() {
     removeStorage(STORAGE_KEYS.history);
     removeStorage(STORAGE_KEYS.activeWorkout);
     removeStorage(STORAGE_KEYS.weightHistory);
+    removeStorage(STORAGE_KEYS.achievements);
 
     alert("Прогресс сброшен.");
 
@@ -866,29 +1126,126 @@ function shareApp() {
     const url = window.location.href;
 
     if (navigator.share) {
-
-        navigator
-            .share({
-                title: "Push-Up Coach",
-                text: "Персональный тренер по отжиманиям",
-                url
-            })
-            .catch(() => {});
-
+        navigator.share({
+            title: "Push-Up Coach",
+            text: "Персональный тренер по отжиманиям",
+            url
+        }).catch(() => {});
         return;
     }
 
     if (navigator.clipboard) {
-
-        navigator.clipboard
-            .writeText(url)
+        navigator.clipboard.writeText(url)
             .then(() => alert("Ссылка скопирована."))
             .catch(() => alert("Ссылка: " + url));
-
         return;
     }
 
     alert("Ссылка: " + url);
+}
+
+
+/* =========================================
+   ЭКСПОРТ / ИМПОРТ ДАННЫХ
+   ========================================= */
+
+
+function exportData() {
+
+    const data = {
+        version: "1.3",
+        exportedAt: new Date().toISOString(),
+        settings: loadJSON(STORAGE_KEYS.settings, {}),
+        history: loadJSON(STORAGE_KEYS.history, []),
+        weightHistory: loadJSON(STORAGE_KEYS.weightHistory, []),
+        achievements: loadJSON(STORAGE_KEYS.achievements, [])
+    };
+
+    const json = JSON.stringify(data, null, 2);
+
+    const filename =
+        `pushup-coach-backup-${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+
+    const blob = new Blob([json], { type: "application/json" });
+
+    // На iOS — через share, чтобы можно было сохранить в Файлы / отправить
+    try {
+        const file = new File([blob], filename, {
+            type: "application/json"
+        });
+
+        if (navigator.canShare &&
+            navigator.canShare({ files: [file] })) {
+
+            navigator.share({
+                files: [file],
+                title: "Push-Up Coach — бэкап"
+            }).catch(() => {});
+            return;
+        }
+    } catch (e) { /* продолжаем с обычным скачиванием */ }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+
+function importDataFile(file) {
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+
+        try {
+            const data = JSON.parse(e.target.result);
+
+            if (!data.history || !Array.isArray(data.history)) {
+                alert("Неверный формат файла.");
+                return;
+            }
+
+            const ok = confirm(
+                `Загрузить данные?\n\n` +
+                `Тренировок в файле: ${data.history.length}\n\n` +
+                `Это заменит текущий прогресс.`
+            );
+
+            if (!ok) return;
+
+            if (data.settings) {
+                saveJSON(STORAGE_KEYS.settings, data.settings);
+            }
+
+            saveJSON(STORAGE_KEYS.history, data.history);
+
+            if (data.weightHistory) {
+                saveJSON(STORAGE_KEYS.weightHistory, data.weightHistory);
+            }
+
+            if (data.achievements) {
+                saveJSON(STORAGE_KEYS.achievements, data.achievements);
+            }
+
+            removeStorage(STORAGE_KEYS.activeWorkout);
+
+            alert("Данные загружены. Приложение перезагрузится.");
+
+            location.reload();
+
+        } catch (err) {
+            alert("Ошибка чтения файла: " + err.message);
+        }
+    };
+
+    reader.readAsText(file);
 }
 
 
@@ -941,6 +1298,27 @@ function getMaxByGrip() {
 }
 
 
+function getWeeklyVolume() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const map = {};
+
+    history.forEach(r => {
+        if (!r.week) return;
+        const total = Number(r.totalActual) || 0;
+        if (!map[r.week]) map[r.week] = 0;
+        map[r.week] += total;
+    });
+
+    return Object.entries(map)
+        .map(([week, volume]) => ({
+            week: Number(week),
+            volume
+        }))
+        .sort((a, b) => a.week - b.week);
+}
+
+
 function formatDelta(value, unit) {
 
     if (value > 0) return `+${value} ${unit}`;
@@ -949,24 +1327,28 @@ function formatDelta(value, unit) {
 }
 
 
-function renderWeightChart(data) {
+function renderLineChart(data, options) {
 
-    if (!data || data.length < 2) {
-        return "<p class='chart-empty'>Недостаточно данных для графика. Меняйте вес в настройках — точки появятся здесь.</p>";
-    }
+    const {
+        width = 320,
+        height = 140,
+        padL = 8,
+        padR = 40,
+        padT = 16,
+        padB = 24,
+        minV: forcedMin,
+        maxV: forcedMax
+    } = options || {};
 
     const last = data.slice(-30);
 
-    const width = 320;
-    const height = 140;
-    const padL = 8;
-    const padR = 40;
-    const padT = 16;
-    const padB = 24;
-
-    const values = last.map(d => d.weight);
-    const minV = Math.min(...values);
-    const maxV = Math.max(...values);
+    const values = last.map(d => d.value);
+    const minV = forcedMin !== undefined
+        ? forcedMin
+        : Math.min(...values);
+    const maxV = forcedMax !== undefined
+        ? forcedMax
+        : Math.max(...values);
     const range = maxV - minV || 1;
 
     const innerW = width - padL - padR;
@@ -974,7 +1356,7 @@ function renderWeightChart(data) {
 
     const points = last.map((d, i) => ({
         x: padL + (i / (last.length - 1)) * innerW,
-        y: padT + innerH - ((d.weight - minV) / range) * innerH
+        y: padT + innerH - ((d.value - minV) / range) * innerH
     }));
 
     const pathD = points
@@ -991,25 +1373,26 @@ function renderWeightChart(data) {
         .join("");
 
     const maxLabel =
-        `<text x="${width - 6}" y="${padT + 4}" text-anchor="end" class="chart-label">${maxV.toFixed(1)}</text>`;
+        `<text x="${width - 6}" y="${padT + 4}" text-anchor="end" class="chart-label">${maxV.toFixed(0)}</text>`;
 
     const minLabel =
-        `<text x="${width - 6}" y="${padT + innerH}" text-anchor="end" class="chart-label">${minV.toFixed(1)}</text>`;
+        `<text x="${width - 6}" y="${padT + innerH}" text-anchor="end" class="chart-label">${minV.toFixed(0)}</text>`;
 
-    const dFirst = new Date(last[0].date);
-    const dLast = new Date(last[last.length - 1].date);
-
-    const fmt = d =>
-        `${d.getDate()}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+    const fmt = d => {
+        const dt = new Date(d.date);
+        return `${dt.getDate()}.${(dt.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}`;
+    };
 
     const startDate =
-        `<text x="${padL}" y="${height - 6}" text-anchor="start" class="chart-label">${fmt(dFirst)}</text>`;
+        `<text x="${padL}" y="${height - 6}" text-anchor="start" class="chart-label">${fmt(last[0])}</text>`;
 
     const endDate =
-        `<text x="${width - padR}" y="${height - 6}" text-anchor="end" class="chart-label">${fmt(dLast)}</text>`;
+        `<text x="${width - padR}" y="${height - 6}" text-anchor="end" class="chart-label">${fmt(last[last.length - 1])}</text>`;
 
     return `
-        <svg viewBox="0 0 ${width} ${height}" class="weight-chart" role="img" aria-label="График веса">
+        <svg viewBox="0 0 ${width} ${height}" class="weight-chart" role="img">
             <path d="${pathD}" />
             ${circles}
             ${maxLabel}
@@ -1021,10 +1404,40 @@ function renderWeightChart(data) {
 }
 
 
+function renderWeightChart(data) {
+
+    if (!data || data.length < 2) {
+        return "<p class='chart-empty'>Недостаточно данных для графика. Меняйте вес в настройках — точки появятся здесь.</p>";
+    }
+
+    const points = data.slice(-30).map(d => ({
+        date: d.date,
+        value: d.weight
+    }));
+
+    return renderLineChart(points, {});
+}
+
+
+function renderVolumeChart(data) {
+
+    if (!data || data.length < 2) {
+        return "<p class='chart-empty'>Объём появится после двух и более недель тренировок.</p>";
+    }
+
+    // Преобразуем недели в псевдо-даты для единообразия графика
+    const points = data.map(d => ({
+        date: new Date(2025, 0, d.week).toISOString(),
+        value: d.volume
+    }));
+
+    return renderLineChart(points, {});
+}
+
+
 function renderProgress() {
 
     const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, []);
-
     const strength = getStrengthStats();
 
     document.getElementById("strengthStart").textContent =
@@ -1056,17 +1469,20 @@ function renderProgress() {
     if (startWeight && nowWeight) {
         const wDelta =
             Math.round((nowWeight - startWeight) * 10) / 10;
-
         document.getElementById("weightDelta").textContent =
             formatDelta(wDelta, "кг");
     } else {
-        document.getElementById("weightDelta").textContent =
-            "Нет данных";
+        document.getElementById("weightDelta").textContent = "Нет данных";
     }
-
 
     document.getElementById("weightChartContainer").innerHTML =
         renderWeightChart(weightHistory);
+
+
+    const volume = getWeeklyVolume();
+
+    document.getElementById("volumeChartContainer").innerHTML =
+        renderVolumeChart(volume);
 
 
     const maxByGrip = getMaxByGrip();
@@ -1087,6 +1503,9 @@ function renderProgress() {
                 </div>
             </div>
         `).join("");
+
+
+    renderAchievements();
 }
 
 

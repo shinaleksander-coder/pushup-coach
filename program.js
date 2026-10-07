@@ -1,6 +1,6 @@
 /* =========================================
    PROGRAM.JS
-   24-недельная программа.
+   24-недельная программа и движок.
    ========================================= */
 
 
@@ -67,8 +67,6 @@ const PROGRAM = buildProgram();
    ========================================= */
 
 
-// Средний фактический результат по подходам,
-// округлённый до целого.
 function getEffectiveReps(record) {
 
     if (!record || !Array.isArray(record.results) ||
@@ -90,9 +88,40 @@ function getEffectiveReps(record) {
    ========================================= */
 
 
-function getNextWorkout() {
+function getNextWorkout(forceRepeatLast) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
+
+    // Если пользователь выбрал «повторить последнюю»
+    // и есть история — используем тот же план.
+    if (forceRepeatLast && history.length > 0) {
+
+        const last = history[history.length - 1];
+        const base = PROGRAM[history.length - 1] || null;
+
+        // Находим ближайший шаблон из программы
+        // по неделе/дню — или используем саму запись.
+        const template = PROGRAM.find(
+            p => p.week === last.week &&
+                 p.day === last.day &&
+                 p.grip === last.grip
+        ) || base;
+
+        if (template) {
+
+            const reps = getEffectiveReps(last) ||
+                last.plannedReps || template.reps;
+
+            return {
+                ...template,
+                reps,
+                reason: "Повтор последней тренировки"
+            };
+        }
+
+        return null;
+    }
+
     const index = history.length;
 
     if (index >= PROGRAM.length) return null;
@@ -107,7 +136,7 @@ function getNextWorkout() {
         return { ...base, reason: "Разгрузочная неделя" };
     }
 
-    // Все нетestовые тренировки того же хвата
+    // Все не-тестовые тренировки того же хвата
     const sameGrip = history.filter(
         r => r.grip === base.grip && !r.isTest
     );
@@ -116,14 +145,10 @@ function getNextWorkout() {
         return { ...base, reason: "Старт блока" };
     }
 
-    // Последняя тренировка этого хвата
     const prev = sameGrip[sameGrip.length - 1];
 
-    // Фактический уровень прошлой тренировки
     const prevEffective = getEffectiveReps(prev);
 
-    // Недавний максимум: лучший средний результат
-    // за последние 5 тренировок этого хвата
     const recent = sameGrip.slice(-5);
 
     let recentBest = 0;
@@ -132,10 +157,6 @@ function getNextWorkout() {
         if (e > recentBest) recentBest = e;
     });
 
-    // Якорь = максимум из:
-    //   • базы программы
-    //   • фактического уровня прошлой тренировки
-    //   • недавнего максимума минус 1
     const anchor = Math.max(
         base.reps,
         prevEffective,
@@ -167,8 +188,16 @@ function getNextWorkout() {
         reason = "Идём на твоём уровне";
     }
 
-    // Не опускаемся ниже базы − 3 и не ниже 3
     reps = Math.max(3, Math.max(base.reps - 3, reps));
 
-    return { ...base, reps, reason };
+    // Умный отдых: адаптация по прошлой сложности
+    let rest = base.rest;
+
+    if (diff === "easy" && allDone) {
+        rest = Math.max(60, base.rest - 30);
+    } else if (diff === "very_hard") {
+        rest = Math.min(180, base.rest + 30);
+    }
+
+    return { ...base, reps, rest, reason };
 }

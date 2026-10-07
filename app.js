@@ -1,6 +1,6 @@
 /* =========================================
    APP.JS
-   Точка входа: обработчики кнопок и запуск.
+   Точка входа.
    ========================================= */
 
 
@@ -55,6 +55,23 @@ document.getElementById("resetProgress")
 document.getElementById("shareApp")
     .addEventListener("click", shareApp);
 
+document.getElementById("exportData")
+    .addEventListener("click", exportData);
+
+document.getElementById("importData")
+    .addEventListener("click", () => {
+        document.getElementById("importFile").click();
+    });
+
+document.getElementById("importFile")
+    .addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (file) {
+            importDataFile(file);
+            event.target.value = "";
+        }
+    });
+
 document.getElementById("showWelcomeAgain")
     .addEventListener("click", showWelcomeAgain);
 
@@ -71,6 +88,22 @@ document.getElementById("gripModal")
     .addEventListener("click", event => {
         if (event.target.id === "gripModal") {
             closeGripModal();
+        }
+    });
+
+
+/* =========================================
+   ДОСТИЖЕНИЯ — ЗАКРЫТИЕ
+   ========================================= */
+
+
+document.getElementById("achievementModalClose")
+    .addEventListener("click", closeAchievementModal);
+
+document.getElementById("achievementModal")
+    .addEventListener("click", event => {
+        if (event.target.id === "achievementModal") {
+            closeAchievementModal();
         }
     });
 
@@ -110,9 +143,7 @@ function handleWelcomeStart() {
     settings.weight = weight;
 
     saveJSON(STORAGE_KEYS.settings, settings);
-
     updateWeightHistory(weight, weightWasEmpty);
-
     saveJSON(STORAGE_KEYS.welcomeShown, true);
 
     hideWelcome();
@@ -126,32 +157,24 @@ document.getElementById("welcomeStart")
 
 
 /* =========================================
-   МИГРАЦИЯ НА V1.2
+   МИГРАЦИЯ
    ========================================= */
 
-// Один раз чистит историю веса, если там только
-// дефолтные 82 кг из старых версий. Тогда
-// welcome показывается заново, чтобы пользователь
-// ввёл свои реальные данные.
+
 function migrateToV12() {
 
     const done = loadJSON(STORAGE_KEYS.migrationV12, false);
-
     if (done) return;
 
     const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
-
     const hasOnlyDefaults =
         wh.length > 0 && wh.every(x => x.weight === 82);
-
     const settingsIsDefault =
         settings.weight === 82 || settings.weight === null;
 
     if (hasOnlyDefaults && settingsIsDefault) {
-
         settings.weight = null;
         settings.name = "Спортсмен";
-
         saveJSON(STORAGE_KEYS.settings, settings);
         saveJSON(STORAGE_KEYS.weightHistory, []);
         saveJSON(STORAGE_KEYS.welcomeShown, false);
@@ -162,7 +185,7 @@ function migrateToV12() {
 
 
 /* =========================================
-   SPLASH SCREEN
+   SPLASH
    ========================================= */
 
 
@@ -176,7 +199,6 @@ function runSplash() {
     }
 
     setTimeout(() => {
-
         splash.classList.add("fade-out");
 
         setTimeout(() => {
@@ -185,7 +207,6 @@ function runSplash() {
             }
             showWelcomeOnFirstLaunch();
         }, 600);
-
     }, 1400);
 }
 
@@ -231,7 +252,7 @@ document.getElementById("historyModal")
 
 
 /* =========================================
-   СЛОЖНОСТЬ ТРЕНИРОВКИ
+   СЛОЖНОСТЬ
    ========================================= */
 
 
@@ -245,18 +266,16 @@ document
 
 
 /* =========================================
-   УСТАНОВКА ПРИЛОЖЕНИЯ (PWA)
+   PWA
    ========================================= */
 
 
 let deferredInstallPrompt = null;
 
-const installButton =
-    document.getElementById("installApp");
+const installButton = document.getElementById("installApp");
 
 
 function isStandalone() {
-
     return (
         window.matchMedia("(display-mode: standalone)").matches ||
         window.navigator.standalone === true
@@ -265,21 +284,17 @@ function isStandalone() {
 
 
 function isIOS() {
-
     return /iPad|iPhone|iPod/.test(navigator.userAgent) &&
         !window.MSStream;
 }
 
 
 function showInstallButton() {
-
     if (!installButton) return;
-
     if (isStandalone()) {
         installButton.classList.add("hidden");
         return;
     }
-
     installButton.classList.remove("hidden");
 }
 
@@ -287,60 +302,42 @@ function showInstallButton() {
 function showInstallInstructions() {
 
     if (isIOS()) {
-
         alert(
             "Установка на iPhone:\n\n" +
             "1. Нажмите кнопку «Поделиться»\n" +
             "   (квадрат со стрелкой вверх)\n\n" +
             "2. Пролистайте и выберите\n" +
             "   «На экран \"Домой\"»\n\n" +
-            "3. Нажмите «Добавить»\n\n" +
-            "Приложение появится на домашнем экране\n" +
-            "и будет работать как обычное."
+            "3. Нажмите «Добавить»"
         );
-
     } else {
-
         alert(
             "Установка приложения:\n\n" +
             "Откройте меню браузера\n" +
-            "(три точки в правом верхнем углу)\n" +
-            "и выберите «Установить приложение»\n" +
-            "или «Добавить на главный экран»."
+            "и выберите «Установить приложение»."
         );
     }
 }
 
 
 window.addEventListener("beforeinstallprompt", event => {
-
     event.preventDefault();
-
     deferredInstallPrompt = event;
-
     showInstallButton();
 });
 
 
 if (installButton) {
-
     installButton.addEventListener("click", async () => {
 
         if (deferredInstallPrompt) {
-
             deferredInstallPrompt.prompt();
-
-            const choice =
-                await deferredInstallPrompt.userChoice;
-
+            const choice = await deferredInstallPrompt.userChoice;
             if (choice.outcome === "accepted") {
                 installButton.classList.add("hidden");
             }
-
             deferredInstallPrompt = null;
-
         } else {
-
             showInstallInstructions();
         }
     });
@@ -348,12 +345,8 @@ if (installButton) {
 
 
 window.addEventListener("appinstalled", () => {
-
     deferredInstallPrompt = null;
-
-    if (installButton) {
-        installButton.classList.add("hidden");
-    }
+    if (installButton) installButton.classList.add("hidden");
 });
 
 
@@ -363,9 +356,7 @@ window.addEventListener("appinstalled", () => {
 
 
 if ("serviceWorker" in navigator) {
-
     window.addEventListener("load", () => {
-
         navigator.serviceWorker
             .register("sw.js")
             .catch(error => {
@@ -403,4 +394,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.2.1 запущен");
+console.log("Push-Up Coach v1.3 запущен");

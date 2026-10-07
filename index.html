@@ -57,9 +57,9 @@
 
     <title>Push-Up Coach</title>
 
-  <link
+    <link
         rel="stylesheet"
-        href="styles.css?v=12"
+        href="styles.css?v=13"
     >
 
 </head>
@@ -114,6 +114,12 @@
                 </h1>
 
 
+                <div
+                    id="homeFreezeBanner"
+                    class="freeze-banner hidden"
+                ></div>
+
+
                 <div class="workout-info">
 
 
@@ -157,6 +163,12 @@
 
 
                 </div>
+
+
+                <div
+                    id="homeCompare"
+                    class="home-compare hidden"
+                ></div>
 
 
                 <div
@@ -687,12 +699,37 @@
             <section class="progress-card">
 
                 <div class="section-title">
+                    Объём по неделям
+                </div>
+
+                <div id="volumeChartContainer"></div>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
                     По хватам
                 </div>
 
                 <div
                     id="gripProgress"
                     class="grip-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="progress-card">
+
+                <div class="section-title">
+                    Достижения
+                </div>
+
+                <div
+                    id="achievementsList"
+                    class="achievements-grid"
                 ></div>
 
             </section>
@@ -800,6 +837,20 @@
                 </label>
 
 
+                <label class="setting-row">
+
+                    <span>
+                        Голосовой отсчёт
+                    </span>
+
+                    <input
+                        id="voiceInput"
+                        type="checkbox"
+                    >
+
+                </label>
+
+
                 <button
                     class="primary-button"
                     id="saveSettings"
@@ -822,6 +873,30 @@
                 >
                     🔗 Поделиться приложением
                 </button>
+
+
+                <button
+                    class="secondary-button"
+                    id="exportData"
+                >
+                    💾 Сохранить данные (бэкап)
+                </button>
+
+
+                <button
+                    class="secondary-button"
+                    id="importData"
+                >
+                    📥 Загрузить данные из файла
+                </button>
+
+
+                <input
+                    id="importFile"
+                    type="file"
+                    accept="application/json,.json"
+                    style="display:none"
+                >
 
 
                 <button
@@ -852,7 +927,7 @@
 
                     <div class="about-row">
                         <span>Версия</span>
-                        <strong>1.2</strong>
+                        <strong>1.3</strong>
                     </div>
 
                     <div class="about-row">
@@ -1020,6 +1095,48 @@
 
 
     <div
+        id="achievementModal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+    >
+
+        <div class="modal-content achievement-modal-content">
+
+            <div
+                id="achievementModalIcon"
+                class="achievement-modal-icon"
+            >
+                🏆
+            </div>
+
+            <h2
+                id="achievementModalTitle"
+                class="modal-title"
+            >
+                Достижение
+            </h2>
+
+            <p
+                id="achievementModalText"
+                class="modal-text"
+                style="text-align:center"
+            ></p>
+
+            <button
+                class="primary-button"
+                id="achievementModalClose"
+            >
+                Класс
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <div
         id="welcomeOverlay"
         class="welcome-overlay hidden"
     >
@@ -1124,18 +1241,18 @@
                     </div>
                     <div class="welcome-feature-text">
                         <strong>Прогресс</strong>
-                        <span>История, вес, рекорды по каждому хвату</span>
+                        <span>История, вес, объём, рекорды по хватам</span>
                     </div>
                 </div>
 
 
                 <div class="welcome-feature">
                     <div class="welcome-feature-icon">
-                        ✋
+                        🏆
                     </div>
                     <div class="welcome-feature-text">
-                        <strong>Подсказки</strong>
-                        <span>Схемы хватов прямо на экране тренировки</span>
+                        <strong>Достижения</strong>
+                        <span>Вехи, которые держат мотивацию</span>
                     </div>
                 </div>
 
@@ -1185,12 +1302,12 @@
 
 
 
-   <script src="storage.js?v=12"></script>
-    <script src="grips.js?v=12"></script>
-    <script src="program.js?v=12"></script>
-    <script src="workout.js?v=12"></script>
-    <script src="ui.js?v=12"></script>
-    <script src="app.js?v=12"></script>
+    <script src="storage.js?v=13"></script>
+    <script src="grips.js?v=13"></script>
+    <script src="program.js?v=13"></script>
+    <script src="workout.js?v=13"></script>
+    <script src="ui.js?v=13"></script>
+    <script src="app.js?v=13"></script>
 
 </body>
 

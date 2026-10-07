@@ -1,7 +1,6 @@
 /* =========================================
    WORKOUT.JS
-   Логика тренировки: жизненный цикл,
-   таймер отдыха, звук.
+   Логика тренировки.
    ========================================= */
 
 
@@ -14,6 +13,7 @@ let restEndsAt = 0;
 let remainingSeconds = 0;
 let timerInterval = null;
 let startedAt = 0;
+let lastSpokenSecond = -1;
 
 
 /* =========================================
@@ -23,7 +23,12 @@ let startedAt = 0;
 
 function startNewWorkout() {
 
-    const next = getNextWorkout();
+    const forceRepeat =
+        loadJSON(STORAGE_KEYS.repeatLast, false) === true;
+
+    removeStorage(STORAGE_KEYS.repeatLast);
+
+    const next = getNextWorkout(forceRepeat);
 
     if (!next) {
         alert("Программа завершена. Отличная работа!");
@@ -37,6 +42,7 @@ function startNewWorkout() {
     restEndsAt = 0;
     remainingSeconds = 0;
     startedAt = Date.now();
+    lastSpokenSecond = -1;
 
     unlockAudio();
 
@@ -57,6 +63,7 @@ function continueExistingWorkout() {
 
     workout = saved.workout;
     currentSet = Number(saved.currentSet || 0);
+    lastSpokenSecond = -1;
 
     actualReps = Number(
         saved.actualReps ??
@@ -148,7 +155,6 @@ function completeCurrentSet() {
 
 
 function failCurrentSet() {
-
     actualReps = 0;
     updateActualReps();
     completeCurrentSet();
@@ -156,7 +162,6 @@ function failCurrentSet() {
 
 
 function decreaseReps() {
-
     if (actualReps > 0) {
         actualReps--;
         updateActualReps();
@@ -166,7 +171,6 @@ function decreaseReps() {
 
 
 function increaseReps() {
-
     actualReps++;
     updateActualReps();
     saveActiveWorkout();
@@ -184,6 +188,7 @@ function enterRestPhase() {
 
     restEndsAt = Date.now() + workout.rest * 1000;
     remainingSeconds = workout.rest;
+    lastSpokenSecond = -1;
 
     showRestControls();
     updateTimer();
@@ -206,11 +211,23 @@ function tickRestTimer() {
         remainingSeconds = left;
         updateTimer();
         saveActiveWorkout();
+        maybeSpeakCountdown(left);
     }
 
     if (left <= 0) {
         endRestPhase();
     }
+}
+
+
+function maybeSpeakCountdown(secondsLeft) {
+
+    if (!settings.voiceCountdown) return;
+    if (secondsLeft < 1 || secondsLeft > 5) return;
+    if (secondsLeft === lastSpokenSecond) return;
+
+    lastSpokenSecond = secondsLeft;
+    speakNumber(secondsLeft);
 }
 
 
@@ -220,6 +237,7 @@ function endRestPhase() {
 
     restEndsAt = 0;
     remainingSeconds = 0;
+    lastSpokenSecond = -1;
 
     notifyRestFinished();
 
@@ -249,7 +267,6 @@ function addRest() {
 
 
 function clearRestTimer() {
-
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -279,13 +296,11 @@ function finishWorkout() {
         0
     );
 
-    // Максимум в одном подходе за эту тренировку
     const bestThisWorkout = workoutResults.reduce(
         (max, r) => Math.max(max, Number(r.actual)),
         0
     );
 
-    // Максимум за все предыдущие тренировки
     const previousMax = getPreviousMax();
 
     const isNewRecord =
@@ -325,6 +340,9 @@ function finishWorkout() {
 
     renderDoneScreen(workoutRecord, saved, isNewRecord);
     showScreen("screenDone");
+
+    // Проверка достижений (после отрисовки экрана)
+    setTimeout(checkAchievements, 100);
 }
 
 
@@ -379,7 +397,7 @@ function saveActiveWorkout() {
 
 
 /* =========================================
-   СЛОЖНОСТЬ ТРЕНИРОВКИ
+   СЛОЖНОСТЬ
    ========================================= */
 
 
@@ -406,7 +424,7 @@ function setWorkoutDifficulty(level) {
 
 
 /* =========================================
-   ЗВУК / ВИБРАЦИЯ
+   ЗВУК / ГОЛОС / ВИБРАЦИЯ
    ========================================= */
 
 
@@ -458,6 +476,22 @@ function playBeep() {
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
 
     osc.stop(now + 0.3);
+}
+
+
+function speakNumber(n) {
+
+    if (!("speechSynthesis" in window)) return;
+
+    try {
+        const u = new SpeechSynthesisUtterance(String(n));
+        u.lang = "ru-RU";
+        u.rate = 1.15;
+        u.volume = 0.9;
+        window.speechSynthesis.speak(u);
+    } catch (error) {
+        console.warn("Голос недоступен", error);
+    }
 }
 
 
