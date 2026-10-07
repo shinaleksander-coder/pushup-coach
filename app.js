@@ -1,6 +1,5 @@
 /* =========================================
    APP.JS
-   Точка входа.
    ========================================= */
 
 
@@ -90,11 +89,6 @@ document.getElementById("gripModal")
             closeGripModal();
         }
     });
-
-
-/* =========================================
-   ДОСТИЖЕНИЯ — ЗАКРЫТИЕ
-   ========================================= */
 
 
 document.getElementById("achievementModalClose")
@@ -389,9 +383,14 @@ document.addEventListener("visibilitychange", () => {
 
 migrateToV12();
 ensureWeightHistory();
+
+// Тихо разблокируем достижения, которые уже заслужены
+// по прошлым тренировкам (без модалок).
+checkAchievements(true);
+
 renderHome();
 showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.3 запущен");
+console.log("Push-Up Coach v1.3.1 запущен");

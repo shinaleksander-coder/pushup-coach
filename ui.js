@@ -1,6 +1,5 @@
 /* =========================================
    UI.JS
-   Переключение экранов и отрисовка.
    ========================================= */
 
 
@@ -360,7 +359,7 @@ function renderFreezeBanner() {
 
 
 /* =========================================
-   СРАВНЕНИЕ «НЕДЕЛЮ НАЗАД»
+   СРАВНЕНИЕ
    ========================================= */
 
 
@@ -659,7 +658,9 @@ function getUnlockedAchievements() {
 }
 
 
-function checkAchievements() {
+// silent = true — просто разблокировать без показа модалки
+// (используется при запуске, чтобы подтянуть старые заслуги).
+function checkAchievements(silent) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     const max = getRecord();
@@ -682,8 +683,9 @@ function checkAchievements() {
     const updated = unlocked.concat(newly.map(a => a.id));
     saveJSON(STORAGE_KEYS.achievements, updated);
 
-    achievementQueue = newly.slice();
+    if (silent) return;
 
+    achievementQueue = newly.slice();
     setTimeout(showNextAchievement, 400);
 }
 
@@ -1146,14 +1148,14 @@ function shareApp() {
 
 
 /* =========================================
-   ЭКСПОРТ / ИМПОРТ ДАННЫХ
+   ЭКСПОРТ / ИМПОРТ
    ========================================= */
 
 
 function exportData() {
 
     const data = {
-        version: "1.3",
+        version: "1.3.1",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),
@@ -1170,7 +1172,6 @@ function exportData() {
 
     const blob = new Blob([json], { type: "application/json" });
 
-    // На iOS — через share, чтобы можно было сохранить в Файлы / отправить
     try {
         const file = new File([blob], filename, {
             type: "application/json"
@@ -1185,7 +1186,7 @@ function exportData() {
             }).catch(() => {});
             return;
         }
-    } catch (e) { /* продолжаем с обычным скачиванием */ }
+    } catch (e) { /* обычное скачивание */ }
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1327,28 +1328,25 @@ function formatDelta(value, unit) {
 }
 
 
+// Общая функция графика. xLabel — необязательная
+// функция, принимающая элемент данных и возвращающая
+// текст подписи. По умолчанию — дата ДД.ММ.
 function renderLineChart(data, options) {
 
-    const {
-        width = 320,
-        height = 140,
-        padL = 8,
-        padR = 40,
-        padT = 16,
-        padB = 24,
-        minV: forcedMin,
-        maxV: forcedMax
-    } = options || {};
+    options = options || {};
+
+    const width = options.width || 320;
+    const height = options.height || 140;
+    const padL = options.padL !== undefined ? options.padL : 8;
+    const padR = options.padR !== undefined ? options.padR : 40;
+    const padT = options.padT !== undefined ? options.padT : 16;
+    const padB = options.padB !== undefined ? options.padB : 24;
 
     const last = data.slice(-30);
 
     const values = last.map(d => d.value);
-    const minV = forcedMin !== undefined
-        ? forcedMin
-        : Math.min(...values);
-    const maxV = forcedMax !== undefined
-        ? forcedMax
-        : Math.max(...values);
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
     const range = maxV - minV || 1;
 
     const innerW = width - padL - padR;
@@ -1378,18 +1376,20 @@ function renderLineChart(data, options) {
     const minLabel =
         `<text x="${width - 6}" y="${padT + innerH}" text-anchor="end" class="chart-label">${minV.toFixed(0)}</text>`;
 
-    const fmt = d => {
+    const defaultXLabel = (d) => {
         const dt = new Date(d.date);
         return `${dt.getDate()}.${(dt.getMonth() + 1)
             .toString()
             .padStart(2, "0")}`;
     };
 
+    const xLabel = options.xLabel || defaultXLabel;
+
     const startDate =
-        `<text x="${padL}" y="${height - 6}" text-anchor="start" class="chart-label">${fmt(last[0])}</text>`;
+        `<text x="${padL}" y="${height - 6}" text-anchor="start" class="chart-label">${xLabel(last[0])}</text>`;
 
     const endDate =
-        `<text x="${width - padR}" y="${height - 6}" text-anchor="end" class="chart-label">${fmt(last[last.length - 1])}</text>`;
+        `<text x="${width - padR}" y="${height - 6}" text-anchor="end" class="chart-label">${xLabel(last[last.length - 1])}</text>`;
 
     return `
         <svg viewBox="0 0 ${width} ${height}" class="weight-chart" role="img">
@@ -1425,13 +1425,14 @@ function renderVolumeChart(data) {
         return "<p class='chart-empty'>Объём появится после двух и более недель тренировок.</p>";
     }
 
-    // Преобразуем недели в псевдо-даты для единообразия графика
     const points = data.map(d => ({
-        date: new Date(2025, 0, d.week).toISOString(),
-        value: d.volume
+        value: d.volume,
+        week: d.week
     }));
 
-    return renderLineChart(points, {});
+    return renderLineChart(points, {
+        xLabel: (d) => `нед. ${d.week}`
+    });
 }
 
 
