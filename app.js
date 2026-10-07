@@ -57,6 +57,9 @@ document.getElementById("resetProgress")
 document.getElementById("shareApp")
     .addEventListener("click", shareApp);
 
+document.getElementById("checkUpdate")
+    .addEventListener("click", checkForUpdates);
+
 document.getElementById("exportData")
     .addEventListener("click", exportData);
 
@@ -117,31 +120,35 @@ document
 
             const mode = btn.dataset.mode;
 
-            if (mode !== "custom") {
+            const history =
+                loadJSON(STORAGE_KEYS.history, []);
 
-                const history =
-                    loadJSON(STORAGE_KEYS.history, []);
+            const programIndex =
+                history.filter(r => !r.isExtra).length;
 
-                const programIndex =
-                    history.filter(r => !r.isExtra).length;
-
-                const currentTotal = PROGRAM.length;
+            if (programIndex > 0 && mode !== "custom") {
 
                 const newConfig =
                     PROGRAM_MODES[mode] || PROGRAM_MODES.base;
 
-                const newTotal =
-                    newConfig.weeks * newConfig.daysPerWeek;
+                const newDays = newConfig.daysPerWeek || 3;
 
-                if (programIndex > 0 &&
-                    newTotal !== currentTotal &&
-                    !confirm(
-                        `Сменить режим?\n\n` +
-                        `Это изменит будущие тренировки. ` +
-                        `Прошлые останутся без изменений.`
-                    )) {
-                    return;
-                }
+                const newWeek =
+                    Math.floor(programIndex / newDays) + 1;
+
+                const newDay =
+                    (programIndex % newDays) + 1;
+
+                const ok = confirm(
+                    `Сменить режим на «${btn.querySelector(".mode-button-title").textContent}»?\n\n` +
+                    `Ты прошёл ${programIndex} плановых тренировок.\n` +
+                    `В новой программе продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
+                    `История, вес и достижения сохранятся.\n` +
+                    `Номер недели может «откатиться» — это нормально, ` +
+                    `нагрузка пересчитается по твоей силе.`
+                );
+
+                if (!ok) return;
             }
 
             settings.programMode = mode;
@@ -178,6 +185,28 @@ document.getElementById("saveCustom")
             repBase < 3 || repBase > 20) {
             alert("Старт повторов: от 3 до 20.");
             return;
+        }
+
+        const history = loadJSON(STORAGE_KEYS.history, []);
+        const programIndex =
+            history.filter(r => !r.isExtra).length;
+
+        if (programIndex > 0) {
+
+            const newWeek =
+                Math.floor(programIndex / days) + 1;
+
+            const newDay =
+                (programIndex % days) + 1;
+
+            const ok = confirm(
+                `Применить индивидуальную программу?\n\n` +
+                `Ты прошёл ${programIndex} плановых тренировок.\n` +
+                `Продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
+                `История, вес и достижения сохранятся.`
+            );
+
+            if (!ok) return;
         }
 
         settings.customDays = days;
@@ -488,4 +517,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.5 запущен");
+console.log("Push-Up Coach v1.5.3 запущен");

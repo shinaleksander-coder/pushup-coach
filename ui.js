@@ -1220,6 +1220,47 @@ function shareApp() {
 
 
 /* =========================================
+   ПРОВЕРКА ОБНОВЛЕНИЯ
+   ========================================= */
+
+
+async function checkForUpdates() {
+
+    const confirmed = confirm(
+        "Проверить обновление?\n\n" +
+        "Приложение снесёт кэш и перезагрузится. " +
+        "Прогресс сохранится."
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+        if ("serviceWorker" in navigator) {
+            const regs =
+                await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) {
+                await r.unregister();
+            }
+        }
+
+        if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(
+                keys.map(k => caches.delete(k))
+            );
+        }
+
+        location.reload();
+
+    } catch (error) {
+        console.warn("Ошибка обновления:", error);
+        location.reload();
+    }
+}
+
+
+/* =========================================
    ЭКСПОРТ / ИМПОРТ
    ========================================= */
 
@@ -1227,7 +1268,7 @@ function shareApp() {
 function exportData() {
 
     const data = {
-        version: "1.5.2",
+        version: "1.5.3",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),
