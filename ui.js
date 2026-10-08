@@ -37,6 +37,11 @@ let editingHistoryDraft = null;
 let achievementQueue = [];
 
 
+/* =========================================
+   ЭКРАНЫ
+   ========================================= */
+
+
 function showScreen(id) {
 
     screens.forEach(screen => {
@@ -60,6 +65,11 @@ function showScreen(id) {
 
     window.scrollTo(0, 0);
 }
+
+
+/* =========================================
+   ПРИВЕТСТВИЕ
+   ========================================= */
 
 
 function showWelcome() {
@@ -102,6 +112,11 @@ function showWelcomeAgain() {
 }
 
 
+/* =========================================
+   ВЕС
+   ========================================= */
+
+
 function updateWeightHistory(newWeight, weightWasEmpty) {
 
     if (newWeight === null || newWeight === undefined) return;
@@ -129,6 +144,11 @@ function updateWeightHistory(newWeight, weightWasEmpty) {
         saveJSON(STORAGE_KEYS.weightHistory, wh);
     }
 }
+
+
+/* =========================================
+   ГЛАВНЫЙ ЭКРАН
+   ========================================= */
 
 
 function renderHome() {
@@ -215,6 +235,11 @@ function renderMaxPushups() {
     document.getElementById("maxPushups").textContent =
         maxPushups > 0 ? maxPushups : "—";
 }
+
+
+/* =========================================
+   БАННЕР ПРОПУСКА
+   ========================================= */
 
 
 function renderMissedBanner() {
@@ -339,6 +364,11 @@ function renderMissedBanner() {
 }
 
 
+/* =========================================
+   СРАВНЕНИЕ
+   ========================================= */
+
+
 function renderCompare() {
 
     const el = document.getElementById("homeCompare");
@@ -431,6 +461,11 @@ function renderWorkoutRecord() {
         recordEl.classList.add("hidden");
     }
 }
+
+
+/* =========================================
+   ЭКРАН ТРЕНИРОВКИ
+   ========================================= */
 
 
 function renderWorkoutScreen() {
@@ -617,6 +652,11 @@ function renderDoneScreen(record, saved, isNewRecord) {
 }
 
 
+/* =========================================
+   ДОСТИЖЕНИЯ
+   ========================================= */
+
+
 function getUnlockedAchievements() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -710,6 +750,11 @@ function renderAchievements() {
         `;
     }).join("");
 }
+
+
+/* =========================================
+   ИСТОРИЯ
+   ========================================= */
 
 
 function renderHistory() {
@@ -933,6 +978,11 @@ function saveHistoryEdit() {
 }
 
 
+/* =========================================
+   ПРОГРАММА
+   ========================================= */
+
+
 function renderProgram() {
     renderProgramModeButtons();
     renderCustomConfig();
@@ -1135,6 +1185,11 @@ function renderProgramList() {
 }
 
 
+/* =========================================
+   НАСТРОЙКИ
+   ========================================= */
+
+
 function renderSettings() {
 
     document.getElementById("nameInput").value =
@@ -1165,7 +1220,109 @@ function renderSettings() {
             cb.checked = savedDays.includes(day);
         });
 
+    renderPushSection();
     renderAbout();
+}
+
+
+function renderPushSection() {
+
+    const statusEl = document.getElementById("pushStatus");
+    const disabledEl = document.getElementById("pushDisabled");
+    const enabledEl = document.getElementById("pushEnabled");
+
+    if (!statusEl || !disabledEl || !enabledEl) return;
+
+    if (typeof pushSupported !== "function" ||
+        !pushSupported()) {
+
+        statusEl.textContent =
+            "На этом устройстве уведомления недоступны.";
+        statusEl.className = "push-status status-warning";
+
+        disabledEl.classList.add("hidden");
+        enabledEl.classList.add("hidden");
+        return;
+    }
+
+    const subscriptionId =
+        typeof getSubscriptionId === "function"
+            ? getSubscriptionId()
+            : null;
+
+    const permission =
+        typeof getPushPermissionState === "function"
+            ? getPushPermissionState()
+            : "default";
+
+    if (!subscriptionId) {
+
+        if (permission === "denied") {
+            statusEl.textContent =
+                "Разрешение отклонено. Откройте Настройки iPhone → " +
+                "Уведомления → Push-Up Coach и включите вручную.";
+            statusEl.className = "push-status status-error";
+        } else {
+            statusEl.textContent =
+                "🔕 Напоминания выключены";
+            statusEl.className = "push-status status-disabled";
+        }
+
+        disabledEl.classList.remove("hidden");
+        enabledEl.classList.add("hidden");
+        return;
+    }
+
+    statusEl.textContent =
+        "🔔 Напоминания включены";
+    statusEl.className = "push-status status-enabled";
+
+    disabledEl.classList.add("hidden");
+    enabledEl.classList.remove("hidden");
+
+    const timeEl = document.getElementById("pushTime");
+    const savedTime =
+        localStorage.getItem("pushReminderTime") || "19:00";
+    if (timeEl) timeEl.value = savedTime;
+
+    let savedDays = [1, 3, 5];
+
+    try {
+        const stored = JSON.parse(
+            localStorage.getItem("pushDays")
+        );
+        if (Array.isArray(stored) && stored.length > 0) {
+            savedDays = stored;
+        }
+    } catch (e) { /* дефолт */ }
+
+    document
+        .querySelectorAll(".push-day-checkbox")
+        .forEach(cb => {
+            const day = Number(cb.dataset.pushDay);
+            cb.checked = savedDays.includes(day);
+        });
+}
+
+
+function getPushDaysFromUI() {
+
+    const days = [];
+
+    document
+        .querySelectorAll(".push-day-checkbox")
+        .forEach(cb => {
+            if (cb.checked) {
+                days.push(Number(cb.dataset.pushDay));
+            }
+        });
+
+    return days;
+}
+
+
+function refreshPushAfterAction() {
+    renderPushSection();
 }
 
 
@@ -1275,7 +1432,7 @@ function pluralDays(n) {
 
 
 /* =========================================
-   ЭКСПОРТ ДАННЫХ — три уровня отката
+   ЭКСПОРТ
    ========================================= */
 
 
@@ -1288,7 +1445,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.8.4",
+            version: "1.9.0",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -1309,7 +1466,6 @@ function exportData() {
         return;
     }
 
-    // Уровень 1: share с файлом
     if (navigator.share && navigator.canShare) {
         try {
             const blob = new Blob([json], { type: "application/json" });
@@ -1396,7 +1552,6 @@ async function exportFallbackClipboard(json) {
         console.warn("[export] буфер не сработал:", err);
     }
 
-    // Крайний случай — показываем JSON текстом
     const preview = json.length > 3000
         ? json.slice(0, 3000) + "\n\n... (продолжение обрезано)"
         : json;

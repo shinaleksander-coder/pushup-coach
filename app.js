@@ -3,11 +3,6 @@
    ========================================= */
 
 
-/* =========================================
-   БЕЗОПАСНЫЕ ХЕЛПЕРЫ
-   ========================================= */
-
-
 function on(id, event, fn) {
     const el = document.getElementById(id);
     if (el) {
@@ -34,7 +29,7 @@ function safeRun(label, fn) {
 
 
 /* =========================================
-   ОБРАБОТЧИКИ КНОПОК
+   КНОПКИ
    ========================================= */
 
 
@@ -166,6 +161,109 @@ on("achievementModal", "click", event => {
 });
 
 on("welcomeStart", "click", handleWelcomeStart);
+
+
+/* =========================================
+   PUSH — КНОПКИ
+   ========================================= */
+
+
+on("pushEnable", "click", async () => {
+
+    const statusEl = document.getElementById("pushStatus");
+
+    if (statusEl) {
+        statusEl.textContent = "Подключаем…";
+        statusEl.className = "push-status status-disabled";
+    }
+
+    const result = await subscribeToPush();
+
+    if (!result.ok) {
+        alert(result.error || "Не удалось включить напоминания");
+    } else {
+        const timeEl = document.getElementById("pushTime");
+        if (timeEl) saveReminderTime(timeEl.value || "19:00");
+
+        const days = getPushDaysFromUI();
+        saveDays(days.length > 0 ? days : [1, 3, 5]);
+
+        await updatePushSettings();
+    }
+
+    refreshPushAfterAction();
+});
+
+
+on("pushDisable", "click", async () => {
+
+    const ok = confirm("Выключить напоминания?");
+
+    if (!ok) return;
+
+    const statusEl = document.getElementById("pushStatus");
+    if (statusEl) {
+        statusEl.textContent = "Отключаем…";
+        statusEl.className = "push-status status-disabled";
+    }
+
+    await unsubscribeFromPush();
+    refreshPushAfterAction();
+});
+
+
+on("pushTest", "click", async () => {
+
+    const statusEl = document.getElementById("pushStatus");
+    if (statusEl) {
+        statusEl.textContent = "Отправляем тестовое уведомление…";
+        statusEl.className = "push-status status-disabled";
+    }
+
+    const result = await testPushNotification();
+
+    if (!result.ok) {
+        alert(result.error || "Не удалось отправить уведомление");
+    } else {
+        alert(
+            "Тестовое уведомление отправлено.\n\n" +
+            "Оно придёт через несколько секунд. " +
+            "Если приложение открыто — сверни его, " +
+            "чтобы увидеть баннер."
+        );
+    }
+
+    refreshPushAfterAction();
+});
+
+
+on("pushTime", "change", async (event) => {
+
+    const newTime = event.target.value || "19:00";
+    saveReminderTime(newTime);
+
+    await updatePushSettings();
+});
+
+
+document
+    .querySelectorAll(".push-day-checkbox")
+    .forEach(cb => {
+        cb.addEventListener("change", async () => {
+
+            const days = getPushDaysFromUI();
+
+            if (days.length === 0) {
+                alert("Выбери хотя бы один день недели.");
+                cb.checked = true;
+                return;
+            }
+
+            saveDays(days);
+
+            await updatePushSettings();
+        });
+    });
 
 
 /* =========================================
@@ -667,4 +765,4 @@ if (firstStartupError) {
 }
 
 
-console.log("Push-Up Coach v1.8.4 запущен");
+console.log("Push-Up Coach v1.9.0 запущен");

@@ -3,19 +3,20 @@
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v31";
+const CACHE_NAME = "pushup-coach-v32";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=24",
-    "./storage.js?v=24",
-    "./grips.js?v=24",
-    "./program.js?v=24",
-    "./workout.js?v=24",
-    "./ui.js?v=24",
-    "./app.js?v=24",
+    "./styles.css?v=25",
+    "./storage.js?v=25",
+    "./grips.js?v=25",
+    "./program.js?v=25",
+    "./workout.js?v=25",
+    "./ui.js?v=25",
+    "./push.js?v=25",
+    "./app.js?v=25",
     "./manifest.json",
     "./icon.svg"
 ];
@@ -98,5 +99,67 @@ self.addEventListener("fetch", event => {
                 })
                 .catch(() => null);
         })
+    );
+});
+
+
+/* =========================================
+   PUSH-УВЕДОМЛЕНИЯ
+   ========================================= */
+
+
+self.addEventListener("push", event => {
+
+    let payload = {};
+
+    try {
+        payload = event.data ? event.data.json() : {};
+    } catch (err) {
+        payload = {
+            title: "Push-Up Coach",
+            body: event.data ? event.data.text() : ""
+        };
+    }
+
+    const title = payload.title || "Push-Up Coach";
+    const options = {
+        body: payload.body || "Пора тренироваться",
+        icon: "./icon.svg",
+        badge: "./icon.svg",
+        tag: payload.tag || "pushup-reminder",
+        data: {
+            url: payload.url || "./"
+        },
+        vibrate: [200, 100, 200]
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
+});
+
+
+self.addEventListener("notificationclick", event => {
+
+    event.notification.close();
+
+    const targetUrl = event.notification.data?.url || "./";
+
+    event.waitUntil(
+        self.clients
+            .matchAll({ type: "window", includeUncontrolled: true })
+            .then(list => {
+
+                for (const client of list) {
+                    if ("focus" in client) {
+                        client.navigate(targetUrl);
+                        return client.focus();
+                    }
+                }
+
+                if (self.clients.openWindow) {
+                    return self.clients.openWindow(targetUrl);
+                }
+            })
     );
 });

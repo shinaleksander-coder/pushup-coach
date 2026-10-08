@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=24">
+    <link rel="stylesheet" href="styles.css?v=25">
 
 </head>
 
@@ -401,11 +401,58 @@
             </section>
 
 
+
+            <section class="progress-card">
+                <div class="section-title">🔔 Напоминания</div>
+
+                <p id="pushStatus" class="push-status"></p>
+
+                <div id="pushDisabled" class="hidden">
+                    <p class="push-hint">
+                        Приложение будет напоминать о тренировках
+                        в выбранные дни и время.
+                    </p>
+                    <button class="primary-button" id="pushEnable">
+                        Включить напоминания
+                    </button>
+                </div>
+
+                <div id="pushEnabled" class="hidden">
+                    <label class="setting-row">
+                        <span>Время напоминания</span>
+                        <input id="pushTime" type="time" value="19:00">
+                    </label>
+
+                    <div class="setting-row setting-days">
+                        <span>Дни напоминаний</span>
+                        <div class="days-grid">
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="1"> Пн</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="2"> Вт</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="3"> Ср</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="4"> Чт</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="5"> Пт</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="6"> Сб</label>
+                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="7"> Вс</label>
+                        </div>
+                    </div>
+
+                    <button class="secondary-button" id="pushTest">
+                        Проверить уведомление
+                    </button>
+
+                    <button class="secondary-button" id="pushDisable">
+                        Выключить напоминания
+                    </button>
+                </div>
+            </section>
+
+
+
             <section class="progress-card">
                 <div class="section-title">О приложении</div>
 
                 <div class="about-grid">
-                    <div class="about-row"><span>Версия</span><strong>1.8.4</strong></div>
+                    <div class="about-row"><span>Версия</span><strong>1.9.0</strong></div>
                     <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
                     <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
                     <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
@@ -526,10 +573,10 @@
                     </div>
                 </div>
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">🏆</div>
+                    <div class="welcome-feature-icon">🔔</div>
                     <div class="welcome-feature-text">
-                        <strong>Достижения</strong>
-                        <span>Вехи, которые держат мотивацию</span>
+                        <strong>Напоминания</strong>
+                        <span>Push-уведомления в выбранные дни</span>
                     </div>
                 </div>
             </div>
@@ -553,12 +600,13 @@
 
 
 
-    <script src="storage.js?v=24"></script>
-    <script src="grips.js?v=24"></script>
-    <script src="program.js?v=24"></script>
-    <script src="workout.js?v=24"></script>
-    <script src="ui.js?v=24"></script>
-    <script src="app.js?v=24"></script>
+    <script src="storage.js?v=25"></script>
+    <script src="grips.js?v=25"></script>
+    <script src="program.js?v=25"></script>
+    <script src="workout.js?v=25"></script>
+    <script src="push.js?v=25"></script>
+    <script src="ui.js?v=25"></script>
+    <script src="app.js?v=25"></script>
 
 </body>
 
