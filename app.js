@@ -1,203 +1,177 @@
 /* =========================================
    APP.JS
+   Точка входа с защитой от падений.
    ========================================= */
-
-
-document.getElementById("startWorkout")
-    .addEventListener("click", startNewWorkout);
-
-document.getElementById("continueWorkout")
-    .addEventListener("click", continueExistingWorkout);
-
-document.getElementById("extraWorkout")
-    .addEventListener("click", startExtraWorkout);
-
-document.getElementById("minusRep")
-    .addEventListener("click", decreaseReps);
-
-document.getElementById("plusRep")
-    .addEventListener("click", increaseReps);
-
-document.getElementById("completeSet")
-    .addEventListener("click", completeCurrentSet);
-
-document.getElementById("failedSet")
-    .addEventListener("click", failCurrentSet);
-
-document.getElementById("skipRest")
-    .addEventListener("click", skipRest);
-
-document.getElementById("addRest")
-    .addEventListener("click", addRest);
-
-document.getElementById("exitWorkout")
-    .addEventListener("click", exitWorkout);
-
-document.getElementById("doneHome")
-    .addEventListener("click", goHome);
-
-document.getElementById("historyButton")
-    .addEventListener("click", showHistory);
-
-document.getElementById("programButton")
-    .addEventListener("click", showProgram);
-
-document.getElementById("progressButton")
-    .addEventListener("click", showProgress);
-
-document.getElementById("settingsButton")
-    .addEventListener("click", showSettings);
-
-document.getElementById("saveSettings")
-    .addEventListener("click", handleSaveSettings);
-
-document.getElementById("resetProgress")
-    .addEventListener("click", resetProgress);
-
-document.getElementById("shareApp")
-    .addEventListener("click", shareApp);
-
-document.getElementById("checkUpdate")
-    .addEventListener("click", checkForUpdates);
-
-document.getElementById("exportData")
-    .addEventListener("click", exportData);
-
-document.getElementById("importData")
-    .addEventListener("click", () => {
-        document.getElementById("importFile").click();
-    });
-
-document.getElementById("importFile")
-    .addEventListener("change", event => {
-        const file = event.target.files[0];
-        if (file) {
-            importDataFile(file);
-            event.target.value = "";
-        }
-    });
-
-document.getElementById("showWelcomeAgain")
-    .addEventListener("click", showWelcomeAgain);
-
-document.getElementById("globalBack")
-    .addEventListener("click", goHome);
-
-document.getElementById("gripVisual")
-    .addEventListener("click", openGripModal);
-
-document.getElementById("gripModalClose")
-    .addEventListener("click", closeGripModal);
-
-document.getElementById("gripModal")
-    .addEventListener("click", event => {
-        if (event.target.id === "gripModal") {
-            closeGripModal();
-        }
-    });
-
-
-document.getElementById("achievementModalClose")
-    .addEventListener("click", closeAchievementModal);
-
-document.getElementById("achievementModal")
-    .addEventListener("click", event => {
-        if (event.target.id === "achievementModal") {
-            closeAchievementModal();
-        }
-    });
 
 
 /* =========================================
-   СОХРАНЕНИЕ НАСТРОЕК С ПРОВЕРКОЙ КОНФЛИКТА
+   БЕЗОПАСНЫЕ ХЕЛПЕРЫ
    ========================================= */
 
 
-function handleSaveSettings() {
-
-    const data = collectSettingsFromForm();
-    if (!data) return;
-
-    const programDays = getActiveConfig().daysPerWeek || 3;
-    const userDays = data.trainingDays.length;
-
-    // Конфликта нет
-    if (userDays === 0 || userDays === programDays) {
-        applySettings(data);
-        return;
+function on(id, event, fn) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(event, fn);
+    } else {
+        console.warn("Не найден элемент:", id);
     }
+}
 
-    // Есть конфликт — спрашиваем
-    const adjust = confirm(
-        `В программе ${programDays} ${pluralDays(programDays)} в неделю, ` +
-        `а ты отметил ${userDays}.\n\n` +
-        `ОК — подстроить программу под ${userDays}-дневную ` +
-        `(режим «Своя»).\n` +
-        `Отмена — оставить программу ${programDays}-дневной, ` +
-        `а дни сохранить как предпочтения.`
-    );
 
-    if (adjust) {
-        settings.customDays = userDays;
-        settings.customSets = settings.customSets || 3;
-        settings.customRepBase = settings.customRepBase || 5;
-        settings.customGrowth =
-            settings.customGrowth !== undefined
-                ? settings.customGrowth
-                : 1;
-        settings.programMode = "custom";
+let firstStartupError = null;
 
-        saveJSON(STORAGE_KEYS.settings, settings);
-        rebuildProgram();
+function safeRun(label, fn) {
+    try {
+        fn();
+    } catch (err) {
+        console.error("Ошибка " + label + ":", err);
+        if (!firstStartupError) {
+            firstStartupError = label + ": " + err.message;
+        }
     }
-
-    applySettings(data);
 }
 
 
 /* =========================================
-   НАСТРОЙКА ОТДЫХА
+   ПОДПИСКИ НА КНОПКИ
    ========================================= */
 
 
-let lastRestValue = "program";
+on("startWorkout", "click", () => {
+    if (typeof startNewWorkout === "function") startNewWorkout();
+});
 
+on("continueWorkout", "click", () => {
+    if (typeof continueExistingWorkout === "function") continueExistingWorkout();
+});
 
-document.getElementById("restInput")
-    .addEventListener("change", event => {
+on("extraWorkout", "click", () => {
+    if (typeof startExtraWorkout === "function") startExtraWorkout();
+});
 
-        const newVal = event.target.value;
+on("minusRep", "click", () => {
+    if (typeof decreaseReps === "function") decreaseReps();
+});
 
-        if (newVal === "program") {
-            lastRestValue = "program";
-            return;
-        }
+on("plusRep", "click", () => {
+    if (typeof increaseReps === "function") increaseReps();
+});
 
-        const sec = Number(newVal);
+on("completeSet", "click", () => {
+    if (typeof completeCurrentSet === "function") completeCurrentSet();
+});
 
-        if (sec < 90) {
+on("failedSet", "click", () => {
+    if (typeof failCurrentSet === "function") failCurrentSet();
+});
 
-            const ok = confirm(
-                `Сократить отдых до ${sec} секунд?\n\n` +
-                `Достаточный отдых между подходами — ` +
-                `это не про «слабость», а про то, ` +
-                `чтобы следующий подход был качественным.\n\n` +
-                `При коротком отдыхе падает объём и растёт риск травмы.\n\n` +
-                `Оставляем на твоё усмотрение — продолжить?`
-            );
+on("skipRest", "click", () => {
+    if (typeof skipRest === "function") skipRest();
+});
 
-            if (!ok) {
-                event.target.value = lastRestValue;
-                return;
-            }
-        }
+on("addRest", "click", () => {
+    if (typeof addRest === "function") addRest();
+});
 
-        lastRestValue = newVal;
-    });
+on("exitWorkout", "click", () => {
+    if (typeof exitWorkout === "function") exitWorkout();
+});
+
+on("doneHome", "click", () => {
+    if (typeof goHome === "function") goHome();
+});
+
+on("historyButton", "click", () => {
+    if (typeof showHistory === "function") showHistory();
+});
+
+on("programButton", "click", () => {
+    if (typeof showProgram === "function") showProgram();
+});
+
+on("progressButton", "click", () => {
+    if (typeof showProgress === "function") showProgress();
+});
+
+on("settingsButton", "click", () => {
+    if (typeof showSettings === "function") showSettings();
+});
+
+on("saveSettings", "click", () => {
+    if (typeof handleSaveSettings === "function") handleSaveSettings();
+});
+
+on("resetProgress", "click", () => {
+    if (typeof resetProgress === "function") resetProgress();
+});
+
+on("shareApp", "click", () => {
+    if (typeof shareApp === "function") shareApp();
+});
+
+on("checkUpdate", "click", () => {
+    if (typeof checkForUpdates === "function") checkForUpdates();
+});
+
+on("exportData", "click", () => {
+    if (typeof exportData === "function") exportData();
+});
+
+on("importData", "click", () => {
+    const fileInput = document.getElementById("importFile");
+    if (fileInput) fileInput.click();
+});
+
+on("importFile", "change", event => {
+    const file = event.target.files[0];
+    if (file && typeof importDataFile === "function") {
+        importDataFile(file);
+        event.target.value = "";
+    }
+});
+
+on("showWelcomeAgain", "click", () => {
+    if (typeof showWelcomeAgain === "function") showWelcomeAgain();
+});
+
+on("globalBack", "click", () => {
+    if (typeof goHome === "function") goHome();
+});
+
+on("gripVisual", "click", () => {
+    if (typeof openGripModal === "function") openGripModal();
+});
+
+on("gripModalClose", "click", () => {
+    if (typeof closeGripModal === "function") closeGripModal();
+});
+
+on("gripModal", "click", event => {
+    if (event.target.id === "gripModal" &&
+        typeof closeGripModal === "function") {
+        closeGripModal();
+    }
+});
+
+on("achievementModalClose", "click", () => {
+    if (typeof closeAchievementModal === "function") closeAchievementModal();
+});
+
+on("achievementModal", "click", event => {
+    if (event.target.id === "achievementModal" &&
+        typeof closeAchievementModal === "function") {
+        closeAchievementModal();
+    }
+});
+
+on("welcomeStart", "click", () => {
+    if (typeof handleWelcomeStart === "function") handleWelcomeStart();
+});
 
 
 /* =========================================
-   РЕЖИМ ПРОГРАММЫ
+   КНОПКИ РЕЖИМА ПРОГРАММЫ
    ========================================= */
 
 
@@ -208,16 +182,24 @@ document
 
             const mode = btn.dataset.mode;
 
-            const history =
-                loadJSON(STORAGE_KEYS.history, []);
+            let history = [];
+            try {
+                history = loadJSON(STORAGE_KEYS.history, []);
+            } catch (e) {
+                console.warn(e);
+            }
 
             const programIndex =
                 history.filter(r => !r.isExtra).length;
 
             if (programIndex > 0 && mode !== "custom") {
 
+                const modes = (typeof PROGRAM_MODES !== "undefined")
+                    ? PROGRAM_MODES
+                    : {};
+
                 const newConfig =
-                    PROGRAM_MODES[mode] || PROGRAM_MODES.base;
+                    modes[mode] || modes.base || { daysPerWeek: 3 };
 
                 const newDays = newConfig.daysPerWeek || 3;
 
@@ -227,8 +209,11 @@ document
                 const newDay =
                     (programIndex % newDays) + 1;
 
+                const title = btn.querySelector(".mode-button-title");
+                const label = title ? title.textContent : mode;
+
                 const ok = confirm(
-                    `Сменить режим на «${btn.querySelector(".mode-button-title").textContent}»?\n\n` +
+                    `Сменить режим на «${label}»?\n\n` +
                     `Ты прошёл ${programIndex} плановых тренировок.\n` +
                     `В новой программе продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
                     `История, вес и достижения сохранятся.`
@@ -240,177 +225,110 @@ document
             settings.programMode = mode;
             saveJSON(STORAGE_KEYS.settings, settings);
 
-            rebuildProgram();
-            renderProgram();
-            renderHome();
+            if (typeof rebuildProgram === "function") rebuildProgram();
+            if (typeof renderProgram === "function") renderProgram();
+            if (typeof renderHome === "function") renderHome();
         });
     });
 
 
-document.getElementById("saveCustom")
-    .addEventListener("click", () => {
-
-        const days = Number(
-            document.getElementById("customDays").value
-        );
-
-        const sets = Number(
-            document.getElementById("customSets").value
-        );
-
-        const repBase = Number(
-            document.getElementById("customRepBase").value
-        );
-
-        const growth = Number(
-            document.getElementById("customGrowth").value
-        );
-
-        if (!Number.isFinite(repBase) ||
-            repBase < 3 || repBase > 20) {
-            alert("Старт повторов: от 3 до 20.");
-            return;
-        }
-
-        const history = loadJSON(STORAGE_KEYS.history, []);
-        const programIndex =
-            history.filter(r => !r.isExtra).length;
-
-        if (programIndex > 0) {
-
-            const newWeek =
-                Math.floor(programIndex / days) + 1;
-
-            const newDay =
-                (programIndex % days) + 1;
-
-            const ok = confirm(
-                `Применить индивидуальную программу?\n\n` +
-                `Ты прошёл ${programIndex} плановых тренировок.\n` +
-                `Продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
-                `История, вес и достижения сохранятся.`
-            );
-
-            if (!ok) return;
-        }
-
-        settings.customDays = days;
-        settings.customSets = sets;
-        settings.customRepBase = repBase;
-        settings.customGrowth = growth;
-        settings.programMode = "custom";
-
-        saveJSON(STORAGE_KEYS.settings, settings);
-
-        rebuildProgram();
-        renderProgram();
-        renderHome();
-
-        alert("Индивидуальная программа применена.");
-    });
-
-
 /* =========================================
-   ПРИВЕТСТВИЕ
+   ПРИМЕНИТЬ СВОЮ ПРОГРАММУ
    ========================================= */
 
 
-function handleWelcomeStart() {
+on("saveCustom", "click", () => {
 
-    const nameInput = document.getElementById("welcomeName");
-    const weightInput = document.getElementById("welcomeWeight");
+    const daysEl = document.getElementById("customDays");
+    const setsEl = document.getElementById("customSets");
+    const repBaseEl = document.getElementById("customRepBase");
+    const growthEl = document.getElementById("customGrowth");
 
-    const rawName = nameInput ? nameInput.value.trim() : "";
-    const rawWeight = weightInput ? weightInput.value.trim() : "";
+    if (!daysEl || !setsEl || !repBaseEl || !growthEl) return;
 
-    const name = rawName || "Спортсмен";
+    const days = Number(daysEl.value);
+    const sets = Number(setsEl.value);
+    const repBase = Number(repBaseEl.value);
+    const growth = Number(growthEl.value);
 
-    const weightWasEmpty =
-        settings.weight === null || settings.weight === undefined;
-
-    let weight = null;
-
-    if (rawWeight !== "") {
-        weight = Number(rawWeight);
-
-        if (!Number.isFinite(weight) || weight < 30 || weight > 250) {
-            alert("Введите корректный вес от 30 до 250 кг, либо оставьте поле пустым.");
-            return;
-        }
-
-        weight = Math.round(weight * 10) / 10;
-    }
-
-    settings.name = name;
-    settings.weight = weight;
-
-    saveJSON(STORAGE_KEYS.settings, settings);
-    updateWeightHistory(weight, weightWasEmpty);
-    saveJSON(STORAGE_KEYS.welcomeShown, true);
-
-    hideWelcome();
-    renderHome();
-    showScreen("screenHome");
-}
-
-
-document.getElementById("welcomeStart")
-    .addEventListener("click", handleWelcomeStart);
-
-
-/* =========================================
-   МИГРАЦИЯ
-   ========================================= */
-
-
-function migrateToV12() {
-
-    const done = loadJSON(STORAGE_KEYS.migrationV12, false);
-    if (done) return;
-
-    const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
-    const hasOnlyDefaults =
-        wh.length > 0 && wh.every(x => x.weight === 82);
-    const settingsIsDefault =
-        settings.weight === 82 || settings.weight === null;
-
-    if (hasOnlyDefaults && settingsIsDefault) {
-        settings.weight = null;
-        settings.name = "Спортсмен";
-        saveJSON(STORAGE_KEYS.settings, settings);
-        saveJSON(STORAGE_KEYS.weightHistory, []);
-        saveJSON(STORAGE_KEYS.welcomeShown, false);
-    }
-
-    saveJSON(STORAGE_KEYS.migrationV12, true);
-}
-
-
-/* =========================================
-   SPLASH
-   ========================================= */
-
-
-function runSplash() {
-
-    const splash = document.getElementById("splash");
-
-    if (!splash) {
-        showWelcomeOnFirstLaunch();
+    if (!Number.isFinite(repBase) ||
+        repBase < 3 || repBase > 20) {
+        alert("Старт повторов: от 3 до 20.");
         return;
     }
 
-    setTimeout(() => {
-        splash.classList.add("fade-out");
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const programIndex =
+        history.filter(r => !r.isExtra).length;
 
-        setTimeout(() => {
-            if (splash.parentNode) {
-                splash.parentNode.removeChild(splash);
-            }
-            showWelcomeOnFirstLaunch();
-        }, 600);
-    }, 1400);
-}
+    if (programIndex > 0) {
+
+        const newWeek = Math.floor(programIndex / days) + 1;
+        const newDay = (programIndex % days) + 1;
+
+        const ok = confirm(
+            `Применить индивидуальную программу?\n\n` +
+            `Ты прошёл ${programIndex} плановых тренировок.\n` +
+            `Продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
+            `История, вес и достижения сохранятся.`
+        );
+
+        if (!ok) return;
+    }
+
+    settings.customDays = days;
+    settings.customSets = sets;
+    settings.customRepBase = repBase;
+    settings.customGrowth = growth;
+    settings.programMode = "custom";
+
+    saveJSON(STORAGE_KEYS.settings, settings);
+
+    if (typeof rebuildProgram === "function") rebuildProgram();
+    if (typeof renderProgram === "function") renderProgram();
+    if (typeof renderHome === "function") renderHome();
+
+    alert("Индивидуальная программа применена.");
+});
+
+
+/* =========================================
+   НАСТРОЙКА ОТДЫХА
+   ========================================= */
+
+
+let lastRestValue = "program";
+
+on("restInput", "change", event => {
+
+    const newVal = event.target.value;
+
+    if (newVal === "program") {
+        lastRestValue = "program";
+        return;
+    }
+
+    const sec = Number(newVal);
+
+    if (sec < 90) {
+
+        const ok = confirm(
+            `Сократить отдых до ${sec} секунд?\n\n` +
+            `Достаточный отдых между подходами — ` +
+            `это не про «слабость», а про то, ` +
+            `чтобы следующий подход был качественным.\n\n` +
+            `При коротком отдыхе падает объём и растёт риск травмы.\n\n` +
+            `Оставляем на твоё усмотрение — продолжить?`
+        );
+
+        if (!ok) {
+            event.target.value = lastRestValue;
+            return;
+        }
+    }
+
+    lastRestValue = newVal;
+});
 
 
 /* =========================================
@@ -423,6 +341,7 @@ document
     .forEach(btn => {
         btn.addEventListener("click", () => {
 
+            if (typeof editingHistoryDraft === "undefined") return;
             if (!editingHistoryDraft) return;
 
             editingHistoryDraft.difficulty = btn.dataset.level;
@@ -438,19 +357,20 @@ document
         });
     });
 
+on("historyEditSave", "click", () => {
+    if (typeof saveHistoryEdit === "function") saveHistoryEdit();
+});
 
-document.getElementById("historyEditSave")
-    .addEventListener("click", saveHistoryEdit);
+on("historyEditCancel", "click", () => {
+    if (typeof closeHistoryEdit === "function") closeHistoryEdit();
+});
 
-document.getElementById("historyEditCancel")
-    .addEventListener("click", closeHistoryEdit);
-
-document.getElementById("historyModal")
-    .addEventListener("click", event => {
-        if (event.target.id === "historyModal") {
-            closeHistoryEdit();
-        }
-    });
+on("historyModal", "click", event => {
+    if (event.target.id === "historyModal" &&
+        typeof closeHistoryEdit === "function") {
+        closeHistoryEdit();
+    }
+});
 
 
 /* =========================================
@@ -462,7 +382,9 @@ document
     .querySelectorAll(".difficulty-button")
     .forEach(btn => {
         btn.addEventListener("click", () => {
-            setWorkoutDifficulty(btn.dataset.level);
+            if (typeof setWorkoutDifficulty === "function") {
+                setWorkoutDifficulty(btn.dataset.level);
+            }
         });
     });
 
@@ -525,7 +447,7 @@ function showInstallInstructions() {
 window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    showInstallButton();
+    if (typeof showInstallButton === "function") showInstallButton();
 });
 
 
@@ -578,7 +500,9 @@ if ("serviceWorker" in navigator) {
 
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) return;
-    if (restEndsAt > 0) {
+    if (typeof restEndsAt !== "undefined" &&
+        restEndsAt > 0 &&
+        typeof tickRestTimer === "function") {
         tickRestTimer();
     }
 });
@@ -589,16 +513,57 @@ document.addEventListener("visibilitychange", () => {
    ========================================= */
 
 
-migrateToV12();
-ensureWeightHistory();
+safeRun("migrateToV12", () => {
+    if (typeof migrateToV12 === "function") migrateToV12();
+});
 
-rebuildProgram();
+safeRun("ensureWeightHistory", () => {
+    if (typeof ensureWeightHistory === "function") ensureWeightHistory();
+});
 
-checkAchievements(true);
+safeRun("rebuildProgram", () => {
+    if (typeof rebuildProgram === "function") rebuildProgram();
+});
 
-renderHome();
-showScreen("screenHome");
-showInstallButton();
-runSplash();
+safeRun("checkAchievements", () => {
+    if (typeof checkAchievements === "function") checkAchievements(true);
+});
 
-console.log("Push-Up Coach v1.8.1 запущен");
+safeRun("renderHome", () => {
+    if (typeof renderHome === "function") renderHome();
+});
+
+safeRun("showScreen", () => {
+    if (typeof showScreen === "function") showScreen("screenHome");
+});
+
+safeRun("showInstallButton", () => {
+    if (typeof showInstallButton === "function") showInstallButton();
+});
+
+safeRun("runSplash", () => {
+    if (typeof runSplash === "function") {
+        runSplash();
+    } else {
+        // Защита: если функции нет — снимаем сплэш принудительно
+        const splash = document.getElementById("splash");
+        if (splash && splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+        }
+    }
+});
+
+
+// Показываем первую ошибку запуска, если была
+if (firstStartupError) {
+    setTimeout(() => {
+        alert(
+            "При запуске возникла ошибка:\n\n" +
+            firstStartupError +
+            "\n\nПожалуйста, сообщите её разработчику."
+        );
+    }, 500);
+}
+
+
+console.log("Push-Up Coach v1.8.2 запущен");
