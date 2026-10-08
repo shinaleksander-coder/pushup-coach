@@ -667,4 +667,4 @@ if (firstStartupError) {
 }
 
 
-console.log("Push-Up Coach v1.8.3 запущен");
+console.log("Push-Up Coach v1.8.4 запущен");
