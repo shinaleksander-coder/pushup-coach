@@ -1,22 +1,21 @@
 /* =========================================
    SERVICE WORKER
-   Network-first для HTML.
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v23";
+const CACHE_NAME = "pushup-coach-v24";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=19",
-    "./storage.js?v=19",
-    "./grips.js?v=19",
-    "./program.js?v=19",
-    "./workout.js?v=19",
-    "./ui.js?v=19",
-    "./app.js?v=19",
+    "./styles.css?v=20",
+    "./storage.js?v=20",
+    "./grips.js?v=20",
+    "./program.js?v=20",
+    "./workout.js?v=20",
+    "./ui.js?v=20",
+    "./app.js?v=20",
     "./manifest.json",
     "./icon.svg"
 ];

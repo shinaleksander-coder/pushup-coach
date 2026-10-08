@@ -37,11 +37,6 @@ let editingHistoryDraft = null;
 let achievementQueue = [];
 
 
-/* =========================================
-   ЭКРАНЫ
-   ========================================= */
-
-
 function showScreen(id) {
 
     screens.forEach(screen => {
@@ -65,11 +60,6 @@ function showScreen(id) {
 
     window.scrollTo(0, 0);
 }
-
-
-/* =========================================
-   ПРИВЕТСТВИЕ
-   ========================================= */
 
 
 function showWelcome() {
@@ -110,11 +100,6 @@ function showWelcomeOnFirstLaunch() {
 function showWelcomeAgain() {
     showWelcome();
 }
-
-
-/* =========================================
-   ВЕС
-   ========================================= */
 
 
 function updateWeightHistory(newWeight, weightWasEmpty) {
@@ -202,7 +187,7 @@ function renderHome() {
             : "не указан";
 
     renderMaxPushups();
-    renderFreezeBanner();
+    renderMissedBanner();
     renderCompare();
 
     const startButton = document.getElementById("startWorkout");
@@ -238,59 +223,131 @@ function renderMaxPushups() {
 
 
 /* =========================================
-   ЗАМОРОЗКА
+   БАННЕР ПРОПУСКА / ЗАМОРОЗКИ
    ========================================= */
 
 
-function renderFreezeBanner() {
+function renderMissedBanner() {
 
     const banner = document.getElementById("homeFreezeBanner");
     if (!banner) return;
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
+    const info = getMissedInfo();
 
-    if (history.length === 0) {
+    // Ничего показывать не нужно
+    if (info.level === "none") {
         banner.classList.add("hidden");
         return;
     }
 
-    const last = new Date(history[history.length - 1].date);
-    const days = Math.floor(
-        (Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)
-    );
-
-    if (days < 14) {
+    // Сегодня пользователь уже отложил баннер
+    if (isBannerSkippedToday()) {
         banner.classList.add("hidden");
         return;
     }
 
     banner.classList.remove("hidden");
+    banner.classList.remove("freeze-banner", "strong-banner", "soft-banner");
+
+    if (info.level === "freeze") {
+        banner.classList.add("freeze-banner");
+        banner.innerHTML = `
+            <div class="freeze-text">
+                <strong>${info.days} дней</strong> без тренировки.
+                Нагрузка будет снижена, чтобы вернуться мягко.
+            </div>
+            <div class="freeze-actions">
+                <button class="freeze-button freeze-continue" id="freezeContinue">
+                    Продолжить
+                </button>
+                <button class="freeze-button freeze-repeat" id="freezeRepeat">
+                    Повторить
+                </button>
+            </div>
+        `;
+
+        document.getElementById("freezeContinue")
+            .addEventListener("click", () => {
+                skipBannerForToday();
+                banner.classList.add("hidden");
+            });
+
+        document.getElementById("freezeRepeat")
+            .addEventListener("click", () => {
+                saveJSON(STORAGE_KEYS.repeatLast, true);
+                skipBannerForToday();
+                banner.classList.add("hidden");
+                startNewWorkout();
+            });
+
+        return;
+    }
+
+    if (info.level === "strong") {
+        banner.classList.add("strong-banner");
+
+        const missedText = info.missedPlan > 0
+            ? `Пропущено <strong>${info.missedPlan}</strong> плановых по графику. `
+            : "";
+
+        banner.innerHTML = `
+            <div class="freeze-text">
+                <strong>${info.days} дней</strong> без тренировки. ${missedText}
+                Нагрузка снижена, чтобы вернуться в ритм.
+            </div>
+            <div class="freeze-actions">
+                <button class="freeze-button freeze-continue" id="missedStart">
+                    Начать сейчас
+                </button>
+                <button class="freeze-button freeze-skip" id="missedSkip">
+                    Пропустить день
+                </button>
+            </div>
+        `;
+
+        document.getElementById("missedStart")
+            .addEventListener("click", () => {
+                banner.classList.add("hidden");
+                startNewWorkout();
+            });
+
+        document.getElementById("missedSkip")
+            .addEventListener("click", () => {
+                skipBannerForToday();
+                banner.classList.add("hidden");
+            });
+
+        return;
+    }
+
+    // soft
+    banner.classList.add("soft-banner");
 
     banner.innerHTML = `
         <div class="freeze-text">
-            Прошло <strong>${days} дней</strong> с последней тренировки.
-            Можно продолжить по программе или повторить последнюю.
+            <strong>${info.days} дня</strong> без тренировки.
+            Самое время вспомнить про программу.
         </div>
         <div class="freeze-actions">
-            <button class="freeze-button freeze-continue" id="freezeContinue">
-                Продолжить
+            <button class="freeze-button freeze-continue" id="missedStart">
+                Начать сейчас
             </button>
-            <button class="freeze-button freeze-repeat" id="freezeRepeat">
-                Повторить
+            <button class="freeze-button freeze-skip" id="missedSkip">
+                Позже
             </button>
         </div>
     `;
 
-    document.getElementById("freezeContinue")
+    document.getElementById("missedStart")
         .addEventListener("click", () => {
-            banner.classList.add("hidden");
-        });
-
-    document.getElementById("freezeRepeat")
-        .addEventListener("click", () => {
-            saveJSON(STORAGE_KEYS.repeatLast, true);
             banner.classList.add("hidden");
             startNewWorkout();
+        });
+
+    document.getElementById("missedSkip")
+        .addEventListener("click", () => {
+            skipBannerForToday();
+            banner.classList.add("hidden");
         });
 }
 
@@ -359,11 +416,6 @@ function getStrengthBefore(daysAgo) {
 
     return max || null;
 }
-
-
-/* =========================================
-   РЕКОРД
-   ========================================= */
 
 
 function getRecord() {
@@ -502,18 +554,12 @@ function updateTimer() {
     statusEl.textContent =
         `Отдых: ${minutes}:${seconds.toString().padStart(2, "0")}`;
 
-    // Подсветка на последних 5 секундах
     if (remainingSeconds > 0 && remainingSeconds <= 5) {
         statusEl.classList.add("countdown-final");
     } else {
         statusEl.classList.remove("countdown-final");
     }
 }
-
-
-/* =========================================
-   МОДАЛКА ХВАТА
-   ========================================= */
 
 
 function openGripModal() {
@@ -536,11 +582,6 @@ function openGripModal() {
 function closeGripModal() {
     document.getElementById("gripModal").classList.add("hidden");
 }
-
-
-/* =========================================
-   РЕЗУЛЬТАТ
-   ========================================= */
 
 
 function renderDoneScreen(record, saved, isNewRecord) {
@@ -604,8 +645,6 @@ function renderDoneScreen(record, saved, isNewRecord) {
    ========================================= */
 
 
-// Разблокированные ачивки вычисляются ДИНАМИЧЕСКИ
-// на текущей конфигурации программы.
 function getUnlockedAchievements() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -625,8 +664,6 @@ function getUnlockedAchievements() {
 }
 
 
-// "Показанные" модалкой — храним отдельно,
-// чтобы не показывать повторно.
 function getShownAchievements() {
     return loadJSON(STORAGE_KEYS.achievements, []);
 }
@@ -989,6 +1026,7 @@ function renderProgramList() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     const stats = getProgramStats();
+    const missedInfo = getMissedInfo();
     const planRecords = history.filter(r => !r.isExtra);
     const extras = history.filter(r => r.isExtra);
 
@@ -1004,6 +1042,29 @@ function renderProgramList() {
     } else {
         extrasEl.textContent = "";
         extrasEl.classList.add("hidden");
+    }
+
+    // Строка пропусков
+    const missedRow = document.getElementById("programMissedRow");
+
+    if (missedRow) {
+        if (missedInfo.weeklyTarget > 0 &&
+            missedInfo.weeklyMissed > 0) {
+
+            missedRow.textContent =
+                `⚠ Пропущено за неделю: ${missedInfo.weeklyMissed} из ${missedInfo.weeklyTarget}`;
+
+            missedRow.classList.remove("hidden");
+
+            if (missedInfo.weeklyMissed >= 2) {
+                missedRow.classList.add("missed-critical");
+            } else {
+                missedRow.classList.remove("missed-critical");
+            }
+        } else {
+            missedRow.textContent = "";
+            missedRow.classList.add("hidden");
+        }
     }
 
     const predictions = predictFutureWorkouts();
@@ -1137,6 +1198,18 @@ function renderSettings() {
             ? "program"
             : String(settings.restOverride);
 
+    // Дни недели
+    const savedDays = Array.isArray(settings.trainingDays)
+        ? settings.trainingDays
+        : [];
+
+    document
+        .querySelectorAll(".day-checkbox")
+        .forEach(cb => {
+            const day = Number(cb.dataset.day);
+            cb.checked = savedDays.includes(day);
+        });
+
     renderAbout();
 }
 
@@ -1198,10 +1271,21 @@ function saveSettings() {
         }
     }
 
+    const trainingDays = [];
+
+    document
+        .querySelectorAll(".day-checkbox")
+        .forEach(cb => {
+            if (cb.checked) {
+                trainingDays.push(Number(cb.dataset.day));
+            }
+        });
+
     settings.name = name;
     settings.weight = weight;
     settings.voiceCountdown = voiceInput.checked;
     settings.restOverride = restOverride;
+    settings.trainingDays = trainingDays;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -1263,11 +1347,6 @@ function shareApp() {
 }
 
 
-/* =========================================
-   ПРОВЕРКА ОБНОВЛЕНИЯ
-   ========================================= */
-
-
 async function checkForUpdates() {
 
     const confirmed = confirm(
@@ -1310,7 +1389,7 @@ async function checkForUpdates() {
 function exportData() {
 
     const data = {
-        version: "1.6",
+        version: "1.7",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),

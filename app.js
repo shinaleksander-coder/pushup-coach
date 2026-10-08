@@ -268,6 +268,27 @@ document.getElementById("saveCustom")
 
 
 /* =========================================
+   ДНИ НЕДЕЛИ
+   ========================================= */
+
+
+document
+    .querySelectorAll(".day-checkbox")
+    .forEach(cb => {
+        cb.addEventListener("change", () => {
+
+            const checked = document
+                .querySelectorAll(".day-checkbox:checked");
+
+            if (checked.length > 0 && checked.length < 2) {
+                // Можно, но предупредим
+                // (не блокируем — пользователь решает)
+            }
+        });
+    });
+
+
+/* =========================================
    ПРИВЕТСТВИЕ
    ========================================= */
 
@@ -558,4 +579,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.6 запущен");
+console.log("Push-Up Coach v1.7 запущен");

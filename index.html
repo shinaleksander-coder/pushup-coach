@@ -540,10 +540,12 @@
                 <div class="section-title">Программа</div>
 
                 <p class="program-summary">
-                    Пройдено:
+                  Пройдено:
                     <strong id="programProgress">0 / 72</strong>
                     <span id="programExtras" class="program-extras hidden"></span>
                 </p>
+
+                <p id="programMissedRow" class="program-missed hidden"></p>
 
                 <div id="programList"></div>
 
@@ -601,6 +603,19 @@
                         <option value="180">180 сек</option>
                     </select>
                 </label>
+                
+                 <div class="setting-row setting-days">
+                    <span>Дни тренировок</span>
+                    <div class="days-grid">
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="1"> Пн</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="2"> Вт</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="3"> Ср</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="4"> Чт</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="5"> Пт</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="6"> Сб</label>
+                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="7"> Вс</label>
+                    </div>
+                </div>
 
                 <button class="primary-button" id="saveSettings">
                     Сохранить

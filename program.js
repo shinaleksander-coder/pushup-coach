@@ -1,6 +1,5 @@
 /* =========================================
    PROGRAM.JS
-   Режимы программы + умный движок.
    ========================================= */
 
 
@@ -13,11 +12,6 @@ const PROGRAM_GRIPS = [
 
 
 const BLOCK_WEEKS = 6;
-
-
-/* =========================================
-   ПРЕСЕТЫ РЕЖИМОВ
-   ========================================= */
 
 
 const PROGRAM_MODES = {
@@ -43,11 +37,6 @@ const PROGRAM_MODES = {
     }
 
 };
-
-
-/* =========================================
-   ГЕНЕРАТОР
-   ========================================= */
 
 
 function buildProgram(config) {
@@ -158,11 +147,6 @@ function rebuildProgram() {
 }
 
 
-/* =========================================
-   УТИЛИТЫ
-   ========================================= */
-
-
 function getEffectiveReps(record) {
 
     if (!record || !Array.isArray(record.results) ||
@@ -179,14 +163,116 @@ function getEffectiveReps(record) {
 }
 
 
-// Применяет restOverride поверх любого значения.
-// Если override не задан — возвращает исходное.
 function applyRestOverride(rest) {
     if (settings.restOverride !== null &&
         settings.restOverride !== undefined) {
         return settings.restOverride;
     }
     return rest;
+}
+
+
+/* =========================================
+   ПРОПУСКИ И ДНИ БЕЗ ТРЕНИРОВКИ
+   ========================================= */
+
+
+function getLastWorkoutDate() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    if (history.length === 0) return null;
+
+    return new Date(history[history.length - 1].date);
+}
+
+
+// Информация о пропусках и «свежести» последней тренировки.
+// Уровни:
+//   none   — 0-3 дня, всё ок
+//   soft   — 4-6 дней, мягкое напоминание
+//   strong — 7-13 дней, сильное + авто-снижение
+//   freeze — 14+ дней, заморозка
+function getMissedInfo() {
+
+    const empty = {
+        level: "none",
+        days: 0,
+        weeklyTarget: 0,
+        weeklyDone: 0,
+        weeklyMissed: 0,
+        missedPlan: 0
+    };
+
+    const last = getLastWorkoutDate();
+    if (!last) return empty;
+
+    const daysSince = Math.floor(
+        (Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
+    const weeklyTarget = getActiveConfig().daysPerWeek || 3;
+
+    // Выполнено за последние 7 дней (только плановые)
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const weeklyDone = history.filter(r =>
+        !r.isExtra && new Date(r.date).getTime() >= weekAgo
+    ).length;
+
+    const weeklyMissed = Math.max(0, weeklyTarget - weeklyDone);
+
+    // Пропущенные плановые дни с последней тренировки
+    let missedPlan = 0;
+
+    const trainingDays = Array.isArray(settings.trainingDays)
+        ? settings.trainingDays
+        : [];
+
+    if (trainingDays.length > 0) {
+        // Считаем по конкретным дням недели
+        for (let i = 1; i <= daysSince; i++) {
+            const d = new Date(last.getTime() + i * 24 * 60 * 60 * 1000);
+            const dow = d.getDay() === 0 ? 7 : d.getDay();
+            if (trainingDays.includes(dow)) missedPlan++;
+        }
+    } else {
+        // Плавающий интервал
+        const interval = 7 / weeklyTarget;
+        missedPlan = Math.max(0, Math.floor(daysSince / interval) - 1);
+    }
+
+    let level = "none";
+    if (daysSince >= 14) level = "freeze";
+    else if (daysSince >= 7) level = "strong";
+    else if (daysSince >= 4) level = "soft";
+
+    return {
+        level,
+        days: daysSince,
+        weeklyTarget,
+        weeklyDone,
+        weeklyMissed,
+        missedPlan
+    };
+}
+
+
+// Проверяет, отложен ли баннер на сегодня
+function isBannerSkippedToday() {
+
+    const skipDate = loadJSON(STORAGE_KEYS.skipBannerDate, null);
+
+    if (!skipDate) return false;
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    return skipDate === today;
+}
+
+
+function skipBannerForToday() {
+    const today = new Date().toISOString().slice(0, 10);
+    saveJSON(STORAGE_KEYS.skipBannerDate, today);
 }
 
 
@@ -206,9 +292,7 @@ function getProgramStats() {
         history.filter(r => r.isExtra).length;
 
     const planTotal = PROGRAM.length;
-
     const total = planTotal + extrasCount;
-
     const completed = planDone + extrasCount;
 
     return {
@@ -341,6 +425,17 @@ function getNextWorkoutFor(history, forceRepeatLast) {
 
     reps = Math.max(3, Math.max(base.reps - 3, reps));
 
+    // Авто-снижение после длинного перерыва
+    const missedInfo = getMissedInfo();
+
+    if (missedInfo.level === "strong") {
+        reps = Math.max(3, reps - 1);
+        reason = "После перерыва — входим мягко";
+    } else if (missedInfo.level === "freeze") {
+        reps = Math.max(3, reps - 2);
+        reason = "Долгий перерыв — снижаем нагрузку";
+    }
+
     let rest = base.rest;
 
     if (diff === "easy" && allDone) {
@@ -362,11 +457,6 @@ function getNextWorkout(forceRepeatLast) {
     const history = loadJSON(STORAGE_KEYS.history, []);
     return getNextWorkoutFor(history, forceRepeatLast);
 }
-
-
-/* =========================================
-   ПРОГНОЗ
-   ========================================= */
 
 
 function predictFutureWorkouts() {

@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
     welcomeShown: "welcomeShown",
     migrationV12: "migrationV12",
     achievements: "unlockedAchievements",
-    repeatLast: "repeatLastFlag"
+    repeatLast: "repeatLastFlag",
+    skipBannerDate: "skipBannerDate"
 };
 
 
@@ -63,9 +64,12 @@ const defaultSettings = {
     customRepBase: 5,
     customGrowth: 1,
 
-    // null = использовать отдых из программы
-    // число = жёстко заданный отдых в секундах
-    restOverride: null
+    restOverride: null,
+
+    // Дни недели для тренировок.
+    // 1 = понедельник, 7 = воскресенье.
+    // Пустой массив = не задано, работаем по интервалу.
+    trainingDays: []
 };
 
 
