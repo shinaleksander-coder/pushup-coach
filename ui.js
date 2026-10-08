@@ -35,6 +35,7 @@ const ACHIEVEMENTS = [
 let editingHistoryIndex = -1;
 let editingHistoryDraft = null;
 let achievementQueue = [];
+let pendingSettings = null;
 
 
 function showScreen(id) {
@@ -234,23 +235,29 @@ function renderMissedBanner() {
 
     const info = getMissedInfo();
 
-    // Ничего показывать не нужно
     if (info.level === "none") {
         banner.classList.add("hidden");
         return;
     }
 
-    // Сегодня пользователь уже отложил баннер
     if (isBannerSkippedToday()) {
         banner.classList.add("hidden");
         return;
     }
 
     banner.classList.remove("hidden");
-    banner.classList.remove("freeze-banner", "strong-banner", "soft-banner");
+    banner.classList.remove(
+        "freeze-banner", "strong-banner", "soft-banner"
+    );
+
+    const missedText = info.missedPlan > 0
+        ? `Пропущено <strong>${info.missedPlan}</strong> плановых. `
+        : "";
 
     if (info.level === "freeze") {
+
         banner.classList.add("freeze-banner");
+
         banner.innerHTML = `
             <div class="freeze-text">
                 <strong>${info.days} дней</strong> без тренировки.
@@ -284,11 +291,8 @@ function renderMissedBanner() {
     }
 
     if (info.level === "strong") {
-        banner.classList.add("strong-banner");
 
-        const missedText = info.missedPlan > 0
-            ? `Пропущено <strong>${info.missedPlan}</strong> плановых по графику. `
-            : "";
+        banner.classList.add("strong-banner");
 
         banner.innerHTML = `
             <div class="freeze-text">
@@ -320,7 +324,6 @@ function renderMissedBanner() {
         return;
     }
 
-    // soft
     banner.classList.add("soft-banner");
 
     banner.innerHTML = `
@@ -350,11 +353,6 @@ function renderMissedBanner() {
             banner.classList.add("hidden");
         });
 }
-
-
-/* =========================================
-   СРАВНЕНИЕ
-   ========================================= */
 
 
 function renderCompare() {
@@ -1044,7 +1042,6 @@ function renderProgramList() {
         extrasEl.classList.add("hidden");
     }
 
-    // Строка пропусков
     const missedRow = document.getElementById("programMissedRow");
 
     if (missedRow) {
@@ -1198,7 +1195,6 @@ function renderSettings() {
             ? "program"
             : String(settings.restOverride);
 
-    // Дни недели
     const savedDays = Array.isArray(settings.trainingDays)
         ? settings.trainingDays
         : [];
@@ -1210,7 +1206,60 @@ function renderSettings() {
             cb.checked = savedDays.includes(day);
         });
 
+    updateDaysHint();
     renderAbout();
+}
+
+
+function updateDaysHint() {
+
+    const hintEl = document.getElementById("daysHint");
+    if (!hintEl) return;
+
+    const programDays = getActiveConfig().daysPerWeek || 3;
+    const checked = document
+        .querySelectorAll(".day-checkbox:checked").length;
+
+    if (checked > 0 && checked !== programDays) {
+
+        hintEl.innerHTML =
+            `⚠ В программе <strong>${programDays}</strong> ` +
+            `${pluralDays(programDays)} в неделю, ` +
+            `а ты отметил <strong>${checked}</strong>. ` +
+            `При сохранении спросим, что делать.`;
+
+        hintEl.classList.remove("hidden");
+        hintEl.classList.add("hint-warning");
+
+    } else if (checked > 0) {
+
+        hintEl.innerHTML =
+            `✓ Совпадает с программой: ` +
+            `<strong>${programDays}</strong> ${pluralDays(programDays)} в неделю.`;
+
+        hintEl.classList.remove("hidden");
+        hintEl.classList.remove("hint-warning");
+
+    } else {
+
+        hintEl.innerHTML =
+            `Программа: <strong>${programDays}</strong> ` +
+            `${pluralDays(programDays)} в неделю. ` +
+            `Отметь дни — или оставь пусто для гибкого графика.`;
+
+        hintEl.classList.remove("hidden");
+        hintEl.classList.remove("hint-warning");
+    }
+}
+
+
+function pluralDays(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return "тренировка";
+    if (mod10 >= 2 && mod10 <= 4 &&
+        (mod100 < 10 || mod100 >= 20)) return "тренировки";
+    return "тренировок";
 }
 
 
@@ -1281,103 +1330,121 @@ function saveSettings() {
             }
         });
 
-    settings.name = name;
-    settings.weight = weight;
-    settings.voiceCountdown = voiceInput.checked;
-    settings.restOverride = restOverride;
-    settings.trainingDays = trainingDays;
+    const programDays = getActiveConfig().daysPerWeek || 3;
+
+    // Если есть конфликт между числом отмеченных дней
+    // и планом программы — спрашиваем.
+    if (trainingDays.length > 0 &&
+        trainingDays.length !== programDays) {
+
+        pendingSettings = {
+            name,
+            weight,
+            weightWasEmpty,
+            voiceCountdown: voiceInput.checked,
+            restOverride,
+            trainingDays
+        };
+
+        showModeConflictModal(
+            trainingDays.length,
+            programDays
+        );
+
+        return;
+    }
+
+    applySettings({
+        name,
+        weight,
+        weightWasEmpty,
+        voiceCountdown: voiceInput.checked,
+        restOverride,
+        trainingDays
+    });
+}
+
+
+function applySettings(data) {
+
+    settings.name = data.name;
+    settings.weight = data.weight;
+    settings.voiceCountdown = data.voiceCountdown;
+    settings.restOverride = data.restOverride;
+    settings.trainingDays = data.trainingDays;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
-    updateWeightHistory(weight, weightWasEmpty);
+    updateWeightHistory(data.weight, data.weightWasEmpty);
 
     renderHome();
     showScreen("screenHome");
 }
 
 
-function resetProgress() {
+function showModeConflictModal(userDays, programDays) {
 
-    const confirmed = confirm(
-        "Сбросить весь прогресс?\n\n" +
-        "Это удалит:\n" +
-        "• всю историю тренировок\n" +
-        "• текущую активную тренировку\n" +
-        "• историю веса\n" +
-        "• достижения\n\n" +
-        "Программа начнётся с Недели 1, Дня 1."
-    );
+    document.getElementById("modeConflictText").innerHTML =
+        `В программе <strong>${programDays}</strong> ` +
+        `${pluralDays(programDays)} в неделю, ` +
+        `а ты отметил <strong>${userDays}</strong>.<br><br>` +
+        `<strong>Подстроить</strong> — программа станет ` +
+        `${userDays}-дневной (режим «Своя»).<br>` +
+        `<strong>Оставить</strong> — дни сохранятся как ` +
+        `предпочтения, но план останется ${programDays}-дневным.`;
 
-    if (!confirmed) return;
-
-    removeStorage(STORAGE_KEYS.history);
-    removeStorage(STORAGE_KEYS.activeWorkout);
-    removeStorage(STORAGE_KEYS.weightHistory);
-    removeStorage(STORAGE_KEYS.achievements);
-
-    alert("Прогресс сброшен.");
-
-    ensureWeightHistory();
-    renderHome();
-    showScreen("screenHome");
+    document.getElementById("modeConflictModal")
+        .classList.remove("hidden");
 }
 
 
-function shareApp() {
+function confirmModeAdjust() {
 
-    const url = window.location.href;
+    if (!pendingSettings) return;
 
-    if (navigator.share) {
-        navigator.share({
-            title: "Push-Up Coach",
-            text: "Персональный тренер по отжиманиям",
-            url
-        }).catch(() => {});
-        return;
-    }
+    const userDays = pendingSettings.trainingDays.length;
 
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(url)
-            .then(() => alert("Ссылка скопирована."))
-            .catch(() => alert("Ссылка: " + url));
-        return;
-    }
+    // Переключаем на «Своя» с сохранением остальных
+    // параметров программы
+    settings.customDays = userDays;
+    settings.customSets = settings.customSets || 3;
+    settings.customRepBase = settings.customRepBase || 5;
+    settings.customGrowth =
+        settings.customGrowth !== undefined
+            ? settings.customGrowth
+            : 1;
+    settings.programMode = "custom";
 
-    alert("Ссылка: " + url);
+    saveJSON(STORAGE_KEYS.settings, settings);
+    rebuildProgram();
+
+    const data = pendingSettings;
+    pendingSettings = null;
+
+    closeModeConflictModal();
+    applySettings(data);
 }
 
 
-async function checkForUpdates() {
+function confirmModeKeep() {
 
-    const confirmed = confirm(
-        "Проверить обновление?\n\n" +
-        "Приложение снесёт кэш и перезагрузится. " +
-        "Прогресс сохранится."
-    );
+    if (!pendingSettings) return;
 
-    if (!confirmed) return;
+    const data = pendingSettings;
+    pendingSettings = null;
 
-    try {
-        if ("serviceWorker" in navigator) {
-            const regs =
-                await navigator.serviceWorker.getRegistrations();
-            for (const r of regs) {
-                await r.unregister();
-            }
-        }
+    closeModeConflictModal();
+    applySettings(data);
+}
 
-        if ("caches" in window) {
-            const keys = await caches.keys();
-            await Promise.all(
-                keys.map(k => caches.delete(k))
-            );
-        }
 
-        location.reload();
-    } catch (error) {
-        console.warn("Ошибка обновления:", error);
-        location.reload();
-    }
+function cancelModeConflict() {
+
+    pendingSettings = null;
+    closeModeConflictModal();
+
+    // Восстанавливаем UI настроек в исходное состояние
+    renderSettings();
 }
 
 
@@ -1389,7 +1456,7 @@ async function checkForUpdates() {
 function exportData() {
 
     const data = {
-        version: "1.7",
+        version: "1.8",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),

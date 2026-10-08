@@ -186,12 +186,15 @@ function getLastWorkoutDate() {
 }
 
 
-// Информация о пропусках и «свежести» последней тренировки.
 // Уровни:
-//   none   — 0-3 дня, всё ок
-//   soft   — 4-6 дней, мягкое напоминание
-//   strong — 7-13 дней, сильное + авто-снижение
-//   freeze — 14+ дней, заморозка
+//   none   — 0-3 дня
+//   soft   — 4-6 дней
+//   strong — 7-13 дней (авто-снижение −1)
+//   freeze — 14+ дней (авто-снижение −2)
+//
+// Пропуски считаются по конкретным дням недели, только
+// если их количество совпадает с daysPerWeek программы.
+// Иначе — по интервалу 7/daysPerWeek.
 function getMissedInfo() {
 
     const empty = {
@@ -200,7 +203,8 @@ function getMissedInfo() {
         weeklyTarget: 0,
         weeklyDone: 0,
         weeklyMissed: 0,
-        missedPlan: 0
+        missedPlan: 0,
+        byExactDays: false
     };
 
     const last = getLastWorkoutDate();
@@ -212,7 +216,6 @@ function getMissedInfo() {
 
     const weeklyTarget = getActiveConfig().daysPerWeek || 3;
 
-    // Выполнено за последние 7 дней (только плановые)
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const history = loadJSON(STORAGE_KEYS.history, []);
     const weeklyDone = history.filter(r =>
@@ -221,24 +224,35 @@ function getMissedInfo() {
 
     const weeklyMissed = Math.max(0, weeklyTarget - weeklyDone);
 
-    // Пропущенные плановые дни с последней тренировки
-    let missedPlan = 0;
-
     const trainingDays = Array.isArray(settings.trainingDays)
         ? settings.trainingDays
         : [];
 
-    if (trainingDays.length > 0) {
-        // Считаем по конкретным дням недели
+    // Используем конкретные дни недели, только если их
+    // количество совпадает с планом программы.
+    const useExactDays =
+        trainingDays.length > 0 &&
+        trainingDays.length === weeklyTarget;
+
+    let missedPlan = 0;
+
+    if (useExactDays) {
+
         for (let i = 1; i <= daysSince; i++) {
-            const d = new Date(last.getTime() + i * 24 * 60 * 60 * 1000);
+            const d = new Date(
+                last.getTime() + i * 24 * 60 * 60 * 1000
+            );
             const dow = d.getDay() === 0 ? 7 : d.getDay();
             if (trainingDays.includes(dow)) missedPlan++;
         }
+
     } else {
-        // Плавающий интервал
+
         const interval = 7 / weeklyTarget;
-        missedPlan = Math.max(0, Math.floor(daysSince / interval) - 1);
+        missedPlan = Math.max(
+            0,
+            Math.floor(daysSince / interval) - 1
+        );
     }
 
     let level = "none";
@@ -252,12 +266,12 @@ function getMissedInfo() {
         weeklyTarget,
         weeklyDone,
         weeklyMissed,
-        missedPlan
+        missedPlan,
+        byExactDays: useExactDays
     };
 }
 
 
-// Проверяет, отложен ли баннер на сегодня
 function isBannerSkippedToday() {
 
     const skipDate = loadJSON(STORAGE_KEYS.skipBannerDate, null);
@@ -265,7 +279,6 @@ function isBannerSkippedToday() {
     if (!skipDate) return false;
 
     const today = new Date().toISOString().slice(0, 10);
-
     return skipDate === today;
 }
 
@@ -425,7 +438,6 @@ function getNextWorkoutFor(history, forceRepeatLast) {
 
     reps = Math.max(3, Math.max(base.reps - 3, reps));
 
-    // Авто-снижение после длинного перерыва
     const missedInfo = getMissedInfo();
 
     if (missedInfo.level === "strong") {

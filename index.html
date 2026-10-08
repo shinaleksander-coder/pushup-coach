@@ -59,7 +59,7 @@
 
     <link
         rel="stylesheet"
-        href="styles.css?v=19"
+        href="styles.css?v=21"
     >
 
 </head>
@@ -615,6 +615,8 @@
                         <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="6"> Сб</label>
                         <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="7"> Вс</label>
                     </div>
+                    <div id="daysHint" class="days-hint hidden"></div>
+                </div>
                 </div>
 
                 <button class="primary-button" id="saveSettings">
@@ -706,6 +708,27 @@
             </section>
 
         </section>
+        
+         <!-- ========================= -->
+        <!-- МОДАЛКА КОНФЛИКТА ДНЕЙ -->
+        <!-- ========================= -->
+
+        <div id="modeConflictModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <h2 class="modal-title">Несовпадение настроек</h2>
+                <p id="modeConflictText" class="modal-text" style="text-align:left"></p>
+                <button class="primary-button" id="modeConflictAdjust">
+                    Подстроить программу
+                </button>
+                <button class="secondary-button" id="modeConflictKeep">
+                    Оставить программу
+                </button>
+                <button class="secondary-button" id="modeConflictCancel">
+                    Отмена
+                </button>
+            </div>
+        </div>
+
 
     </main>
 
@@ -899,12 +922,12 @@
 
 
 
-    <script src="storage.js?v=19"></script>
-    <script src="grips.js?v=19"></script>
-    <script src="program.js?v=19"></script>
-    <script src="workout.js?v=19"></script>
-    <script src="ui.js?v=19"></script>
-    <script src="app.js?v=19"></script>
+    <script src="storage.js?v=21"></script>
+    <script src="grips.js?v=21"></script>
+    <script src="program.js?v=21"></script>
+    <script src="workout.js?v=21"></script>
+    <script src="ui.js?v=21"></script>
+    <script src="app.js?v=21"></script>
 
 </body>
 

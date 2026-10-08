@@ -109,6 +109,21 @@ document.getElementById("achievementModal")
 
 
 /* =========================================
+   МОДАЛКА КОНФЛИКТА ДНЕЙ
+   ========================================= */
+
+
+document.getElementById("modeConflictAdjust")
+    .addEventListener("click", confirmModeAdjust);
+
+document.getElementById("modeConflictKeep")
+    .addEventListener("click", confirmModeKeep);
+
+document.getElementById("modeConflictCancel")
+    .addEventListener("click", cancelModeConflict);
+
+
+/* =========================================
    НАСТРОЙКА ОТДЫХА
    ========================================= */
 
@@ -150,6 +165,20 @@ document.getElementById("restInput")
 
 
 /* =========================================
+   ДНИ НЕДЕЛИ
+   ========================================= */
+
+
+document
+    .querySelectorAll(".day-checkbox")
+    .forEach(cb => {
+        cb.addEventListener("change", () => {
+            updateDaysHint();
+        });
+    });
+
+
+/* =========================================
    РЕЖИМ ПРОГРАММЫ
    ========================================= */
 
@@ -184,9 +213,7 @@ document
                     `Сменить режим на «${btn.querySelector(".mode-button-title").textContent}»?\n\n` +
                     `Ты прошёл ${programIndex} плановых тренировок.\n` +
                     `В новой программе продолжишь с Недели ${newWeek}, Дня ${newDay}.\n\n` +
-                    `История, вес и достижения сохранятся.\n` +
-                    `Номер недели может «откатиться» — это нормально, ` +
-                    `нагрузка пересчитается по твоей силе.`
+                    `История, вес и достижения сохранятся.`
                 );
 
                 if (!ok) return;
@@ -196,9 +223,9 @@ document
             saveJSON(STORAGE_KEYS.settings, settings);
 
             rebuildProgram();
-
             renderProgram();
             renderHome();
+            updateDaysHint();
         });
     });
 
@@ -259,32 +286,11 @@ document.getElementById("saveCustom")
         saveJSON(STORAGE_KEYS.settings, settings);
 
         rebuildProgram();
-
         renderProgram();
         renderHome();
+        updateDaysHint();
 
         alert("Индивидуальная программа применена.");
-    });
-
-
-/* =========================================
-   ДНИ НЕДЕЛИ
-   ========================================= */
-
-
-document
-    .querySelectorAll(".day-checkbox")
-    .forEach(cb => {
-        cb.addEventListener("change", () => {
-
-            const checked = document
-                .querySelectorAll(".day-checkbox:checked");
-
-            if (checked.length > 0 && checked.length < 2) {
-                // Можно, но предупредим
-                // (не блокируем — пользователь решает)
-            }
-        });
     });
 
 
@@ -579,4 +585,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.7 запущен");
+console.log("Push-Up Coach v1.8 запущен");
