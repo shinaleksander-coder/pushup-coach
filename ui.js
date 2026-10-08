@@ -1274,51 +1274,144 @@ function pluralDays(n) {
 }
 
 
+/* =========================================
+   ЭКСПОРТ ДАННЫХ — три уровня отката
+   ========================================= */
+
+
 function exportData() {
 
-    const data = {
-        version: "1.8.3",
-        exportedAt: new Date().toISOString(),
-        settings: loadJSON(STORAGE_KEYS.settings, {}),
-        history: loadJSON(STORAGE_KEYS.history, []),
-        weightHistory: loadJSON(STORAGE_KEYS.weightHistory, []),
-        achievements: loadJSON(STORAGE_KEYS.achievements, [])
-    };
+    console.log("[export] старт");
 
-    const json = JSON.stringify(data, null, 2);
-
-    const filename =
-        `pushup-coach-backup-${new Date()
-            .toISOString()
-            .slice(0, 10)}.json`;
-
-    const blob = new Blob([json], { type: "application/json" });
+    let json;
+    let filename;
 
     try {
-        const file = new File([blob], filename, {
-            type: "application/json"
-        });
+        const data = {
+            version: "1.8.4",
+            exportedAt: new Date().toISOString(),
+            settings: loadJSON(STORAGE_KEYS.settings, {}),
+            history: loadJSON(STORAGE_KEYS.history, []),
+            weightHistory: loadJSON(STORAGE_KEYS.weightHistory, []),
+            achievements: loadJSON(STORAGE_KEYS.achievements, [])
+        };
 
-        if (navigator.canShare &&
-            navigator.canShare({ files: [file] })) {
+        json = JSON.stringify(data, null, 2);
+        filename =
+            `pushup-coach-backup-${new Date()
+                .toISOString()
+                .slice(0, 10)}.json`;
 
-            navigator.share({
-                files: [file],
-                title: "Push-Up Coach — бэкап"
-            }).catch(() => {});
+        console.log("[export] данных:", json.length, "символов");
+
+    } catch (err) {
+        alert("Ошибка сбора данных: " + err.message);
+        return;
+    }
+
+    // Уровень 1: share с файлом
+    if (navigator.share && navigator.canShare) {
+        try {
+            const blob = new Blob([json], { type: "application/json" });
+            const file = new File([blob], filename, {
+                type: "application/json"
+            });
+
+            if (navigator.canShare({ files: [file] })) {
+
+                console.log("[export] пробуем share файлом");
+
+                navigator.share({
+                    files: [file],
+                    title: "Push-Up Coach — бэкап"
+                })
+                .then(() => {
+                    console.log("[export] share успешно");
+                })
+                .catch(err => {
+                    if (err && err.name === "AbortError") {
+                        console.log("[export] отменено пользователем");
+                        return;
+                    }
+                    console.warn("[export] share файлом не удалось:", err);
+                    exportFallbackDownload(json, filename);
+                });
+
+                return;
+            }
+        } catch (err) {
+            console.warn("[export] ошибка share:", err);
+        }
+    }
+
+    exportFallbackDownload(json, filename);
+}
+
+
+function exportFallbackDownload(json, filename) {
+
+    console.log("[export] пробуем скачивание");
+
+    try {
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        console.log("[export] скачивание инициировано");
+
+    } catch (err) {
+        console.warn("[export] ошибка скачивания:", err);
+        exportFallbackClipboard(json);
+    }
+}
+
+
+async function exportFallbackClipboard(json) {
+
+    console.log("[export] пробуем буфер обмена");
+
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(json);
+
+            alert(
+                "Скачивание файла недоступно в этом режиме.\n\n" +
+                "Данные скопированы в буфер обмена. Вставь их " +
+                "в заметки или отправь себе — это полный бэкап " +
+                "в формате JSON."
+            );
             return;
         }
-    } catch (e) { /* обычное скачивание */ }
+    } catch (err) {
+        console.warn("[export] буфер не сработал:", err);
+    }
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Крайний случай — показываем JSON текстом
+    const preview = json.length > 3000
+        ? json.slice(0, 3000) + "\n\n... (продолжение обрезано)"
+        : json;
+
+    alert(
+        "Не удалось сохранить автоматически.\n\n" +
+        "Скопируй текст ниже и сохрани его вручную:\n\n" +
+        preview
+    );
 }
+
+
+/* =========================================
+   ИМПОРТ
+   ========================================= */
 
 
 function importDataFile(file) {
@@ -1331,7 +1424,7 @@ function importDataFile(file) {
             const data = JSON.parse(e.target.result);
 
             if (!data.history || !Array.isArray(data.history)) {
-                alert("Неверный формат файла.");
+                alert("Неверный формат файла: нет массива history.");
                 return;
             }
 
@@ -1368,8 +1461,17 @@ function importDataFile(file) {
         }
     };
 
+    reader.onerror = () => {
+        alert("Не удалось прочитать файл.");
+    };
+
     reader.readAsText(file);
 }
+
+
+/* =========================================
+   ПРОГРЕСС
+   ========================================= */
 
 
 function getStrengthStats() {
