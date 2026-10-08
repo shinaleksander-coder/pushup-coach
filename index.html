@@ -540,7 +540,7 @@
                 <div class="section-title">Программа</div>
 
                 <p class="program-summary">
-                  Пройдено:
+                    Пройдено:
                     <strong id="programProgress">0 / 72</strong>
                     <span id="programExtras" class="program-extras hidden"></span>
                 </p>
@@ -584,7 +584,7 @@
                     >
                 </label>
 
-                 <label class="setting-row">
+                <label class="setting-row">
                     <span>Голосовой отсчёт</span>
                     <input id="voiceInput" type="checkbox">
                 </label>
@@ -603,8 +603,8 @@
                         <option value="180">180 сек</option>
                     </select>
                 </label>
-                
-                 <div class="setting-row setting-days">
+
+                <div class="setting-row setting-days">
                     <span>Дни тренировок</span>
                     <div class="days-grid">
                         <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="1"> Пн</label>
@@ -615,8 +615,6 @@
                         <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="6"> Сб</label>
                         <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="7"> Вс</label>
                     </div>
-                    <div id="daysHint" class="days-hint hidden"></div>
-                </div>
                 </div>
 
                 <button class="primary-button" id="saveSettings">
@@ -669,7 +667,7 @@
 
                     <div class="about-row">
                         <span>Версия</span>
-                        <strong>1.5</strong>
+                        <strong>1.8.1</strong>
                     </div>
 
                     <div class="about-row">
@@ -708,27 +706,6 @@
             </section>
 
         </section>
-        
-         <!-- ========================= -->
-        <!-- МОДАЛКА КОНФЛИКТА ДНЕЙ -->
-        <!-- ========================= -->
-
-        <div id="modeConflictModal" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <h2 class="modal-title">Несовпадение настроек</h2>
-                <p id="modeConflictText" class="modal-text" style="text-align:left"></p>
-                <button class="primary-button" id="modeConflictAdjust">
-                    Подстроить программу
-                </button>
-                <button class="secondary-button" id="modeConflictKeep">
-                    Оставить программу
-                </button>
-                <button class="secondary-button" id="modeConflictCancel">
-                    Отмена
-                </button>
-            </div>
-        </div>
-
 
     </main>
 

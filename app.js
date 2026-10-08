@@ -49,7 +49,7 @@ document.getElementById("settingsButton")
     .addEventListener("click", showSettings);
 
 document.getElementById("saveSettings")
-    .addEventListener("click", saveSettings);
+    .addEventListener("click", handleSaveSettings);
 
 document.getElementById("resetProgress")
     .addEventListener("click", resetProgress);
@@ -109,18 +109,50 @@ document.getElementById("achievementModal")
 
 
 /* =========================================
-   МОДАЛКА КОНФЛИКТА ДНЕЙ
+   СОХРАНЕНИЕ НАСТРОЕК С ПРОВЕРКОЙ КОНФЛИКТА
    ========================================= */
 
 
-document.getElementById("modeConflictAdjust")
-    .addEventListener("click", confirmModeAdjust);
+function handleSaveSettings() {
 
-document.getElementById("modeConflictKeep")
-    .addEventListener("click", confirmModeKeep);
+    const data = collectSettingsFromForm();
+    if (!data) return;
 
-document.getElementById("modeConflictCancel")
-    .addEventListener("click", cancelModeConflict);
+    const programDays = getActiveConfig().daysPerWeek || 3;
+    const userDays = data.trainingDays.length;
+
+    // Конфликта нет
+    if (userDays === 0 || userDays === programDays) {
+        applySettings(data);
+        return;
+    }
+
+    // Есть конфликт — спрашиваем
+    const adjust = confirm(
+        `В программе ${programDays} ${pluralDays(programDays)} в неделю, ` +
+        `а ты отметил ${userDays}.\n\n` +
+        `ОК — подстроить программу под ${userDays}-дневную ` +
+        `(режим «Своя»).\n` +
+        `Отмена — оставить программу ${programDays}-дневной, ` +
+        `а дни сохранить как предпочтения.`
+    );
+
+    if (adjust) {
+        settings.customDays = userDays;
+        settings.customSets = settings.customSets || 3;
+        settings.customRepBase = settings.customRepBase || 5;
+        settings.customGrowth =
+            settings.customGrowth !== undefined
+                ? settings.customGrowth
+                : 1;
+        settings.programMode = "custom";
+
+        saveJSON(STORAGE_KEYS.settings, settings);
+        rebuildProgram();
+    }
+
+    applySettings(data);
+}
 
 
 /* =========================================
@@ -161,20 +193,6 @@ document.getElementById("restInput")
         }
 
         lastRestValue = newVal;
-    });
-
-
-/* =========================================
-   ДНИ НЕДЕЛИ
-   ========================================= */
-
-
-document
-    .querySelectorAll(".day-checkbox")
-    .forEach(cb => {
-        cb.addEventListener("change", () => {
-            updateDaysHint();
-        });
     });
 
 
@@ -225,7 +243,6 @@ document
             rebuildProgram();
             renderProgram();
             renderHome();
-            updateDaysHint();
         });
     });
 
@@ -288,7 +305,6 @@ document.getElementById("saveCustom")
         rebuildProgram();
         renderProgram();
         renderHome();
-        updateDaysHint();
 
         alert("Индивидуальная программа применена.");
     });
@@ -585,4 +601,4 @@ showScreen("screenHome");
 showInstallButton();
 runSplash();
 
-console.log("Push-Up Coach v1.8 запущен");
+console.log("Push-Up Coach v1.8.1 запущен");
