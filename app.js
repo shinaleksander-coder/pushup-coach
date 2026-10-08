@@ -89,6 +89,10 @@ on("progressButton", "click", () => {
     if (typeof showProgress === "function") showProgress();
 });
 
+on("leaderboardButton", "click", () => {
+    if (typeof showLeaderboard === "function") showLeaderboard();
+});
+
 on("settingsButton", "click", () => {
     if (typeof showSettings === "function") showSettings();
 });
@@ -161,6 +165,35 @@ on("achievementModal", "click", event => {
 });
 
 on("welcomeStart", "click", handleWelcomeStart);
+
+
+/* =========================================
+   РЕЙТИНГ — ОБРАБОТЧИКИ
+   ========================================= */
+
+
+document
+    .querySelectorAll(".lb-tab")
+    .forEach(btn => {
+        btn.addEventListener("click", () => {
+
+            leaderboardTab = btn.dataset.lbTab;
+
+            document
+                .querySelectorAll(".lb-tab")
+                .forEach(b => b.classList.toggle(
+                    "active",
+                    b.dataset.lbTab === leaderboardTab
+                ));
+
+            renderLeaderboard();
+        });
+    });
+
+
+on("lbRefresh", "click", () => {
+    refreshLeaderboard();
+});
 
 
 /* =========================================
@@ -764,5 +797,13 @@ if (firstStartupError) {
     }, 500);
 }
 
+// Автоотправка в рейтинг при запуске (один раз за сессию)
+safeRun("submitLeaderboard", () => {
+    if (typeof submitToLeaderboard === "function") {
+        setTimeout(() => {
+            submitToLeaderboard().catch(() => {});
+        }, 3000);
+    }
+});
 
-console.log("Push-Up Coach v1.9.0 запущен");
+console.log("Push-Up Coach v1.9.1 запущен");

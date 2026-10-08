@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
 
 </head>
 
@@ -92,6 +92,9 @@
                 </button>
                 <button class="menu-button" id="progressButton">
                     <span>📈</span><span>Прогресс</span>
+                </button>
+                <button class="menu-button" id="leaderboardButton">
+                    <span>🏆</span><span>Рейтинг</span>
                 </button>
                 <button class="menu-button" id="historyButton">
                     <span>📊</span><span>История</span>
@@ -238,6 +241,35 @@
             <section class="progress-card">
                 <div class="section-title">Достижения</div>
                 <div id="achievementsList" class="achievements-grid"></div>
+            </section>
+
+        </section>
+
+
+
+        <section id="screenLeaderboard" class="screen" hidden>
+
+            <section class="progress-card">
+
+                <div class="section-title">Рейтинг</div>
+
+                <div class="lb-tabs">
+                    <button class="lb-tab active" data-lb-tab="weekly">
+                        За неделю
+                    </button>
+                    <button class="lb-tab" data-lb-tab="allTime">
+                        За всё время
+                    </button>
+                </div>
+
+                <p id="lbMeta" class="lb-meta"></p>
+
+                <div id="leaderboardList" class="lb-list"></div>
+
+                <button class="secondary-button" id="lbRefresh">
+                    🔄 Обновить
+                </button>
+
             </section>
 
         </section>
@@ -452,7 +484,7 @@
                 <div class="section-title">О приложении</div>
 
                 <div class="about-grid">
-                    <div class="about-row"><span>Версия</span><strong>1.9.0</strong></div>
+                    <div class="about-row"><span>Версия</span><strong>1.9.1</strong></div>
                     <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
                     <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
                     <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
@@ -566,10 +598,10 @@
                     </div>
                 </div>
                 <div class="welcome-feature">
-                    <div class="welcome-feature-icon">📈</div>
+                    <div class="welcome-feature-icon">🏆</div>
                     <div class="welcome-feature-text">
-                        <strong>Прогресс</strong>
-                        <span>История, вес, объём, рекорды по хватам</span>
+                        <strong>Рейтинг друзей</strong>
+                        <span>Соревнуйся с теми, кто в теме</span>
                     </div>
                 </div>
                 <div class="welcome-feature">
@@ -600,13 +632,14 @@
 
 
 
-    <script src="storage.js?v=25"></script>
-    <script src="grips.js?v=25"></script>
-    <script src="program.js?v=25"></script>
-    <script src="workout.js?v=25"></script>
-    <script src="push.js?v=25"></script>
-    <script src="ui.js?v=25"></script>
-    <script src="app.js?v=25"></script>
+    <script src="storage.js?v=26"></script>
+    <script src="grips.js?v=26"></script>
+    <script src="program.js?v=26"></script>
+    <script src="workout.js?v=26"></script>
+    <script src="push.js?v=26"></script>
+    <script src="leaderboard.js?v=26"></script>
+    <script src="ui.js?v=26"></script>
+    <script src="app.js?v=26"></script>
 
 </body>
 

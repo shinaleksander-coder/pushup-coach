@@ -2156,3 +2156,135 @@ input:focus-visible {
     }
 
 }
+/* ========================================= */
+/* V1.9.1 — LEADERBOARD                      */
+/* ========================================= */
+
+
+.lb-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+
+.lb-tab {
+    flex: 1;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 12px;
+    background: #f4f4f4;
+    color: #111;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+.lb-tab.active {
+    background: #111;
+    color: white;
+}
+
+
+.lb-meta {
+    margin: 0 0 12px;
+    font-size: 12px;
+    opacity: 0.6;
+    text-align: center;
+}
+
+
+.lb-list {
+    margin-bottom: 16px;
+}
+
+
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    background: #f4f4f4;
+}
+
+
+.lb-row.lb-me {
+    background: #e8f5e9;
+    outline: 2px solid #4caf50;
+}
+
+
+.lb-rank {
+    min-width: 32px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+}
+
+
+.lb-content {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.lb-name {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.lb-sub {
+    font-size: 11px;
+    opacity: 0.55;
+    margin-top: 2px;
+}
+
+
+.lb-stat {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+.lb-empty {
+    padding: 24px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.6;
+}
+
+
+@media (prefers-color-scheme: dark) {
+
+    .lb-tab {
+        background: #303030;
+        color: #f5f5f5;
+    }
+
+
+    .lb-tab.active {
+        background: #f5f5f5;
+        color: #111;
+    }
+
+
+    .lb-row {
+        background: #303030;
+        color: #f5f5f5;
+    }
+
+
+    .lb-row.lb-me {
+        background: #1b3a1e;
+        color: #a5d6a7;
+        outline-color: #4caf50;
+    }
+
+}

@@ -10,6 +10,7 @@ const SCREEN_TITLES = {
     screenWorkout: "Тренировка",
     screenDone: "Тренировка завершена",
     screenProgress: "Прогресс",
+    screenLeaderboard: "Рейтинг",
     screenHistory: "История",
     screenProgram: "Программа",
     screenSettings: "Настройки"
@@ -649,6 +650,13 @@ function renderDoneScreen(record, saved, isNewRecord) {
         warning.style.opacity = "0.7";
         list.appendChild(warning);
     }
+
+    // Автоотправка в рейтинг (не блокирует UI)
+    setTimeout(() => {
+        if (typeof submitToLeaderboard === "function") {
+            submitToLeaderboard().catch(() => {});
+        }
+    }, 1500);
 }
 
 
@@ -1432,6 +1440,122 @@ function pluralDays(n) {
 
 
 /* =========================================
+   РЕЙТИНГ
+   ========================================= */
+
+
+let leaderboardData = null;
+let leaderboardTab = "weekly";
+
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[c]);
+}
+
+
+function showLeaderboard() {
+    showScreen("screenLeaderboard");
+    refreshLeaderboard();
+}
+
+
+async function refreshLeaderboard() {
+
+    const listEl = document.getElementById("leaderboardList");
+
+    if (listEl) {
+        listEl.innerHTML =
+            "<p class='lb-empty'>Загрузка…</p>";
+    }
+
+    try {
+        await submitToLeaderboard();
+    } catch (e) { /* ignore */ }
+
+    leaderboardData = await loadLeaderboard();
+    renderLeaderboard();
+}
+
+
+function renderLeaderboard() {
+
+    const listEl = document.getElementById("leaderboardList");
+    const metaEl = document.getElementById("lbMeta");
+
+    if (!listEl) return;
+
+    if (!leaderboardData) {
+        listEl.innerHTML =
+            "<p class='lb-empty'>Не удалось загрузить. Проверь связь.</p>";
+        if (metaEl) metaEl.textContent = "";
+        return;
+    }
+
+    const list = leaderboardTab === "weekly"
+        ? leaderboardData.weekly
+        : leaderboardData.allTime;
+
+    if (metaEl) {
+        if (leaderboardTab === "weekly") {
+            metaEl.textContent =
+                `Участников с тренировками за неделю: ${list.length}`;
+        } else {
+            metaEl.textContent =
+                `Всего участников: ${leaderboardData.totalUsers}`;
+        }
+    }
+
+    if (list.length === 0) {
+        listEl.innerHTML =
+            "<p class='lb-empty'>Пока никого нет. Будь первым!</p>";
+        return;
+    }
+
+    const myId = getLeaderboardDeviceId();
+
+    let html = "";
+
+    list.forEach((item, i) => {
+
+        const isMe = item.deviceId === myId;
+
+        let rank;
+        if (i === 0) rank = "🥇";
+        else if (i === 1) rank = "🥈";
+        else if (i === 2) rank = "🥉";
+        else rank = String(i + 1);
+
+        const stat = leaderboardTab === "weekly"
+            ? item.weeklyBestSet
+            : item.bestSet;
+
+        const sub = leaderboardTab === "weekly"
+            ? `${item.weeklyVolume} за неделю`
+            : `${item.totalVolume} всего`;
+
+        html += `
+            <div class="lb-row ${isMe ? "lb-me" : ""}">
+                <div class="lb-rank">${rank}</div>
+                <div class="lb-content">
+                    <div class="lb-name">${escapeHtml(item.name)}</div>
+                    <div class="lb-sub">${sub}</div>
+                </div>
+                <div class="lb-stat">${stat}</div>
+            </div>
+        `;
+    });
+
+    listEl.innerHTML = html;
+}
+
+
+/* =========================================
    ЭКСПОРТ
    ========================================= */
 
@@ -1445,7 +1569,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.0",
+            version: "1.9.1",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
