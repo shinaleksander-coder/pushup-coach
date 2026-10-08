@@ -1503,11 +1503,15 @@ function renderLeaderboard() {
 
     if (metaEl) {
         if (leaderboardTab === "weekly") {
-            metaEl.textContent =
-                `Участников с тренировками за неделю: ${list.length}`;
+            metaEl.innerHTML =
+                "🏆 <strong>Топ недели по общему количеству отжиманий.</strong><br>" +
+                "Большая цифра справа — сколько всего отжался за неделю. " +
+                "Под именем — личный рекорд за один подход.";
         } else {
-            metaEl.textContent =
-                `Всего участников: ${leaderboardData.totalUsers}`;
+            metaEl.innerHTML =
+                "🏆 <strong>Топ за всё время по общему количеству отжиманий.</strong><br>" +
+                "Большая цифра справа — сколько всего отжался. " +
+                "Под именем — личный рекорд за один подход.";
         }
     }
 
@@ -1531,29 +1535,28 @@ function renderLeaderboard() {
         else if (i === 2) rank = "🥉";
         else rank = String(i + 1);
 
-        const stat = leaderboardTab === "weekly"
+        const volume = leaderboardTab === "weekly"
+            ? item.weeklyVolume
+            : item.totalVolume;
+
+        const bestOf = leaderboardTab === "weekly"
             ? item.weeklyBestSet
             : item.bestSet;
-
-        const sub = leaderboardTab === "weekly"
-            ? `${item.weeklyVolume} за неделю`
-            : `${item.totalVolume} всего`;
 
         html += `
             <div class="lb-row ${isMe ? "lb-me" : ""}">
                 <div class="lb-rank">${rank}</div>
                 <div class="lb-content">
                     <div class="lb-name">${escapeHtml(item.name)}</div>
-                    <div class="lb-sub">${sub}</div>
+                    <div class="lb-sub">личный рекорд: ${bestOf} за подход</div>
                 </div>
-                <div class="lb-stat">${stat}</div>
+                <div class="lb-stat">${volume}</div>
             </div>
         `;
     });
 
     listEl.innerHTML = html;
 }
-
 
 /* =========================================
    ЭКСПОРТ

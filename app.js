@@ -806,4 +806,4 @@ safeRun("submitLeaderboard", () => {
     }
 });
 
-console.log("Push-Up Coach v1.9.1 запущен");
+console.log("Push-Up Coach v1.9.2 запущен");
