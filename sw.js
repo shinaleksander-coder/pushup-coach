@@ -3,19 +3,19 @@
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v25";
+const CACHE_NAME = "pushup-coach-v27";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=21",
-    "./storage.js?v=21",
-    "./grips.js?v=21",
-    "./program.js?v=21",
-    "./workout.js?v=21",
-    "./ui.js?v=21",
-    "./app.js?v=21",
+    "./styles.css?v=22",
+    "./storage.js?v=22",
+    "./grips.js?v=22",
+    "./program.js?v=22",
+    "./workout.js?v=22",
+    "./ui.js?v=22",
+    "./app.js?v=22",
     "./manifest.json",
     "./icon.svg"
 ];

@@ -20,47 +20,18 @@
         content="Твой персональный тренер по отжиманиям"
     >
 
-    <link
-        rel="icon"
-        href="icon.svg"
-    >
+    <link rel="icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
 
-    <link
-        rel="manifest"
-        href="manifest.json"
-    >
-
-    <link
-        rel="apple-touch-icon"
-        href="icon.svg"
-    >
-
-    <meta
-        name="mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-capable"
-        content="yes"
-    >
-
-    <meta
-        name="apple-mobile-web-app-status-bar-style"
-        content="black-translucent"
-    >
-
-    <meta
-        name="apple-mobile-web-app-title"
-        content="Push-Up"
-    >
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Push-Up">
 
     <title>Push-Up Coach</title>
 
-    <link
-        rel="stylesheet"
-        href="styles.css?v=21"
-    >
+    <link rel="stylesheet" href="styles.css?v=22">
 
 </head>
 
@@ -69,27 +40,11 @@
 
     <header class="app-header">
 
-        <button
-            class="back-button hidden"
-            id="globalBack"
-            aria-label="Назад"
-        >
-            ←
-        </button>
+        <button class="back-button hidden" id="globalBack" aria-label="Назад">←</button>
 
         <div class="app-header-text">
-
-            <div class="app-title">
-                Push-Up Coach
-            </div>
-
-            <div
-                class="app-subtitle"
-                id="appSubtitle"
-            >
-                Твой персональный тренер
-            </div>
-
+            <div class="app-title">Push-Up Coach</div>
+            <div class="app-subtitle" id="appSubtitle">Твой персональный тренер</div>
         </div>
 
     </header>
@@ -128,20 +83,11 @@
                 </div>
 
                 <div id="homeCompare" class="home-compare hidden"></div>
-
                 <div id="homeReason" class="home-reason hidden"></div>
 
-                <button class="primary-button" id="startWorkout">
-                    Начать тренировку
-                </button>
-
-                <button class="secondary-button hidden" id="continueWorkout">
-                    Продолжить тренировку
-                </button>
-
-                <button class="secondary-button extra-button" id="extraWorkout">
-                    ➕ Дополнительная тренировка
-                </button>
+                <button class="primary-button" id="startWorkout">Начать тренировку</button>
+                <button class="secondary-button hidden" id="continueWorkout">Продолжить тренировку</button>
+                <button class="secondary-button extra-button" id="extraWorkout">➕ Дополнительная тренировка</button>
 
             </section>
 
@@ -233,36 +179,20 @@
 
                 </div>
 
-                <div
-                    id="workoutStatus"
-                    class="workout-status"
-                    aria-live="polite"
-                >
+                <div id="workoutStatus" class="workout-status" aria-live="polite">
                     Сделай 5 чистых повторений
                 </div>
 
                 <div id="repControls" class="rep-controls">
 
-                    <button
-                        class="rep-button"
-                        id="minusRep"
-                        aria-label="Уменьшить количество повторений"
-                    >
-                        −
-                    </button>
+                    <button class="rep-button" id="minusRep" aria-label="Уменьшить">−</button>
 
                     <div class="rep-display">
                         <div class="rep-label">ФАКТ</div>
                         <div id="actualReps" class="rep-value">5</div>
                     </div>
 
-                    <button
-                        class="rep-button"
-                        id="plusRep"
-                        aria-label="Увеличить количество повторений"
-                    >
-                        +
-                    </button>
+                    <button class="rep-button" id="plusRep" aria-label="Увеличить">+</button>
 
                 </div>
 
@@ -276,13 +206,8 @@
 
                 <div id="restControls" class="rest-controls hidden">
 
-                    <button class="secondary-button" id="skipRest">
-                        Пропустить отдых
-                    </button>
-
-                    <button class="secondary-button" id="addRest">
-                        +30 секунд
-                    </button>
+                    <button class="secondary-button" id="skipRest">Пропустить отдых</button>
+                    <button class="secondary-button" id="addRest">+30 секунд</button>
 
                 </div>
 
@@ -331,21 +256,10 @@
 
                     <div class="difficulty-grid">
 
-                        <button class="difficulty-button" data-level="easy">
-                            Легко
-                        </button>
-
-                        <button class="difficulty-button" data-level="normal">
-                            Нормально
-                        </button>
-
-                        <button class="difficulty-button" data-level="hard">
-                            Тяжело
-                        </button>
-
-                        <button class="difficulty-button" data-level="very_hard">
-                            Очень тяжело
-                        </button>
+                        <button class="difficulty-button" data-level="easy">Легко</button>
+                        <button class="difficulty-button" data-level="normal">Нормально</button>
+                        <button class="difficulty-button" data-level="hard">Тяжело</button>
+                        <button class="difficulty-button" data-level="very_hard">Очень тяжело</button>
 
                     </div>
 
@@ -353,9 +267,7 @@
 
                 <div class="result-list" id="doneResults"></div>
 
-                <button class="primary-button" id="doneHome">
-                    На главную
-                </button>
+                <button class="primary-button" id="doneHome">На главную</button>
 
             </section>
 
@@ -370,14 +282,8 @@
                 <div class="section-title">Сила</div>
 
                 <div class="progress-grid">
-                    <div class="stat">
-                        <strong id="strengthStart">—</strong>
-                        <span>начал</span>
-                    </div>
-                    <div class="stat">
-                        <strong id="strengthNow">—</strong>
-                        <span>сейчас</span>
-                    </div>
+                    <div class="stat"><strong id="strengthStart">—</strong><span>начал</span></div>
+                    <div class="stat"><strong id="strengthNow">—</strong><span>сейчас</span></div>
                 </div>
 
                 <div id="strengthDelta" class="delta-line"></div>
@@ -389,18 +295,11 @@
                 <div class="section-title">Вес</div>
 
                 <div class="progress-grid">
-                    <div class="stat">
-                        <strong id="weightStart">—</strong>
-                        <span>начало</span>
-                    </div>
-                    <div class="stat">
-                        <strong id="weightNow">—</strong>
-                        <span>сейчас</span>
-                    </div>
+                    <div class="stat"><strong id="weightStart">—</strong><span>начало</span></div>
+                    <div class="stat"><strong id="weightNow">—</strong><span>сейчас</span></div>
                 </div>
 
                 <div id="weightDelta" class="delta-line"></div>
-
                 <div id="weightChartContainer"></div>
 
             </section>
@@ -408,7 +307,6 @@
             <section class="progress-card">
 
                 <div class="section-title">Объём по неделям</div>
-
                 <div id="volumeChartContainer"></div>
 
             </section>
@@ -416,7 +314,6 @@
             <section class="progress-card">
 
                 <div class="section-title">По хватам</div>
-
                 <div id="gripProgress" class="grip-grid"></div>
 
             </section>
@@ -424,7 +321,6 @@
             <section class="progress-card">
 
                 <div class="section-title">Достижения</div>
-
                 <div id="achievementsList" class="achievements-grid"></div>
 
             </section>
@@ -438,11 +334,7 @@
             <section class="progress-card">
 
                 <div class="section-title">История тренировок</div>
-
-                <p class="history-hint">
-                    Нажми на запись, чтобы отредактировать
-                </p>
-
+                <p class="history-hint">Нажми на запись, чтобы отредактировать</p>
                 <div id="historyList"></div>
 
             </section>
@@ -509,13 +401,7 @@
 
                 <label class="setting-row">
                     <span>Старт, повторов</span>
-                    <input
-                        id="customRepBase"
-                        type="number"
-                        min="3"
-                        max="20"
-                        step="1"
-                    >
+                    <input id="customRepBase" type="number" min="3" max="20" step="1">
                 </label>
 
                 <label class="setting-row">
@@ -527,9 +413,7 @@
                     </select>
                 </label>
 
-                <button class="primary-button" id="saveCustom">
-                    Применить
-                </button>
+                <button class="primary-button" id="saveCustom">Применить</button>
 
             </section>
 
@@ -563,25 +447,12 @@
 
                 <label class="setting-row">
                     <span>Имя</span>
-                    <input
-                        id="nameInput"
-                        type="text"
-                        maxlength="30"
-                        placeholder="Как тебя зовут"
-                    >
+                    <input id="nameInput" type="text" maxlength="30" placeholder="Как тебя зовут">
                 </label>
 
                 <label class="setting-row">
                     <span>Вес</span>
-                    <input
-                        id="weightInput"
-                        type="number"
-                        inputmode="decimal"
-                        min="30"
-                        max="250"
-                        step="0.1"
-                        placeholder="кг"
-                    >
+                    <input id="weightInput" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="кг">
                 </label>
 
                 <label class="setting-row">
@@ -617,44 +488,18 @@
                     </div>
                 </div>
 
-                <button class="primary-button" id="saveSettings">
-                    Сохранить
-                </button>
+                <button class="primary-button" id="saveSettings">Сохранить</button>
 
-                <button class="secondary-button hidden" id="installApp">
-                    📲 Установить приложение
-                </button>
+                <button class="secondary-button hidden" id="installApp">📲 Установить приложение</button>
+                <button class="secondary-button" id="checkUpdate">🔄 Проверить обновление</button>
+                <button class="secondary-button" id="shareApp">🔗 Поделиться приложением</button>
+                <button class="secondary-button" id="exportData">💾 Сохранить данные (бэкап)</button>
+                <button class="secondary-button" id="importData">📥 Загрузить данные из файла</button>
 
-                <button class="secondary-button" id="checkUpdate">
-                    🔄 Проверить обновление
-                </button>
+                <input id="importFile" type="file" accept="application/json,.json" style="display:none">
 
-                <button class="secondary-button" id="shareApp">
-                    🔗 Поделиться приложением
-                </button>
-
-                <button class="secondary-button" id="exportData">
-                    💾 Сохранить данные (бэкап)
-                </button>
-
-                <button class="secondary-button" id="importData">
-                    📥 Загрузить данные из файла
-                </button>
-
-                <input
-                    id="importFile"
-                    type="file"
-                    accept="application/json,.json"
-                    style="display:none"
-                >
-
-                <button class="secondary-button" id="showWelcomeAgain">
-                    👋 Показать инструкцию
-                </button>
-
-                <button class="secondary-button" id="resetProgress">
-                    Сбросить прогресс
-                </button>
+                <button class="secondary-button" id="showWelcomeAgain">👋 Показать инструкцию</button>
+                <button class="secondary-button" id="resetProgress">Сбросить прогресс</button>
 
             </section>
 
@@ -665,30 +510,11 @@
 
                 <div class="about-grid">
 
-                    <div class="about-row">
-                        <span>Версия</span>
-                        <strong>1.8.1</strong>
-                    </div>
-
-                    <div class="about-row">
-                        <span>Имя</span>
-                        <strong id="aboutName">—</strong>
-                    </div>
-
-                    <div class="about-row">
-                        <span>Тренировок пройдено</span>
-                        <strong id="aboutWorkouts">0</strong>
-                    </div>
-
-                    <div class="about-row">
-                        <span>Первая тренировка</span>
-                        <strong id="aboutFirstDate">—</strong>
-                    </div>
-
-                    <div class="about-row">
-                        <span>Автор</span>
-                        <strong>Александр Шин</strong>
-                    </div>
+                    <div class="about-row"><span>Версия</span><strong>1.8.2</strong></div>
+                    <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
+                    <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
+                    <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
+                    <div class="about-row"><span>Автор</span><strong>Александр Шин</strong></div>
 
                 </div>
 
@@ -716,9 +542,7 @@
             <div id="gripModalVisual" class="grip-modal-visual"></div>
             <h2 id="gripModalTitle" class="modal-title">Хват</h2>
             <p id="gripModalText" class="modal-text"></p>
-            <button class="primary-button" id="gripModalClose">
-                Понятно
-            </button>
+            <button class="primary-button" id="gripModalClose">Понятно</button>
         </div>
     </div>
 
@@ -733,31 +557,17 @@
             <div class="edit-section-label">Сложность</div>
 
             <div class="difficulty-grid">
-                <button class="edit-difficulty-button" data-level="easy">
-                    Легко
-                </button>
-                <button class="edit-difficulty-button" data-level="normal">
-                    Нормально
-                </button>
-                <button class="edit-difficulty-button" data-level="hard">
-                    Тяжело
-                </button>
-                <button class="edit-difficulty-button" data-level="very_hard">
-                    Очень тяжело
-                </button>
+                <button class="edit-difficulty-button" data-level="easy">Легко</button>
+                <button class="edit-difficulty-button" data-level="normal">Нормально</button>
+                <button class="edit-difficulty-button" data-level="hard">Тяжело</button>
+                <button class="edit-difficulty-button" data-level="very_hard">Очень тяжело</button>
             </div>
 
             <div class="edit-section-label">Подходы</div>
-
             <div id="historyEditSets" class="edit-sets"></div>
 
-            <button class="primary-button" id="historyEditSave">
-                Сохранить
-            </button>
-
-            <button class="secondary-button" id="historyEditCancel">
-                Отмена
-            </button>
+            <button class="primary-button" id="historyEditSave">Сохранить</button>
+            <button class="secondary-button" id="historyEditCancel">Отмена</button>
         </div>
     </div>
 
@@ -766,17 +576,9 @@
     <div id="achievementModal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-content achievement-modal-content">
             <div id="achievementModalIcon" class="achievement-modal-icon">🏆</div>
-            <h2 id="achievementModalTitle" class="modal-title">
-                Достижение
-            </h2>
-            <p
-                id="achievementModalText"
-                class="modal-text"
-                style="text-align:center"
-            ></p>
-            <button class="primary-button" id="achievementModalClose">
-                Класс
-            </button>
+            <h2 id="achievementModalTitle" class="modal-title">Достижение</h2>
+            <p id="achievementModalText" class="modal-text" style="text-align:center"></p>
+            <button class="primary-button" id="achievementModalClose">Класс</button>
         </div>
     </div>
 
@@ -787,40 +589,21 @@
         <div class="welcome-card">
 
             <div class="welcome-brand">
-
                 <div class="welcome-brand-icon">💪</div>
-
                 <div class="welcome-brand-title">Push-Up Coach</div>
-
-                <div class="welcome-brand-subtitle">
-                    Персональный тренер по отжиманиям
-                </div>
-
+                <div class="welcome-brand-subtitle">Персональный тренер по отжиманиям</div>
             </div>
 
             <div class="welcome-form">
 
                 <label class="welcome-field">
                     <span>Как тебя зовут?</span>
-                    <input
-                        id="welcomeName"
-                        type="text"
-                        maxlength="30"
-                        placeholder="Александр"
-                    >
+                    <input id="welcomeName" type="text" maxlength="30" placeholder="Александр">
                 </label>
 
                 <label class="welcome-field">
                     <span>Твой вес, кг</span>
-                    <input
-                        id="welcomeWeight"
-                        type="number"
-                        inputmode="decimal"
-                        min="30"
-                        max="250"
-                        step="0.1"
-                        placeholder="например, 82"
-                    >
+                    <input id="welcomeWeight" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="например, 82">
                 </label>
 
             </div>
@@ -869,13 +652,9 @@
 
             </div>
 
-            <button class="primary-button" id="welcomeStart">
-                Начать
-            </button>
+            <button class="primary-button" id="welcomeStart">Начать</button>
 
-            <div class="welcome-footer">
-                Автор: Александр Шин
-            </div>
+            <div class="welcome-footer">Автор: Александр Шин</div>
 
         </div>
 
@@ -886,25 +665,21 @@
     <div id="splash" class="splash">
 
         <div class="splash-content">
-
             <div class="splash-logo">PC</div>
-
             <div class="splash-name">Push-Up Coach</div>
-
             <div class="splash-author">Александр Шин</div>
-
         </div>
 
     </div>
 
 
 
-    <script src="storage.js?v=21"></script>
-    <script src="grips.js?v=21"></script>
-    <script src="program.js?v=21"></script>
-    <script src="workout.js?v=21"></script>
-    <script src="ui.js?v=21"></script>
-    <script src="app.js?v=21"></script>
+    <script src="storage.js?v=22"></script>
+    <script src="grips.js?v=22"></script>
+    <script src="program.js?v=22"></script>
+    <script src="workout.js?v=22"></script>
+    <script src="ui.js?v=22"></script>
+    <script src="app.js?v=22"></script>
 
 </body>
 
