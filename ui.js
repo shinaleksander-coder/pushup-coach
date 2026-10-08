@@ -37,11 +37,6 @@ let editingHistoryDraft = null;
 let achievementQueue = [];
 
 
-/* =========================================
-   ЭКРАНЫ
-   ========================================= */
-
-
 function showScreen(id) {
 
     screens.forEach(screen => {
@@ -65,11 +60,6 @@ function showScreen(id) {
 
     window.scrollTo(0, 0);
 }
-
-
-/* =========================================
-   ПРИВЕТСТВИЕ
-   ========================================= */
 
 
 function showWelcome() {
@@ -112,11 +102,6 @@ function showWelcomeAgain() {
 }
 
 
-/* =========================================
-   ВЕС
-   ========================================= */
-
-
 function updateWeightHistory(newWeight, weightWasEmpty) {
 
     if (newWeight === null || newWeight === undefined) return;
@@ -144,11 +129,6 @@ function updateWeightHistory(newWeight, weightWasEmpty) {
         saveJSON(STORAGE_KEYS.weightHistory, wh);
     }
 }
-
-
-/* =========================================
-   ГЛАВНЫЙ ЭКРАН
-   ========================================= */
 
 
 function renderHome() {
@@ -235,11 +215,6 @@ function renderMaxPushups() {
     document.getElementById("maxPushups").textContent =
         maxPushups > 0 ? maxPushups : "—";
 }
-
-
-/* =========================================
-   БАННЕР ПРОПУСКА
-   ========================================= */
 
 
 function renderMissedBanner() {
@@ -364,11 +339,6 @@ function renderMissedBanner() {
 }
 
 
-/* =========================================
-   СРАВНЕНИЕ
-   ========================================= */
-
-
 function renderCompare() {
 
     const el = document.getElementById("homeCompare");
@@ -461,11 +431,6 @@ function renderWorkoutRecord() {
         recordEl.classList.add("hidden");
     }
 }
-
-
-/* =========================================
-   ЭКРАН ТРЕНИРОВКИ
-   ========================================= */
 
 
 function renderWorkoutScreen() {
@@ -574,11 +539,6 @@ function updateTimer() {
 }
 
 
-/* =========================================
-   МОДАЛКА ХВАТА
-   ========================================= */
-
-
 function openGripModal() {
 
     if (!workout) return;
@@ -599,11 +559,6 @@ function openGripModal() {
 function closeGripModal() {
     document.getElementById("gripModal").classList.add("hidden");
 }
-
-
-/* =========================================
-   РЕЗУЛЬТАТ
-   ========================================= */
 
 
 function renderDoneScreen(record, saved, isNewRecord) {
@@ -660,11 +615,6 @@ function renderDoneScreen(record, saved, isNewRecord) {
         list.appendChild(warning);
     }
 }
-
-
-/* =========================================
-   ДОСТИЖЕНИЯ
-   ========================================= */
 
 
 function getUnlockedAchievements() {
@@ -760,11 +710,6 @@ function renderAchievements() {
         `;
     }).join("");
 }
-
-
-/* =========================================
-   ИСТОРИЯ
-   ========================================= */
 
 
 function renderHistory() {
@@ -988,11 +933,6 @@ function saveHistoryEdit() {
 }
 
 
-/* =========================================
-   ПРОГРАММА
-   ========================================= */
-
-
 function renderProgram() {
     renderProgramModeButtons();
     renderCustomConfig();
@@ -1195,11 +1135,6 @@ function renderProgramList() {
 }
 
 
-/* =========================================
-   НАСТРОЙКИ
-   ========================================= */
-
-
 function renderSettings() {
 
     document.getElementById("nameInput").value =
@@ -1256,8 +1191,6 @@ function renderAbout() {
 }
 
 
-// Собирает данные из формы настроек.
-// Возвращает объект или null, если была ошибка валидации.
 function collectSettingsFromForm() {
 
     const nameInput = document.getElementById("nameInput");
@@ -1314,7 +1247,6 @@ function collectSettingsFromForm() {
 }
 
 
-// Сохраняет настройки и возвращает на главную.
 function applySettings(data) {
 
     settings.name = data.name;
@@ -1342,15 +1274,10 @@ function pluralDays(n) {
 }
 
 
-/* =========================================
-   ЭКСПОРТ / ИМПОРТ
-   ========================================= */
-
-
 function exportData() {
 
     const data = {
-        version: "1.8.1",
+        version: "1.8.3",
         exportedAt: new Date().toISOString(),
         settings: loadJSON(STORAGE_KEYS.settings, {}),
         history: loadJSON(STORAGE_KEYS.history, []),
@@ -1443,11 +1370,6 @@ function importDataFile(file) {
 
     reader.readAsText(file);
 }
-
-
-/* =========================================
-   ПРОГРЕСС
-   ========================================= */
 
 
 function getStrengthStats() {
@@ -1725,11 +1647,6 @@ function ensureWeightHistory() {
 }
 
 
-/* =========================================
-   НАВИГАЦИЯ
-   ========================================= */
-
-
 function goHome() {
     clearRestTimer();
     renderHome();
@@ -1769,4 +1686,89 @@ function exitWorkout() {
 
     renderHome();
     showScreen("screenHome");
+}
+
+
+function resetProgress() {
+
+    const confirmed = confirm(
+        "Сбросить весь прогресс?\n\n" +
+        "Это удалит:\n" +
+        "• всю историю тренировок\n" +
+        "• текущую активную тренировку\n" +
+        "• историю веса\n" +
+        "• достижения\n\n" +
+        "Программа начнётся с Недели 1, Дня 1."
+    );
+
+    if (!confirmed) return;
+
+    removeStorage(STORAGE_KEYS.history);
+    removeStorage(STORAGE_KEYS.activeWorkout);
+    removeStorage(STORAGE_KEYS.weightHistory);
+    removeStorage(STORAGE_KEYS.achievements);
+
+    alert("Прогресс сброшен.");
+
+    ensureWeightHistory();
+    renderHome();
+    showScreen("screenHome");
+}
+
+
+function shareApp() {
+
+    const url = window.location.href;
+
+    if (navigator.share) {
+        navigator.share({
+            title: "Push-Up Coach",
+            text: "Персональный тренер по отжиманиям",
+            url
+        }).catch(() => {});
+        return;
+    }
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url)
+            .then(() => alert("Ссылка скопирована."))
+            .catch(() => alert("Ссылка: " + url));
+        return;
+    }
+
+    alert("Ссылка: " + url);
+}
+
+
+async function checkForUpdates() {
+
+    const confirmed = confirm(
+        "Проверить обновление?\n\n" +
+        "Приложение снесёт кэш и перезагрузится. " +
+        "Прогресс сохранится."
+    );
+
+    if (!confirmed) return;
+
+    try {
+        if ("serviceWorker" in navigator) {
+            const regs =
+                await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) {
+                await r.unregister();
+            }
+        }
+
+        if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(
+                keys.map(k => caches.delete(k))
+            );
+        }
+
+        location.reload();
+    } catch (error) {
+        console.warn("Ошибка обновления:", error);
+        location.reload();
+    }
 }

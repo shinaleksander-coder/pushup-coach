@@ -1,6 +1,5 @@
 /* =========================================
    APP.JS
-   Точка входа с защитой от падений.
    ========================================= */
 
 
@@ -21,6 +20,7 @@ function on(id, event, fn) {
 
 let firstStartupError = null;
 
+
 function safeRun(label, fn) {
     try {
         fn();
@@ -34,7 +34,7 @@ function safeRun(label, fn) {
 
 
 /* =========================================
-   ПОДПИСКИ НА КНОПКИ
+   ОБРАБОТЧИКИ КНОПОК
    ========================================= */
 
 
@@ -165,13 +165,155 @@ on("achievementModal", "click", event => {
     }
 });
 
-on("welcomeStart", "click", () => {
-    if (typeof handleWelcomeStart === "function") handleWelcomeStart();
-});
+on("welcomeStart", "click", handleWelcomeStart);
 
 
 /* =========================================
-   КНОПКИ РЕЖИМА ПРОГРАММЫ
+   СОХРАНЕНИЕ НАСТРОЕК С ПРОВЕРКОЙ КОНФЛИКТА
+   ========================================= */
+
+
+function handleSaveSettings() {
+
+    const data = collectSettingsFromForm();
+    if (!data) return;
+
+    const programDays = getActiveConfig().daysPerWeek || 3;
+    const userDays = data.trainingDays.length;
+
+    if (userDays === 0 || userDays === programDays) {
+        applySettings(data);
+        return;
+    }
+
+    const adjust = confirm(
+        `В программе ${programDays} ${pluralDays(programDays)} в неделю, ` +
+        `а ты отметил ${userDays}.\n\n` +
+        `ОК — подстроить программу под ${userDays}-дневную ` +
+        `(режим «Своя»).\n` +
+        `Отмена — оставить программу ${programDays}-дневной, ` +
+        `а дни сохранить как предпочтения.`
+    );
+
+    if (adjust) {
+        settings.customDays = userDays;
+        settings.customSets = settings.customSets || 3;
+        settings.customRepBase = settings.customRepBase || 5;
+        settings.customGrowth =
+            settings.customGrowth !== undefined
+                ? settings.customGrowth
+                : 1;
+        settings.programMode = "custom";
+
+        saveJSON(STORAGE_KEYS.settings, settings);
+        rebuildProgram();
+    }
+
+    applySettings(data);
+}
+
+
+/* =========================================
+   ПРИВЕТСТВИЕ
+   ========================================= */
+
+
+function handleWelcomeStart() {
+
+    const nameInput = document.getElementById("welcomeName");
+    const weightInput = document.getElementById("welcomeWeight");
+
+    const rawName = nameInput ? nameInput.value.trim() : "";
+    const rawWeight = weightInput ? weightInput.value.trim() : "";
+
+    const name = rawName || "Спортсмен";
+
+    const weightWasEmpty =
+        settings.weight === null || settings.weight === undefined;
+
+    let weight = null;
+
+    if (rawWeight !== "") {
+        weight = Number(rawWeight);
+
+        if (!Number.isFinite(weight) || weight < 30 || weight > 250) {
+            alert("Введите корректный вес от 30 до 250 кг, либо оставьте поле пустым.");
+            return;
+        }
+
+        weight = Math.round(weight * 10) / 10;
+    }
+
+    settings.name = name;
+    settings.weight = weight;
+
+    saveJSON(STORAGE_KEYS.settings, settings);
+    updateWeightHistory(weight, weightWasEmpty);
+    saveJSON(STORAGE_KEYS.welcomeShown, true);
+
+    hideWelcome();
+    renderHome();
+    showScreen("screenHome");
+}
+
+
+/* =========================================
+   МИГРАЦИЯ
+   ========================================= */
+
+
+function migrateToV12() {
+
+    const done = loadJSON(STORAGE_KEYS.migrationV12, false);
+    if (done) return;
+
+    const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
+    const hasOnlyDefaults =
+        wh.length > 0 && wh.every(x => x.weight === 82);
+    const settingsIsDefault =
+        settings.weight === 82 || settings.weight === null;
+
+    if (hasOnlyDefaults && settingsIsDefault) {
+        settings.weight = null;
+        settings.name = "Спортсмен";
+        saveJSON(STORAGE_KEYS.settings, settings);
+        saveJSON(STORAGE_KEYS.weightHistory, []);
+        saveJSON(STORAGE_KEYS.welcomeShown, false);
+    }
+
+    saveJSON(STORAGE_KEYS.migrationV12, true);
+}
+
+
+/* =========================================
+   SPLASH
+   ========================================= */
+
+
+function runSplash() {
+
+    const splash = document.getElementById("splash");
+
+    if (!splash) {
+        showWelcomeOnFirstLaunch();
+        return;
+    }
+
+    setTimeout(() => {
+        splash.classList.add("fade-out");
+
+        setTimeout(() => {
+            if (splash.parentNode) {
+                splash.parentNode.removeChild(splash);
+            }
+            showWelcomeOnFirstLaunch();
+        }, 600);
+    }, 1400);
+}
+
+
+/* =========================================
+   СМЕНА РЕЖИМА ПРОГРАММЫ
    ========================================= */
 
 
@@ -182,24 +324,16 @@ document
 
             const mode = btn.dataset.mode;
 
-            let history = [];
-            try {
-                history = loadJSON(STORAGE_KEYS.history, []);
-            } catch (e) {
-                console.warn(e);
-            }
+            const history =
+                loadJSON(STORAGE_KEYS.history, []);
 
             const programIndex =
                 history.filter(r => !r.isExtra).length;
 
             if (programIndex > 0 && mode !== "custom") {
 
-                const modes = (typeof PROGRAM_MODES !== "undefined")
-                    ? PROGRAM_MODES
-                    : {};
-
                 const newConfig =
-                    modes[mode] || modes.base || { daysPerWeek: 3 };
+                    PROGRAM_MODES[mode] || PROGRAM_MODES.base;
 
                 const newDays = newConfig.daysPerWeek || 3;
 
@@ -225,15 +359,15 @@ document
             settings.programMode = mode;
             saveJSON(STORAGE_KEYS.settings, settings);
 
-            if (typeof rebuildProgram === "function") rebuildProgram();
-            if (typeof renderProgram === "function") renderProgram();
-            if (typeof renderHome === "function") renderHome();
+            rebuildProgram();
+            renderProgram();
+            renderHome();
         });
     });
 
 
 /* =========================================
-   ПРИМЕНИТЬ СВОЮ ПРОГРАММУ
+   ИНДИВИДУАЛЬНАЯ ПРОГРАММА
    ========================================= */
 
 
@@ -284,20 +418,21 @@ on("saveCustom", "click", () => {
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
-    if (typeof rebuildProgram === "function") rebuildProgram();
-    if (typeof renderProgram === "function") renderProgram();
-    if (typeof renderHome === "function") renderHome();
+    rebuildProgram();
+    renderProgram();
+    renderHome();
 
     alert("Индивидуальная программа применена.");
 });
 
 
 /* =========================================
-   НАСТРОЙКА ОТДЫХА
+   ОТДЫХ
    ========================================= */
 
 
 let lastRestValue = "program";
+
 
 on("restInput", "change", event => {
 
@@ -341,7 +476,6 @@ document
     .forEach(btn => {
         btn.addEventListener("click", () => {
 
-            if (typeof editingHistoryDraft === "undefined") return;
             if (!editingHistoryDraft) return;
 
             editingHistoryDraft.difficulty = btn.dataset.level;
@@ -513,57 +647,24 @@ document.addEventListener("visibilitychange", () => {
    ========================================= */
 
 
-safeRun("migrateToV12", () => {
-    if (typeof migrateToV12 === "function") migrateToV12();
-});
-
-safeRun("ensureWeightHistory", () => {
-    if (typeof ensureWeightHistory === "function") ensureWeightHistory();
-});
-
-safeRun("rebuildProgram", () => {
-    if (typeof rebuildProgram === "function") rebuildProgram();
-});
-
-safeRun("checkAchievements", () => {
-    if (typeof checkAchievements === "function") checkAchievements(true);
-});
-
-safeRun("renderHome", () => {
-    if (typeof renderHome === "function") renderHome();
-});
-
-safeRun("showScreen", () => {
-    if (typeof showScreen === "function") showScreen("screenHome");
-});
-
-safeRun("showInstallButton", () => {
-    if (typeof showInstallButton === "function") showInstallButton();
-});
-
-safeRun("runSplash", () => {
-    if (typeof runSplash === "function") {
-        runSplash();
-    } else {
-        // Защита: если функции нет — снимаем сплэш принудительно
-        const splash = document.getElementById("splash");
-        if (splash && splash.parentNode) {
-            splash.parentNode.removeChild(splash);
-        }
-    }
-});
+safeRun("migrateToV12", migrateToV12);
+safeRun("ensureWeightHistory", ensureWeightHistory);
+safeRun("rebuildProgram", rebuildProgram);
+safeRun("checkAchievements", () => checkAchievements(true));
+safeRun("renderHome", renderHome);
+safeRun("showScreen", () => showScreen("screenHome"));
+safeRun("showInstallButton", showInstallButton);
+safeRun("runSplash", runSplash);
 
 
-// Показываем первую ошибку запуска, если была
 if (firstStartupError) {
     setTimeout(() => {
         alert(
             "При запуске возникла ошибка:\n\n" +
-            firstStartupError +
-            "\n\nПожалуйста, сообщите её разработчику."
+            firstStartupError
         );
     }, 500);
 }
 
 
-console.log("Push-Up Coach v1.8.2 запущен");
+console.log("Push-Up Coach v1.8.3 запущен");
