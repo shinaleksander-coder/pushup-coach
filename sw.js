@@ -3,7 +3,7 @@
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v34";
+const CACHE_NAME = "pushup-coach-v35";
 
 
 const ASSETS = [
@@ -128,9 +128,6 @@ self.addEventListener("push", event => {
         icon: "./icon.svg",
         badge: "./icon.svg",
         tag: payload.tag || "pushup-reminder",
-        data: {
-            url: payload.url || "./"
-        },
         vibrate: [200, 100, 200]
     };
 
@@ -144,20 +141,31 @@ self.addEventListener("notificationclick", event => {
 
     event.notification.close();
 
-    const targetUrl = event.notification.data?.url || "./";
+    // Всегда ведём на само приложение (scope SW),
+    // а не на URL из push-payload, где может быть адрес
+    // сервера Cloudflare.
+    const targetUrl = self.registration.scope;
 
     event.waitUntil(
         self.clients
             .matchAll({ type: "window", includeUncontrolled: true })
             .then(list => {
 
+                // Ищем уже открытое окно приложения
                 for (const client of list) {
-                    if ("focus" in client) {
-                        client.navigate(targetUrl);
-                        return client.focus();
+                    const clientUrl = new URL(client.url);
+                    const scopeUrl = new URL(self.registration.scope);
+
+                    if (clientUrl.origin === scopeUrl.origin &&
+                        clientUrl.pathname.startsWith(scopeUrl.pathname)) {
+
+                        if ("focus" in client) {
+                            return client.focus();
+                        }
                     }
                 }
 
+                // Если не нашли — открываем новое
                 if (self.clients.openWindow) {
                     return self.clients.openWindow(targetUrl);
                 }
