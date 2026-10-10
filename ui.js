@@ -2065,19 +2065,34 @@ function getWeeklyVolume() {
     const history = loadJSON(STORAGE_KEYS.history, []);
     const map = {};
 
-    history.forEach(r => {
-        if (!r.week) return;
-        const total = Number(r.totalActual) || 0;
-        if (!map[r.week]) map[r.week] = 0;
-        map[r.week] += total;
+    history.forEach(record => {
+
+        const d = new Date(record.date);
+        const t = d.getTime();
+        if (!Number.isFinite(t)) return;
+
+        // Находим понедельник текущей календарной недели
+        const day = d.getDay(); // 0 = вс, 1 = пн, ...
+        const diffToMonday = day === 0 ? -6 : 1 - day;
+
+        const monday = new Date(d);
+        monday.setDate(d.getDate() + diffToMonday);
+        monday.setHours(0, 0, 0, 0);
+
+        const key = monday.toISOString().slice(0, 10);
+
+        const total = Number(record.totalActual) || 0;
+        if (!map[key]) map[key] = 0;
+        map[key] += total;
     });
 
     return Object.entries(map)
-        .map(([week, volume]) => ({
-            week: Number(week),
-            volume
+        .map(([dateStr, volume]) => ({
+            date: new Date(dateStr).toISOString(),
+            value: volume,
+            weekStart: dateStr
         }))
-        .sort((a, b) => a.week - b.week);
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
 
@@ -2485,7 +2500,7 @@ function renderVolumeChart() {
     renderInteractiveChart("volumeChartContainer", volume, {
         stateKey: "volume",
         unit: "",
-        label: "Последняя неделя",
+        label: "Объём за неделю",
         valueFormatter: v => Math.round(v).toString()
     });
 }
