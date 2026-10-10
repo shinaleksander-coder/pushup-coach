@@ -137,11 +137,6 @@ let achievementQueue = [];
 let achievementModalMode = "new";
 
 
-/* =========================================
-   ЭКРАНЫ
-   ========================================= */
-
-
 function showScreen(id) {
 
     screens.forEach(screen => {
@@ -165,11 +160,6 @@ function showScreen(id) {
 
     window.scrollTo(0, 0);
 }
-
-
-/* =========================================
-   ПРИВЕТСТВИЕ
-   ========================================= */
 
 
 function showWelcome() {
@@ -212,11 +202,6 @@ function showWelcomeAgain() {
 }
 
 
-/* =========================================
-   ВЕС
-   ========================================= */
-
-
 function updateWeightHistory(newWeight, weightWasEmpty) {
 
     if (newWeight === null || newWeight === undefined) return;
@@ -244,11 +229,6 @@ function updateWeightHistory(newWeight, weightWasEmpty) {
         saveJSON(STORAGE_KEYS.weightHistory, wh);
     }
 }
-
-
-/* =========================================
-   ГЛАВНЫЙ ЭКРАН
-   ========================================= */
 
 
 function renderHome() {
@@ -318,16 +298,10 @@ function renderHome() {
 }
 
 
-/* =========================================
-   БЛОК ПРОГРЕССА НА ГЛАВНОЙ
-   ========================================= */
-
-
 function renderProgressStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
 
-    // Максимум за 1 подход (за всё время)
     let maxPushups = 0;
 
     history.forEach(record => {
@@ -344,7 +318,6 @@ function renderProgressStats() {
         maxEl.textContent = maxPushups > 0 ? maxPushups : "—";
     }
 
-    // Объём за последние 7 дней и за предыдущие 7 дней
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
 
@@ -382,7 +355,7 @@ function renderProgressStats() {
             } else if (d < 0) {
                 deltaLine.textContent =
                     `Снижение: ${d} к прошлой неделе`;
-                deltaLine.className = "delta-line";
+                deltaLine.className = "delta-line delta-down";
             } else {
                 deltaLine.textContent =
                     "На уровне прошлой недели";
@@ -399,11 +372,6 @@ function renderProgressStats() {
         }
     }
 }
-
-
-/* =========================================
-   БАННЕР ПРОПУСКА
-   ========================================= */
 
 
 function renderMissedBanner() {
@@ -528,11 +496,6 @@ function renderMissedBanner() {
 }
 
 
-/* =========================================
-   СРАВНЕНИЕ
-   ========================================= */
-
-
 function renderCompare() {
 
     const el = document.getElementById("homeCompare");
@@ -625,11 +588,6 @@ function renderWorkoutRecord() {
         recordEl.classList.add("hidden");
     }
 }
-
-
-/* =========================================
-   ЭКРАН ТРЕНИРОВКИ
-   ========================================= */
 
 
 function renderWorkoutScreen() {
@@ -760,11 +718,6 @@ function closeGripModal() {
 }
 
 
-/* =========================================
-   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА — UI
-   ========================================= */
-
-
 function getAvailableGrips() {
 
     const stats = getProgramStats();
@@ -859,11 +812,6 @@ function submitExtraConfig() {
 }
 
 
-/* =========================================
-   РЕЗУЛЬТАТ
-   ========================================= */
-
-
 function renderDoneScreen(record, saved, isNewRecord) {
 
     document.getElementById("doneSets").textContent =
@@ -924,11 +872,6 @@ function renderDoneScreen(record, saved, isNewRecord) {
         }
     }, 1500);
 }
-
-
-/* =========================================
-   ДОСТИЖЕНИЯ
-   ========================================= */
 
 
 function getUnlockedAchievements() {
@@ -1118,11 +1061,6 @@ function renderAchievements() {
             });
         });
 }
-
-
-/* =========================================
-   ИСТОРИЯ
-   ========================================= */
 
 
 function renderHistory() {
@@ -1346,11 +1284,6 @@ function saveHistoryEdit() {
 }
 
 
-/* =========================================
-   ПРОГРАММА
-   ========================================= */
-
-
 function renderProgram() {
     renderProgramModeButtons();
     renderCustomConfig();
@@ -1551,11 +1484,6 @@ function renderProgramList() {
 
     document.getElementById("programList").innerHTML = html;
 }
-
-
-/* =========================================
-   НАСТРОЙКИ
-   ========================================= */
 
 
 function renderSettings() {
@@ -1799,11 +1727,6 @@ function pluralDays(n) {
 }
 
 
-/* =========================================
-   РЕЙТИНГ
-   ========================================= */
-
-
 let leaderboardData = null;
 let leaderboardTab = "weekly";
 
@@ -1919,11 +1842,6 @@ function renderLeaderboard() {
 }
 
 
-/* =========================================
-   ЭКСПОРТ / ИМПОРТ
-   ========================================= */
-
-
 function exportData() {
 
     let json;
@@ -1931,7 +1849,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.5",
+            version: "1.9.6",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -2072,11 +1990,6 @@ function importDataFile(file) {
 }
 
 
-/* =========================================
-   ПРОГРЕСС
-   ========================================= */
-
-
 function getStrengthStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -2176,11 +2089,6 @@ function formatDelta(value, unit) {
 }
 
 
-/* =========================================
-   ИНТЕРАКТИВНЫЙ ГРАФИК
-   ========================================= */
-
-
 const CHART_PERIODS = {
     "1m": { label: "Месяц", days: 30 },
     "3m": { label: "3 мес", days: 90 },
@@ -2221,6 +2129,8 @@ function renderInteractiveChart(containerId, data, options) {
     const stateKey = options.stateKey || "weight";
     const unit = options.unit || "";
     const label = options.label || "";
+    const inverseColors = options.inverseColors === true;
+
     const valueFormatter = options.valueFormatter ||
         (v => Math.round(v).toString());
 
@@ -2343,6 +2253,17 @@ function renderInteractiveChart(containerId, data, options) {
     const diffSign = diff > 0 ? "+" : "";
     const diffLabel = `${diffSign}${diff}${unit ? " " + unit : ""}`;
 
+    // Инверсия цветов для веса: сброс = хорошо, набор = плохо
+    let diffColorClass = "";
+
+    if (diff !== 0) {
+        if (inverseColors) {
+            diffColorClass = diff < 0 ? "up" : "down";
+        } else {
+            diffColorClass = diff > 0 ? "up" : "down";
+        }
+    }
+
     container.innerHTML = `
         <div class="chart-periods">${buttonsHtml}</div>
 
@@ -2415,8 +2336,11 @@ function renderInteractiveChart(containerId, data, options) {
         </div>
 
         <div class="chart-summary">
-            ${label}: <strong>${valueFormatter(lastVal)}${unit ? " " + unit : ""}</strong>
-            <span class="chart-diff ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diffLabel}</span>
+            <span class="chart-summary-label">${label}:</span>
+            <span class="chart-summary-main">
+                <strong>${valueFormatter(lastVal)}${unit ? " " + unit : ""}</strong>
+                <span class="chart-diff ${diffColorClass}">${diffLabel}</span>
+            </span>
         </div>
     `;
 
@@ -2531,11 +2455,6 @@ function bindChartInteractions(container, points, opts) {
 }
 
 
-/* =========================================
-   ГРАФИКИ
-   ========================================= */
-
-
 function renderWeightChart() {
 
     const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, [])
@@ -2548,7 +2467,8 @@ function renderWeightChart() {
         stateKey: "weight",
         unit: "кг",
         label: "Сейчас",
-        valueFormatter: v => v.toFixed(1)
+        valueFormatter: v => v.toFixed(1),
+        inverseColors: true
     });
 }
 
@@ -2569,11 +2489,6 @@ function renderVolumeChart() {
         valueFormatter: v => Math.round(v).toString()
     });
 }
-
-
-/* =========================================
-   ЭКРАН ПРОГРЕССА
-   ========================================= */
 
 
 function renderProgress() {
@@ -2615,7 +2530,7 @@ function renderProgress() {
             } else if (d < 0) {
                 weeklyDeltaEl.textContent =
                     `Снижение ${d} к прошлой неделе`;
-                weeklyDeltaEl.className = "delta-line";
+                weeklyDeltaEl.className = "delta-line delta-down";
             } else {
                 weeklyDeltaEl.textContent =
                     "На уровне прошлой недели";
@@ -2648,13 +2563,25 @@ function renderProgress() {
     document.getElementById("weightNow").textContent =
         nowWeight ? `${nowWeight} кг` : "—";
 
+    const weightDeltaEl = document.getElementById("weightDelta");
+
     if (startWeight && nowWeight) {
         const wDelta =
             Math.round((nowWeight - startWeight) * 10) / 10;
-        document.getElementById("weightDelta").textContent =
-            formatDelta(wDelta, "кг");
+
+        weightDeltaEl.textContent = formatDelta(wDelta, "кг");
+
+        // Для веса: сброс = хорошо (зелёный), набор = плохо (красный)
+        if (wDelta < 0) {
+            weightDeltaEl.className = "delta-line delta-up";
+        } else if (wDelta > 0) {
+            weightDeltaEl.className = "delta-line delta-down";
+        } else {
+            weightDeltaEl.className = "delta-line";
+        }
     } else {
-        document.getElementById("weightDelta").textContent = "Нет данных";
+        weightDeltaEl.textContent = "Нет данных";
+        weightDeltaEl.className = "delta-line";
     }
 
     renderWeightChart();

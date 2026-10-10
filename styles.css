@@ -2381,3 +2381,63 @@ input:focus-visible {
 #weeklyDeltaLine {
     margin-top: 12px;
 }
+/* ========================================= */
+/* V1.9.6 — CHART & WEIGHT FIXES             */
+/* ========================================= */
+
+
+.progress-card .chart-periods {
+    position: relative;
+    z-index: 11;
+}
+
+
+.progress-card .chart-wrap {
+    margin-top: 6px;
+}
+
+
+.progress-card .chart-summary {
+    margin-top: 16px;
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.progress-card .chart-summary-label {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+
+.progress-card .chart-summary-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.progress-card .chart-summary-main strong {
+    font-size: 15px;
+}
+
+
+.delta-line.delta-down {
+    background: #ffebee;
+    color: #b71c1c;
+    font-weight: 700;
+}
+
+
+@media (prefers-color-scheme: dark) {
+
+    .delta-line.delta-down {
+        background: #3d1a1a;
+        color: #ffcdd2;
+    }
+
+}
