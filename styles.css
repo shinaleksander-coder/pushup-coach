@@ -2441,3 +2441,11 @@ input:focus-visible {
     }
 
 }
+/* ========================================= */
+/* V1.9.7 — CHART SPACING                    */
+/* ========================================= */
+
+
+#weightChartContainer .chart-periods {
+    margin-top: 16px;
+}
