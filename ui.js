@@ -2490,18 +2490,17 @@ function renderWeightChart() {
 
 function renderVolumeChart() {
 
-    const volume = getWeeklyVolume()
-        .map(d => ({
-            date: new Date().toISOString(),
-            value: d.volume,
-            week: d.week
-        }));
+    const volume = getWeeklyVolume();
 
     renderInteractiveChart("volumeChartContainer", volume, {
         stateKey: "volume",
         unit: "",
         label: "Объём за неделю",
-        valueFormatter: v => Math.round(v).toString()
+        valueFormatter: v => Math.round(v).toString(),
+        xLabel: (d) => {
+            const dt = new Date(d);
+            return `${dt.getDate()}.${(dt.getMonth() + 1).toString().padStart(2, "0")}`;
+        }
     });
 }
 
