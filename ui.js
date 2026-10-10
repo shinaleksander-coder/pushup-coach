@@ -2563,27 +2563,6 @@ function renderProgress() {
     document.getElementById("weightNow").textContent =
         nowWeight ? `${nowWeight} кг` : "—";
 
-    const weightDeltaEl = document.getElementById("weightDelta");
-
-    if (startWeight && nowWeight) {
-        const wDelta =
-            Math.round((nowWeight - startWeight) * 10) / 10;
-
-        weightDeltaEl.textContent = formatDelta(wDelta, "кг");
-
-        // Для веса: сброс = хорошо (зелёный), набор = плохо (красный)
-        if (wDelta < 0) {
-            weightDeltaEl.className = "delta-line delta-up";
-        } else if (wDelta > 0) {
-            weightDeltaEl.className = "delta-line delta-down";
-        } else {
-            weightDeltaEl.className = "delta-line";
-        }
-    } else {
-        weightDeltaEl.textContent = "Нет данных";
-        weightDeltaEl.className = "delta-line";
-    }
-
     renderWeightChart();
     renderVolumeChart();
 
