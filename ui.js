@@ -2159,21 +2159,19 @@ function renderInteractiveChart(containerId, data, options) {
         .join("");
 
     if (filtered.length < 2) {
-
         container.innerHTML = `
             <div class="chart-periods">${buttonsHtml}</div>
             <p class="chart-empty">Недостаточно данных для выбранного периода. Попробуй другой диапазон.</p>
         `;
-
         bindChartPeriodButtons(container);
         return;
     }
 
     const width = 320;
-    const height = 160;
+    const height = 190;
     const padL = 12;
-    const padR = 42;
-    const padT = 20;
+    const padR = 52;
+    const padT = 14;
     const padB = 28;
 
     const values = filtered.map(d => d.value);
@@ -2183,6 +2181,46 @@ function renderInteractiveChart(containerId, data, options) {
 
     const innerW = width - padL - padR;
     const innerH = height - padT - padB;
+
+    // 5 уровней на оси Y: 0%, 25%, 50%, 75%, 100%
+    const gridLevels = [];
+
+    for (let i = 0; i <= 4; i++) {
+        const ratio = i / 4;
+        const value = minV + range * ratio;
+        const y = padT + innerH * (1 - ratio);
+        gridLevels.push({ value, y, ratio });
+    }
+
+    // Убираем дубликаты после форматирования
+    const seenLabels = new Set();
+    const filteredLevels = [];
+
+    for (const lvl of gridLevels) {
+        const lbl = valueFormatter(lvl.value);
+        if (!seenLabels.has(lbl)) {
+            seenLabels.add(lbl);
+            filteredLevels.push({ ...lvl, labelText: lbl });
+        }
+    }
+
+    const gridLinesHtml = filteredLevels
+        .map(lvl => `
+            <line
+                class="chart-grid-line"
+                x1="${padL}"
+                y1="${lvl.y.toFixed(1)}"
+                x2="${width - padR}"
+                y2="${lvl.y.toFixed(1)}"
+            />
+            <text
+                class="chart-label chart-axis-label"
+                x="${width - padR + 6}"
+                y="${(lvl.y + 3.5).toFixed(1)}"
+                text-anchor="start"
+            >${lvl.labelText}</text>
+        `)
+        .join("");
 
     const points = filtered.map((d, i) => ({
         x: padL + (i / (filtered.length - 1)) * innerW,
@@ -2250,9 +2288,6 @@ function renderInteractiveChart(containerId, data, options) {
         })
         .join("");
 
-    const maxLabel = valueFormatter(maxV);
-    const minLabel = valueFormatter(minV);
-
     const firstDate = new Date(points[0].date);
     const lastDate = new Date(points[points.length - 1].date);
 
@@ -2268,7 +2303,6 @@ function renderInteractiveChart(containerId, data, options) {
     const diffSign = diff > 0 ? "+" : "";
     const diffLabel = `${diffSign}${diff}${unit ? " " + unit : ""}`;
 
-    // Инверсия цветов для веса: сброс = хорошо, набор = плохо
     let diffColorClass = "";
 
     if (diff !== 0) {
@@ -2300,6 +2334,8 @@ function renderInteractiveChart(containerId, data, options) {
                     </linearGradient>
                 </defs>
 
+                ${gridLinesHtml}
+
                 <path
                     class="chart-area"
                     d="${areaD}"
@@ -2312,20 +2348,6 @@ function renderInteractiveChart(containerId, data, options) {
                 />
 
                 ${circles}
-
-                <text
-                    class="chart-label"
-                    x="${width - 6}"
-                    y="${padT + 4}"
-                    text-anchor="end"
-                >${maxLabel}</text>
-
-                <text
-                    class="chart-label"
-                    x="${width - 6}"
-                    y="${padT + innerH + 4}"
-                    text-anchor="end"
-                >${minLabel}</text>
 
                 <text
                     class="chart-label"
@@ -2427,13 +2449,16 @@ function bindChartInteractions(container, points, opts) {
         tooltip.classList.remove("hidden");
 
         const svg = container.querySelector(".interactive-chart");
-        const rect = svg.getBoundingClientRect();
-        const wrapRect = container
-            .querySelector(".chart-wrap")
-            .getBoundingClientRect();
+        const wrap = container.querySelector(".chart-wrap");
 
-        const scaleX = rect.width / 320;
-        const scaleY = rect.height / 160;
+        if (!svg || !wrap) return;
+
+        const rect = svg.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+
+        const vb = svg.viewBox.baseVal;
+        const scaleX = rect.width / vb.width;
+        const scaleY = rect.height / vb.height;
 
         const x = point.x * scaleX;
         const y = point.y * scaleY;
