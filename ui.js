@@ -597,6 +597,115 @@ function closeGripModal() {
 }
 
 
+/* =========================================
+   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА — UI
+   ========================================= */
+
+
+function getAvailableGrips() {
+
+    const stats = getProgramStats();
+    const daysPerWeek = getActiveConfig().daysPerWeek || 3;
+    const programIndex = stats.planDone;
+
+    const currentWeek = Math.floor(programIndex / daysPerWeek);
+    const currentBlock = Math.floor(currentWeek / BLOCK_WEEKS);
+
+    const maxBlock = Math.min(
+        currentBlock,
+        PROGRAM_GRIPS.length - 1
+    );
+
+    return PROGRAM_GRIPS.slice(0, maxBlock + 1);
+}
+
+
+function openExtraConfigModal() {
+
+    const gripSelect = document.getElementById("extraGrip");
+    const setsSelect = document.getElementById("extraSets");
+    const repsSelect = document.getElementById("extraReps");
+    const hintEl = document.getElementById("extraHint");
+
+    if (!gripSelect || !setsSelect || !repsSelect) return;
+
+    // Хваты — только доступные
+    const grips = getAvailableGrips();
+
+    gripSelect.innerHTML = grips
+        .map(g => `<option value="${g}">${g}</option>`)
+        .join("");
+
+    // Подходы — 1..10, по умолчанию 3
+    let setsHtml = "";
+    for (let i = 1; i <= 10; i++) {
+        setsHtml += `<option value="${i}" ${i === 3 ? "selected" : ""}>${i}</option>`;
+    }
+    setsSelect.innerHTML = setsHtml;
+
+    // Повторы — 1..50
+    // По умолчанию: половина от планового следующего подхода
+    const next = getNextWorkout(false);
+    let defaultReps = 10;
+
+    if (next && next.reps) {
+        defaultReps = Math.max(3, Math.round(next.reps / 2));
+    }
+
+    let repsHtml = "";
+    for (let i = 1; i <= 50; i++) {
+        repsHtml += `<option value="${i}" ${i === defaultReps ? "selected" : ""}>${i}</option>`;
+    }
+    repsSelect.innerHTML = repsHtml;
+
+    // Подсказка
+    if (hintEl) {
+        if (grips.length === 1) {
+            hintEl.textContent =
+                "Пока доступен только «Обычный» хват. " +
+                "Остальные откроются по мере прохождения программы.";
+        } else {
+            hintEl.textContent =
+                `Доступно ${grips.length} хватов — открываются по мере прохождения блоков.`;
+        }
+    }
+
+    document.getElementById("extraConfigModal")
+        .classList.remove("hidden");
+}
+
+
+function closeExtraConfigModal() {
+    document.getElementById("extraConfigModal")
+        .classList.add("hidden");
+}
+
+
+function submitExtraConfig() {
+
+    const gripEl = document.getElementById("extraGrip");
+    const setsEl = document.getElementById("extraSets");
+    const repsEl = document.getElementById("extraReps");
+
+    if (!gripEl || !setsEl || !repsEl) return;
+
+    const grip = gripEl.value;
+    const sets = Number(setsEl.value);
+    const reps = Number(repsEl.value);
+
+    closeExtraConfigModal();
+
+    if (typeof startExtraWorkout === "function") {
+        startExtraWorkout({ grip, sets, reps });
+    }
+}
+
+
+/* =========================================
+   РЕЗУЛЬТАТ
+   ========================================= */
+
+
 function renderDoneScreen(record, saved, isNewRecord) {
 
     document.getElementById("doneSets").textContent =
@@ -651,7 +760,6 @@ function renderDoneScreen(record, saved, isNewRecord) {
         list.appendChild(warning);
     }
 
-    // Автоотправка в рейтинг (не блокирует UI)
     setTimeout(() => {
         if (typeof submitToLeaderboard === "function") {
             submitToLeaderboard().catch(() => {});
@@ -1558,6 +1666,7 @@ function renderLeaderboard() {
     listEl.innerHTML = html;
 }
 
+
 /* =========================================
    ЭКСПОРТ
    ========================================= */
@@ -1565,14 +1674,12 @@ function renderLeaderboard() {
 
 function exportData() {
 
-    console.log("[export] старт");
-
     let json;
     let filename;
 
     try {
         const data = {
-            version: "1.9.1",
+            version: "1.9.3",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -1585,8 +1692,6 @@ function exportData() {
             `pushup-coach-backup-${new Date()
                 .toISOString()
                 .slice(0, 10)}.json`;
-
-        console.log("[export] данных:", json.length, "символов");
 
     } catch (err) {
         alert("Ошибка сбора данных: " + err.message);
@@ -1602,29 +1707,18 @@ function exportData() {
 
             if (navigator.canShare({ files: [file] })) {
 
-                console.log("[export] пробуем share файлом");
-
                 navigator.share({
                     files: [file],
                     title: "Push-Up Coach — бэкап"
                 })
-                .then(() => {
-                    console.log("[export] share успешно");
-                })
                 .catch(err => {
-                    if (err && err.name === "AbortError") {
-                        console.log("[export] отменено пользователем");
-                        return;
-                    }
-                    console.warn("[export] share файлом не удалось:", err);
+                    if (err && err.name === "AbortError") return;
                     exportFallbackDownload(json, filename);
                 });
 
                 return;
             }
-        } catch (err) {
-            console.warn("[export] ошибка share:", err);
-        }
+        } catch (err) { /* ignore */ }
     }
 
     exportFallbackDownload(json, filename);
@@ -1632,8 +1726,6 @@ function exportData() {
 
 
 function exportFallbackDownload(json, filename) {
-
-    console.log("[export] пробуем скачивание");
 
     try {
         const blob = new Blob([json], { type: "application/json" });
@@ -1650,10 +1742,7 @@ function exportFallbackDownload(json, filename) {
 
         setTimeout(() => URL.revokeObjectURL(url), 2000);
 
-        console.log("[export] скачивание инициировано");
-
     } catch (err) {
-        console.warn("[export] ошибка скачивания:", err);
         exportFallbackClipboard(json);
     }
 }
@@ -1661,12 +1750,9 @@ function exportFallbackDownload(json, filename) {
 
 async function exportFallbackClipboard(json) {
 
-    console.log("[export] пробуем буфер обмена");
-
     try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(json);
-
             alert(
                 "Скачивание файла недоступно в этом режиме.\n\n" +
                 "Данные скопированы в буфер обмена. Вставь их " +
@@ -1675,9 +1761,7 @@ async function exportFallbackClipboard(json) {
             );
             return;
         }
-    } catch (err) {
-        console.warn("[export] буфер не сработал:", err);
-    }
+    } catch (err) { /* ignore */ }
 
     const preview = json.length > 3000
         ? json.slice(0, 3000) + "\n\n... (продолжение обрезано)"
@@ -1689,11 +1773,6 @@ async function exportFallbackClipboard(json) {
         preview
     );
 }
-
-
-/* =========================================
-   ИМПОРТ
-   ========================================= */
 
 
 function importDataFile(file) {

@@ -42,7 +42,7 @@ on("continueWorkout", "click", () => {
 });
 
 on("extraWorkout", "click", () => {
-    if (typeof startExtraWorkout === "function") startExtraWorkout();
+    if (typeof openExtraConfigModal === "function") openExtraConfigModal();
 });
 
 on("minusRep", "click", () => {
@@ -165,6 +165,27 @@ on("achievementModal", "click", event => {
 });
 
 on("welcomeStart", "click", handleWelcomeStart);
+
+
+/* =========================================
+   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА — МОДАЛКА
+   ========================================= */
+
+
+on("extraStart", "click", () => {
+    if (typeof submitExtraConfig === "function") submitExtraConfig();
+});
+
+on("extraCancel", "click", () => {
+    if (typeof closeExtraConfigModal === "function") closeExtraConfigModal();
+});
+
+on("extraConfigModal", "click", event => {
+    if (event.target.id === "extraConfigModal" &&
+        typeof closeExtraConfigModal === "function") {
+        closeExtraConfigModal();
+    }
+});
 
 
 /* =========================================
@@ -797,13 +818,5 @@ if (firstStartupError) {
     }, 500);
 }
 
-// Автоотправка в рейтинг при запуске (один раз за сессию)
-safeRun("submitLeaderboard", () => {
-    if (typeof submitToLeaderboard === "function") {
-        setTimeout(() => {
-            submitToLeaderboard().catch(() => {});
-        }, 3000);
-    }
-});
 
-console.log("Push-Up Coach v1.9.2 запущен");
+console.log("Push-Up Coach v1.9.3 запущен");

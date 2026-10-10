@@ -17,66 +17,25 @@ let isExtraWorkout = false;
 
 
 /* =========================================
-   СТАРТ / ВОССТАНОВЛЕНИЕ
+   СТАРТ ОБЫЧНОЙ ТРЕНИРОВКИ
    ========================================= */
 
 
 function startNewWorkout() {
-    startWorkoutInternal(false);
-}
-
-
-function startExtraWorkout() {
-    startWorkoutInternal(true);
-}
-
-
-function startWorkoutInternal(isExtra) {
-
-    isExtraWorkout = isExtra === true;
 
     const forceRepeat =
         loadJSON(STORAGE_KEYS.repeatLast, false) === true;
 
     removeStorage(STORAGE_KEYS.repeatLast);
 
-    let next;
-
-    if (isExtraWorkout) {
-
-        const history = loadJSON(STORAGE_KEYS.history, []);
-        const programIndex =
-            history.filter(r => !r.isExtra).length;
-
-        const base =
-            PROGRAM[programIndex] ||
-            PROGRAM[PROGRAM.length - 1];
-
-        if (!base) {
-            alert("Программа завершена.");
-            return;
-        }
-
-        const adapted =
-            getNextWorkoutFor(history, false) || base;
-
-        next = {
-            ...base,
-            reps: adapted.reps || base.reps,
-            rest: adapted.rest || base.rest,
-            reason: "Дополнительная тренировка"
-        };
-
-    } else {
-
-        next = getNextWorkout(forceRepeat);
-    }
+    const next = getNextWorkout(forceRepeat);
 
     if (!next) {
         alert("Программа завершена. Отличная работа!");
         return;
     }
 
+    isExtraWorkout = false;
     workout = next;
     currentSet = 0;
     workoutResults = [];
@@ -92,6 +51,54 @@ function startWorkoutInternal(isExtra) {
     renderWorkoutScreen();
     startSet();
 }
+
+
+/* =========================================
+   СТАРТ ДОПОЛНИТЕЛЬНОЙ ТРЕНИРОВКИ
+   ========================================= */
+
+
+function startExtraWorkout(config) {
+
+    if (!config || !config.grip) {
+        console.warn("startExtraWorkout: нет конфига");
+        return;
+    }
+
+    isExtraWorkout = true;
+
+    const rest = settings.restOverride ||
+        (config.rest || 90);
+
+    workout = {
+        grip: config.grip,
+        sets: Number(config.sets) || 3,
+        reps: Number(config.reps) || 10,
+        rest: rest,
+        isTest: false,
+        isExtra: true,
+        reason: "Дополнительная тренировка"
+    };
+
+    currentSet = 0;
+    workoutResults = [];
+    actualReps = workout.reps;
+    restEndsAt = 0;
+    remainingSeconds = 0;
+    startedAt = Date.now();
+    lastCountdownSecond = -1;
+
+    unlockAudio();
+
+    showScreen("screenWorkout");
+    renderWorkoutScreen();
+    startSet();
+}
+
+
+/* =========================================
+   ВОССТАНОВЛЕНИЕ АКТИВНОЙ ТРЕНИРОВКИ
+   ========================================= */
 
 
 function continueExistingWorkout() {
@@ -258,7 +265,6 @@ function tickRestTimer() {
 }
 
 
-// Последние 5 секунд: бип + вибро + (опционально) речь.
 function maybeCountdown(secondsLeft) {
 
     if (secondsLeft < 1 || secondsLeft > 5) return;
@@ -266,19 +272,16 @@ function maybeCountdown(secondsLeft) {
 
     lastCountdownSecond = secondsLeft;
 
-    // Всегда: короткий бип (это работает и в фоне)
     try {
         playTick();
     } catch (e) { /* ignore */ }
 
-    // Вибрация (Android, где поддерживается)
     try {
         if (navigator.vibrate) {
             navigator.vibrate(40);
         }
     } catch (e) { /* ignore */ }
 
-    // Если включено — ещё и голос
     if (settings.voiceCountdown) {
         try {
             speakNumber(secondsLeft);
@@ -370,8 +373,8 @@ function finishWorkout() {
         finishedAt,
         durationMs: finishedAt - startedAt,
 
-        week: workout.week,
-        day: workout.day,
+        week: workout.week || null,
+        day: workout.day || null,
         grip: workout.grip,
         isTest: workout.isTest,
         isExtra: isExtraWorkout,
@@ -508,7 +511,6 @@ function unlockAudio() {
 }
 
 
-// Короткий "клик" — 1 сек отсчёта.
 function playTick() {
 
     if (!audioCtx) return;
@@ -538,7 +540,6 @@ function playTick() {
 }
 
 
-// Более длинный сигнал — на "ноль" и по завершении.
 function playBeep() {
 
     if (!audioCtx) return;

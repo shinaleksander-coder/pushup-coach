@@ -3,21 +3,21 @@
    ========================================= */
 
 
-const CACHE_NAME = "pushup-coach-v35";
+const CACHE_NAME = "pushup-coach-v36";
 
 
 const ASSETS = [
     "./",
     "./index.html",
-    "./styles.css?v=27",
-    "./storage.js?v=27",
-    "./grips.js?v=27",
-    "./program.js?v=27",
-    "./workout.js?v=27",
-    "./push.js?v=27",
-    "./leaderboard.js?v=27",
-    "./ui.js?v=27",
-    "./app.js?v=27",
+    "./styles.css?v=28",
+    "./storage.js?v=28",
+    "./grips.js?v=28",
+    "./program.js?v=28",
+    "./workout.js?v=28",
+    "./push.js?v=28",
+    "./leaderboard.js?v=28",
+    "./ui.js?v=28",
+    "./app.js?v=28",
     "./manifest.json",
     "./icon.svg"
 ];
@@ -141,9 +141,6 @@ self.addEventListener("notificationclick", event => {
 
     event.notification.close();
 
-    // Всегда ведём на само приложение (scope SW),
-    // а не на URL из push-payload, где может быть адрес
-    // сервера Cloudflare.
     const targetUrl = self.registration.scope;
 
     event.waitUntil(
@@ -151,7 +148,6 @@ self.addEventListener("notificationclick", event => {
             .matchAll({ type: "window", includeUncontrolled: true })
             .then(list => {
 
-                // Ищем уже открытое окно приложения
                 for (const client of list) {
                     const clientUrl = new URL(client.url);
                     const scopeUrl = new URL(self.registration.scope);
@@ -165,7 +161,6 @@ self.addEventListener("notificationclick", event => {
                     }
                 }
 
-                // Если не нашли — открываем новое
                 if (self.clients.openWindow) {
                     return self.clients.openWindow(targetUrl);
                 }
