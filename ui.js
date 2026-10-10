@@ -327,7 +327,7 @@ function renderProgressStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
 
-    // Рекорд за всё время
+    // Максимум за 1 подход (за всё время)
     let maxPushups = 0;
 
     history.forEach(record => {
@@ -344,40 +344,36 @@ function renderProgressStats() {
         maxEl.textContent = maxPushups > 0 ? maxPushups : "—";
     }
 
-    // Рекорды за неделю и прошлую неделю
+    // Объём за последние 7 дней и за предыдущие 7 дней
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
 
-    let weekly = 0;
-    let prevWeekly = 0;
+    let weeklyVolume = 0;
+    let prevWeeklyVolume = 0;
 
     history.forEach(record => {
         const t = new Date(record.date).getTime();
-        let best = 0;
-        record.results?.forEach(r => {
-            const a = Number(r.actual);
-            if (a > best) best = a;
-        });
+        const total = Number(record.totalActual) || 0;
 
         if (t >= weekAgo) {
-            if (best > weekly) weekly = best;
+            weeklyVolume += total;
         } else if (t >= twoWeeksAgo) {
-            if (best > prevWeekly) prevWeekly = best;
+            prevWeeklyVolume += total;
         }
     });
 
-    const weeklyEl = document.getElementById("weeklyPushups");
+    const weeklyEl = document.getElementById("weeklyVolume");
     if (weeklyEl) {
-        weeklyEl.textContent = weekly > 0 ? weekly : "—";
+        weeklyEl.textContent = weeklyVolume > 0 ? weeklyVolume : "—";
     }
 
     const deltaLine = document.getElementById("weeklyDeltaLine");
 
     if (deltaLine) {
 
-        if (weekly > 0 && prevWeekly > 0) {
+        if (weeklyVolume > 0 && prevWeeklyVolume > 0) {
 
-            const d = weekly - prevWeekly;
+            const d = weeklyVolume - prevWeeklyVolume;
 
             if (d > 0) {
                 deltaLine.textContent =
@@ -393,9 +389,9 @@ function renderProgressStats() {
                 deltaLine.className = "delta-line";
             }
 
-        } else if (weekly > 0) {
+        } else if (weeklyVolume > 0) {
             deltaLine.textContent =
-                "Первая тренировка за последние 7 дней";
+                "Первая активная неделя";
             deltaLine.className = "delta-line";
         } else {
             deltaLine.textContent = "";
