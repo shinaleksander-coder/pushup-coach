@@ -23,7 +23,7 @@ const ACHIEVEMENTS = [
     { id: "ten", icon: "🔟", title: "10 тренировок", desc: "Уже не новичок", check: (h, max) => h.filter(r => !r.isExtra).length >= 10 },
     { id: "twentyfive", icon: "💪", title: "25 тренировок", desc: "Четверть пути", check: (h, max) => h.filter(r => !r.isExtra).length >= 25 },
     { id: "fifty", icon: "🚀", title: "50 тренировок", desc: "Больше половины программы", check: (h, max) => h.filter(r => !r.isExtra).length >= 50 },
-    { id: "record10", icon: "⭐", title: "Рекорд 10", desc: "10 повторов в подходе", check: (h, max) => max >= 10 },
+    { id: "record10", icon: "⭐", title: "Рекорд 10", desc: "10 повторов в подходе", check: (h, max) => h.max >= 10 },
     { id: "record15", icon: "🌟", title: "Рекорд 15", desc: "15 повторов в подходе", check: (h, max) => max >= 15 },
     { id: "record20", icon: "🏅", title: "Рекорд 20", desc: "20 повторов в подходе", check: (h, max) => max >= 20 },
     { id: "record25", icon: "👑", title: "Рекорд 25", desc: "25 повторов в подходе", check: (h, max) => max >= 25 },
@@ -629,22 +629,18 @@ function openExtraConfigModal() {
 
     if (!gripSelect || !setsSelect || !repsSelect) return;
 
-    // Хваты — только доступные
     const grips = getAvailableGrips();
 
     gripSelect.innerHTML = grips
         .map(g => `<option value="${g}">${g}</option>`)
         .join("");
 
-    // Подходы — 1..10, по умолчанию 3
     let setsHtml = "";
     for (let i = 1; i <= 10; i++) {
         setsHtml += `<option value="${i}" ${i === 3 ? "selected" : ""}>${i}</option>`;
     }
     setsSelect.innerHTML = setsHtml;
 
-    // Повторы — 1..50
-    // По умолчанию: половина от планового следующего подхода
     const next = getNextWorkout(false);
     let defaultReps = 10;
 
@@ -658,7 +654,6 @@ function openExtraConfigModal() {
     }
     repsSelect.innerHTML = repsHtml;
 
-    // Подсказка
     if (hintEl) {
         if (grips.length === 1) {
             hintEl.textContent =
@@ -1668,7 +1663,7 @@ function renderLeaderboard() {
 
 
 /* =========================================
-   ЭКСПОРТ
+   ЭКСПОРТ / ИМПОРТ
    ========================================= */
 
 
@@ -1679,7 +1674,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.3",
+            version: "1.9.4",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -1755,23 +1750,13 @@ async function exportFallbackClipboard(json) {
             await navigator.clipboard.writeText(json);
             alert(
                 "Скачивание файла недоступно в этом режиме.\n\n" +
-                "Данные скопированы в буфер обмена. Вставь их " +
-                "в заметки или отправь себе — это полный бэкап " +
-                "в формате JSON."
+                "Данные скопированы в буфер обмена."
             );
             return;
         }
     } catch (err) { /* ignore */ }
 
-    const preview = json.length > 3000
-        ? json.slice(0, 3000) + "\n\n... (продолжение обрезано)"
-        : json;
-
-    alert(
-        "Не удалось сохранить автоматически.\n\n" +
-        "Скопируй текст ниже и сохрани его вручную:\n\n" +
-        preview
-    );
+    alert("Не удалось сохранить файл.");
 }
 
 
@@ -1908,20 +1893,86 @@ function formatDelta(value, unit) {
 }
 
 
-function renderLineChart(data, options) {
+/* =========================================
+   ИНТЕРАКТИВНЫЙ ГРАФИК
+   ========================================= */
+
+
+const CHART_PERIODS = {
+    "1m": { label: "Месяц", days: 30 },
+    "3m": { label: "3 мес", days: 90 },
+    "6m": { label: "6 мес", days: 180 },
+    "all": { label: "Всё", days: null }
+};
+
+
+const chartState = {
+    weight: { period: "3m" },
+    volume: { period: "all" }
+};
+
+
+function filterByPeriod(data, period) {
+
+    if (period === "all") return data;
+
+    const days = CHART_PERIODS[period]?.days;
+    if (!days) return data;
+
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+    return data.filter(d => {
+        const t = new Date(d.date).getTime();
+        return t >= cutoff;
+    });
+}
+
+
+function renderInteractiveChart(containerId, data, options) {
+
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
     options = options || {};
 
-    const width = options.width || 320;
-    const height = options.height || 140;
-    const padL = options.padL !== undefined ? options.padL : 8;
-    const padR = options.padR !== undefined ? options.padR : 40;
-    const padT = options.padT !== undefined ? options.padT : 16;
-    const padB = options.padB !== undefined ? options.padB : 24;
+    const stateKey = options.stateKey || "weight";
+    const unit = options.unit || "";
+    const label = options.label || "";
+    const xLabelFn = options.xLabel;
+    const valueFormatter = options.valueFormatter ||
+        (v => Math.round(v).toString());
 
-    const last = data.slice(-30);
+    // Период
+    const currentPeriod = chartState[stateKey].period;
+    const filtered = filterByPeriod(data, currentPeriod);
 
-    const values = last.map(d => d.value);
+    // Кнопки периодов
+    const buttonsHtml = Object.entries(CHART_PERIODS)
+        .map(([key, cfg]) =>
+            `<button class="chart-period-btn ${currentPeriod === key ? "active" : ""}" data-period="${key}" data-chart="${stateKey}">${cfg.label}</button>`
+        )
+        .join("");
+
+    // Мало данных
+    if (filtered.length < 2) {
+
+        container.innerHTML = `
+            <div class="chart-periods">${buttonsHtml}</div>
+            <p class="chart-empty">Недостаточно данных для выбранного периода. Попробуй другой диапазон.</p>
+        `;
+
+        bindChartPeriodButtons(container);
+        return;
+    }
+
+    const width = 320;
+    const height = 160;
+    const padL = 12;
+    const padR = 42;
+    const padT = 20;
+    const padB = 28;
+
+    const values = filtered.map(d => d.value);
     const minV = Math.min(...values);
     const maxV = Math.max(...values);
     const range = maxV - minV || 1;
@@ -1929,93 +1980,347 @@ function renderLineChart(data, options) {
     const innerW = width - padL - padR;
     const innerH = height - padT - padB;
 
-    const points = last.map((d, i) => ({
-        x: padL + (i / (last.length - 1)) * innerW,
-        y: padT + innerH - ((d.value - minV) / range) * innerH
+    const points = filtered.map((d, i) => ({
+        x: padL + (i / (filtered.length - 1)) * innerW,
+        y: padT + innerH - ((d.value - minV) / range) * innerH,
+        value: d.value,
+        date: d.date,
+        meta: d
     }));
 
-    const pathD = points
-        .map((p, i) =>
-            (i === 0 ? "M" : "L") +
-            p.x.toFixed(1) + "," + p.y.toFixed(1)
-        )
-        .join(" ");
+    // Плавная кривая через cardinal spline
+    let pathD = "";
+
+    if (points.length === 2) {
+        pathD = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} ` +
+                `L ${points[1].x.toFixed(1)},${points[1].y.toFixed(1)}`;
+    } else {
+
+        pathD = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+
+        for (let i = 0; i < points.length - 1; i++) {
+
+            const p0 = points[i - 1] || points[i];
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            const p3 = points[i + 2] || p2;
+
+            const cp1x = p1.x + (p2.x - p0.x) / 6;
+            const cp1y = p1.y + (p2.y - p0.y) / 6;
+            const cp2x = p2.x - (p3.x - p1.x) / 6;
+            const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+            pathD +=
+                ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ` +
+                `${cp2x.toFixed(1)},${cp2y.toFixed(1)} ` +
+                `${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+        }
+    }
+
+    // Площадь под кривой
+    const areaD =
+        pathD +
+        ` L ${points[points.length - 1].x.toFixed(1)},${(padT + innerH).toFixed(1)}` +
+        ` L ${points[0].x.toFixed(1)},${(padT + innerH).toFixed(1)} Z`;
+
+    // Точки — только последние N, чтобы не загромождать
+    const showEveryN = points.length > 15
+        ? Math.ceil(points.length / 8)
+        : 1;
 
     const circles = points
-        .map(p =>
-            `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" />`
-        )
+        .map((p, i) => {
+
+            const isLast = i === points.length - 1;
+            const showDot = isLast || i % showEveryN === 0;
+
+            const r = isLast ? 4 : 3;
+            const opacity = isLast ? 1 : 0.7;
+
+            return `
+                <circle
+                    class="chart-dot"
+                    cx="${p.x.toFixed(1)}"
+                    cy="${p.y.toFixed(1)}"
+                    r="${r}"
+                    data-index="${i}"
+                    opacity="${showDot ? opacity : 0}"
+                />
+            `;
+        })
         .join("");
 
-    const maxLabel =
-        `<text x="${width - 6}" y="${padT + 4}" text-anchor="end" class="chart-label">${maxV.toFixed(0)}</text>`;
+    // Метки
+    const maxLabel = valueFormatter(maxV);
+    const minLabel = valueFormatter(minV);
 
-    const minLabel =
-        `<text x="${width - 6}" y="${padT + innerH}" text-anchor="end" class="chart-label">${minV.toFixed(0)}</text>`;
+    const firstDate = new Date(points[0].date);
+    const lastDate = new Date(points[points.length - 1].date);
 
-    const defaultXLabel = (d) => {
-        const dt = new Date(d.date);
-        return `${dt.getDate()}.${(dt.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}`;
-    };
+    const fmtDate = (d) =>
+        xLabelFn
+            ? xLabelFn(d)
+            : `${d.getDate()}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
 
-    const xLabel = options.xLabel || defaultXLabel;
+    const startDateLabel = fmtDate(firstDate);
+    const endDateLabel = fmtDate(lastDate);
 
-    const startDate =
-        `<text x="${padL}" y="${height - 6}" text-anchor="start" class="chart-label">${xLabel(last[0])}</text>`;
+    // Итог: разница
+    const firstVal = points[0].value;
+    const lastVal = points[points.length - 1].value;
+    const diff = Math.round((lastVal - firstVal) * 10) / 10;
+    const diffSign = diff > 0 ? "+" : "";
+    const diffLabel = `${diffSign}${diff}${unit ? " " + unit : ""}`;
 
-    const endDate =
-        `<text x="${width - padR}" y="${height - 6}" text-anchor="end" class="chart-label">${xLabel(last[last.length - 1])}</text>`;
+    container.innerHTML = `
+        <div class="chart-periods">${buttonsHtml}</div>
 
-    return `
-        <svg viewBox="0 0 ${width} ${height}" class="weight-chart" role="img">
-            <path d="${pathD}" />
-            ${circles}
-            ${maxLabel}
-            ${minLabel}
-            ${startDate}
-            ${endDate}
-        </svg>
+        <div class="chart-wrap" data-chart="${stateKey}">
+
+            <svg
+                class="interactive-chart"
+                viewBox="0 0 ${width} ${height}"
+                preserveAspectRatio="xMidYMid meet"
+            >
+
+                <defs>
+                    <linearGradient
+                        id="chart-gradient-${stateKey}"
+                        x1="0" y1="0" x2="0" y2="1"
+                    >
+                        <stop offset="0%" stop-color="currentColor" stop-opacity="0.25"/>
+                        <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                    </linearGradient>
+                </defs>
+
+                <path
+                    class="chart-area"
+                    d="${areaD}"
+                    fill="url(#chart-gradient-${stateKey})"
+                />
+
+                <path
+                    class="chart-line"
+                    d="${pathD}"
+                />
+
+                ${circles}
+
+                <text
+                    class="chart-label"
+                    x="${width - 6}"
+                    y="${padT + 4}"
+                    text-anchor="end"
+                >${maxLabel}</text>
+
+                <text
+                    class="chart-label"
+                    x="${width - 6}"
+                    y="${padT + innerH + 4}"
+                    text-anchor="end"
+                >${minLabel}</text>
+
+                <text
+                    class="chart-label"
+                    x="${padL}"
+                    y="${height - 8}"
+                    text-anchor="start"
+                >${startDateLabel}</text>
+
+                <text
+                    class="chart-label"
+                    x="${width - padR}"
+                    y="${height - 8}"
+                    text-anchor="end"
+                >${endDateLabel}</text>
+
+            </svg>
+
+            <div class="chart-tooltip hidden" data-tooltip="${stateKey}">
+                <div class="chart-tooltip-value"></div>
+                <div class="chart-tooltip-date"></div>
+            </div>
+
+        </div>
+
+        <div class="chart-summary">
+            ${label}: <strong>${valueFormatter(lastVal)}${unit ? " " + unit : ""}</strong>
+            <span class="chart-diff ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${diffLabel}</span>
+        </div>
     `;
+
+    // Анимация прорисовки линии
+    const lineEl = container.querySelector(".chart-line");
+
+    if (lineEl) {
+        const length = lineEl.getTotalLength();
+        lineEl.style.strokeDasharray = length;
+        lineEl.style.strokeDashoffset = length;
+        lineEl.style.transition = "stroke-dashoffset 1.2s ease-out";
+        lineEl.style.opacity = "1";
+
+        requestAnimationFrame(() => {
+            lineEl.style.strokeDashoffset = "0";
+        });
+    }
+
+    // Обработка тапа на точки
+    bindChartInteractions(container, points, {
+        unit,
+        valueFormatter,
+        xLabel: fmtDate
+    });
+
+    bindChartPeriodButtons(container);
 }
 
 
-function renderWeightChart(data) {
+function bindChartPeriodButtons(container) {
 
-    if (!data || data.length < 2) {
-        return "<p class='chart-empty'>Недостаточно данных для графика. Меняйте вес в настройках — точки появятся здесь.</p>";
-    }
+    container
+        .querySelectorAll(".chart-period-btn")
+        .forEach(btn => {
+            btn.addEventListener("click", () => {
 
-    const points = data.slice(-30).map(d => ({
-        date: d.date,
-        value: d.weight
-    }));
+                const stateKey = btn.dataset.chart;
+                const period = btn.dataset.period;
 
-    return renderLineChart(points, {});
+                chartState[stateKey].period = period;
+
+                // Перерисовываем только нужный график
+                if (stateKey === "weight") {
+                    renderWeightChart();
+                } else if (stateKey === "volume") {
+                    renderVolumeChart();
+                }
+            });
+        });
 }
 
 
-function renderVolumeChart(data) {
+function bindChartInteractions(container, points, opts) {
 
-    if (!data || data.length < 2) {
-        return "<p class='chart-empty'>Объём появится после двух и более недель тренировок.</p>";
+    const dots = container.querySelectorAll(".chart-dot");
+    const tooltip = container.querySelector(".chart-tooltip");
+
+    if (!tooltip) return;
+
+    const valueEl = tooltip.querySelector(".chart-tooltip-value");
+    const dateEl = tooltip.querySelector(".chart-tooltip-date");
+
+    function showTooltip(point) {
+
+        const localDate = new Date(point.date);
+
+        valueEl.textContent =
+            opts.valueFormatter(point.value) +
+            (opts.unit ? " " + opts.unit : "");
+
+        dateEl.textContent = opts.xLabel
+            ? new Date(point.date).toLocaleDateString("ru-RU")
+            : new Date(point.date).toLocaleDateString("ru-RU");
+
+        tooltip.classList.remove("hidden");
+
+        // Позиция тултипа: над точкой
+        const svg = container.querySelector(".interactive-chart");
+        const rect = svg.getBoundingClientRect();
+        const wrapRect = container
+            .querySelector(".chart-wrap")
+            .getBoundingClientRect();
+
+        const scaleX = rect.width / 320;
+        const scaleY = rect.height / 160;
+
+        const x = point.x * scaleX;
+        const y = point.y * scaleY;
+
+        let left = x - wrapRect.width / 2;
+        let top = y - 60;
+
+        // Не вылезаем за края
+        left = Math.max(8, Math.min(left, wrapRect.width - 120));
+        top = Math.max(4, top);
+
+        tooltip.style.left = (left + wrapRect.width / 2 - 60) + "px";
+        tooltip.style.top = top + "px";
     }
 
-    const points = data.map(d => ({
-        value: d.volume,
-        week: d.week
-    }));
+    function hideTooltip() {
+        tooltip.classList.add("hidden");
+    }
 
-    return renderLineChart(points, {
-        xLabel: (d) => `нед. ${d.week}`
+    dots.forEach(dot => {
+        dot.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const idx = Number(dot.dataset.index);
+            showTooltip(points[idx]);
+        });
+
+        dot.addEventListener("touchstart", (e) => {
+            e.stopPropagation();
+            const idx = Number(dot.dataset.index);
+            showTooltip(points[idx]);
+        }, { passive: true });
+    });
+
+    // Тап вне точек — скрыть
+    container.addEventListener("click", hideTooltip);
+}
+
+
+/* =========================================
+   ГРАФИКИ — обёртки
+   ========================================= */
+
+
+function renderWeightChart() {
+
+    const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, [])
+        .map(d => ({
+            date: d.date,
+            value: Number(d.weight)
+        }));
+
+    renderInteractiveChart("weightChartContainer", weightHistory, {
+        stateKey: "weight",
+        unit: "кг",
+        label: "Сейчас",
+        valueFormatter: v => v.toFixed(1)
     });
 }
 
 
+function renderVolumeChart() {
+
+    const volume = getWeeklyVolume()
+        .map(d => ({
+            date: new Date(2025, 0, d.week).toISOString(),
+            value: d.volume,
+            week: d.week
+        }));
+
+    renderInteractiveChart("volumeChartContainer", volume, {
+        stateKey: "volume",
+        unit: "",
+        label: "Последняя неделя",
+        valueFormatter: v => Math.round(v).toString(),
+        xLabel: (d) => {
+            // Для графика объёма даты — фейковые, показываем "нед. N"
+            // Определяем номер недели через метаданные
+            return "нед.";
+        }
+    });
+}
+
+
+/* =========================================
+   ЭКРАН ПРОГРЕССА
+   ========================================= */
+
+
 function renderProgress() {
 
-    const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, []);
     const strength = getStrengthStats();
 
     document.getElementById("strengthStart").textContent =
@@ -2029,6 +2334,8 @@ function renderProgress() {
             ? formatDelta(strength.now - strength.start, "повторов")
             : "Нет данных";
 
+
+    const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, []);
 
     const startWeight =
         weightHistory[0]?.weight ?? settings.weight;
@@ -2053,14 +2360,8 @@ function renderProgress() {
         document.getElementById("weightDelta").textContent = "Нет данных";
     }
 
-    document.getElementById("weightChartContainer").innerHTML =
-        renderWeightChart(weightHistory);
-
-
-    const volume = getWeeklyVolume();
-
-    document.getElementById("volumeChartContainer").innerHTML =
-        renderVolumeChart(volume);
+    renderWeightChart();
+    renderVolumeChart();
 
 
     const maxByGrip = getMaxByGrip();
