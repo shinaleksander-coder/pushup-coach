@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=29">
+    <link rel="stylesheet" href="styles.css?v=30">
 
 </head>
 
@@ -70,18 +70,25 @@
 
 
 
-            <section class="progress-card">
+                        <section class="progress-card">
                 <div class="section-title">Твой прогресс</div>
-                <div class="progress-grid">
+
+                <div class="progress-grid progress-grid-3">
                     <div class="stat">
                         <strong id="maxPushups">—</strong>
-                        <span>личный рекорд</span>
+                        <span>рекорд<br>за всё время</span>
+                    </div>
+                    <div class="stat">
+                        <strong id="weeklyPushups">—</strong>
+                        <span>рекорд<br>за неделю</span>
                     </div>
                     <div class="stat">
                         <strong id="currentWeight">—</strong>
-                        <span>текущий вес</span>
+                        <span>текущий<br>вес</span>
                     </div>
                 </div>
+
+                <div id="weeklyDeltaLine" class="delta-line hidden"></div>
             </section>
 
 
@@ -484,7 +491,7 @@
                 <div class="section-title">О приложении</div>
 
                 <div class="about-grid">
-                    <div class="about-row"><span>Версия</span><strong>1.9.4</strong></div>
+                    <div class="about-row"><span>Версия</span><strong>1.9.5</strong></div>
                     <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
                     <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
                     <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
@@ -663,14 +670,14 @@
 
 
 
-    <script src="storage.js?v=29"></script>
-    <script src="grips.js?v=29"></script>
-    <script src="program.js?v=29"></script>
-    <script src="workout.js?v=29"></script>
-    <script src="push.js?v=29"></script>
-    <script src="leaderboard.js?v=29"></script>
-    <script src="ui.js?v=29"></script>
-    <script src="app.js?v=29"></script>
+    <script src="storage.js?v=30"></script>
+    <script src="grips.js?v=30"></script>
+    <script src="program.js?v=30"></script>
+    <script src="workout.js?v=30"></script>
+    <script src="push.js?v=30"></script>
+    <script src="leaderboard.js?v=30"></script>
+    <script src="ui.js?v=30"></script>
+    <script src="app.js?v=30"></script>
 
 </body>
 

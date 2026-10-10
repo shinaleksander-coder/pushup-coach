@@ -18,24 +18,123 @@ const SCREEN_TITLES = {
 
 
 const ACHIEVEMENTS = [
-    { id: "first", icon: "🎯", title: "Первая тренировка", desc: "Программа началась", check: (h, max) => h.filter(r => !r.isExtra).length >= 1 },
-    { id: "week1", icon: "📅", title: "Первая неделя", desc: "Первая неделя программы пройдена", check: (h, max) => h.filter(r => !r.isExtra).length >= (getActiveConfig().daysPerWeek || 3) },
-    { id: "ten", icon: "🔟", title: "10 тренировок", desc: "Уже не новичок", check: (h, max) => h.filter(r => !r.isExtra).length >= 10 },
-    { id: "twentyfive", icon: "💪", title: "25 тренировок", desc: "Четверть пути", check: (h, max) => h.filter(r => !r.isExtra).length >= 25 },
-    { id: "fifty", icon: "🚀", title: "50 тренировок", desc: "Больше половины программы", check: (h, max) => h.filter(r => !r.isExtra).length >= 50 },
-    { id: "record10", icon: "⭐", title: "Рекорд 10", desc: "10 повторов в подходе", check: (h, max) => h.max >= 10 },
-    { id: "record15", icon: "🌟", title: "Рекорд 15", desc: "15 повторов в подходе", check: (h, max) => max >= 15 },
-    { id: "record20", icon: "🏅", title: "Рекорд 20", desc: "20 повторов в подходе", check: (h, max) => max >= 20 },
-    { id: "record25", icon: "👑", title: "Рекорд 25", desc: "25 повторов в подходе", check: (h, max) => max >= 25 },
-    { id: "first_test", icon: "🎓", title: "Первый тест", desc: "Тест на максимум пройден", check: (h, max) => h.some(r => r.isTest) },
-    { id: "extra", icon: "➕", title: "Сверх плана", desc: "Первая дополнительная тренировка", check: (h, max) => h.some(r => r.isExtra) },
-    { id: "extra5", icon: "🔥", title: "Рвение", desc: "5 дополнительных тренировок", check: (h, max) => h.filter(r => r.isExtra).length >= 5 }
+    {
+        id: "first",
+        icon: "🎯",
+        title: "Первая тренировка",
+        desc: "Программа началась",
+        how: "Просто начни — первая тренировка откроет эту веху.",
+        check: (h) => h.filter(r => !r.isExtra).length >= 1,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 1), target: 1 })
+    },
+    {
+        id: "week1",
+        icon: "📅",
+        title: "Первая неделя",
+        desc: "Первая неделя программы пройдена",
+        how: "Пройди полностью первую неделю по программе.",
+        check: (h) => h.filter(r => !r.isExtra).length >= (getActiveConfig().daysPerWeek || 3),
+        progress: (h) => ({
+            current: Math.min(h.filter(r => !r.isExtra).length, getActiveConfig().daysPerWeek || 3),
+            target: getActiveConfig().daysPerWeek || 3
+        })
+    },
+    {
+        id: "ten",
+        icon: "🔟",
+        title: "10 тренировок",
+        desc: "Уже не новичок",
+        how: "Пройди 10 плановых тренировок.",
+        check: (h) => h.filter(r => !r.isExtra).length >= 10,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 10), target: 10 })
+    },
+    {
+        id: "twentyfive",
+        icon: "💪",
+        title: "25 тренировок",
+        desc: "Четверть пути",
+        how: "Пройди 25 плановых тренировок.",
+        check: (h) => h.filter(r => !r.isExtra).length >= 25,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 25), target: 25 })
+    },
+    {
+        id: "fifty",
+        icon: "🚀",
+        title: "50 тренировок",
+        desc: "Больше половины программы",
+        how: "Пройди 50 плановых тренировок.",
+        check: (h) => h.filter(r => !r.isExtra).length >= 50,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 50), target: 50 })
+    },
+    {
+        id: "record10",
+        icon: "⭐",
+        title: "Рекорд 10",
+        desc: "10 повторов в подходе",
+        how: "Сделай 10 повторов в одном подходе.",
+        check: (h, max) => max >= 10,
+        progress: (h, max) => ({ current: Math.min(max, 10), target: 10 })
+    },
+    {
+        id: "record15",
+        icon: "🌟",
+        title: "Рекорд 15",
+        desc: "15 повторов в подходе",
+        how: "Сделай 15 повторов в одном подходе.",
+        check: (h, max) => max >= 15,
+        progress: (h, max) => ({ current: Math.min(max, 15), target: 15 })
+    },
+    {
+        id: "record20",
+        icon: "🏅",
+        title: "Рекорд 20",
+        desc: "20 повторов в подходе",
+        how: "Сделай 20 повторов в одном подходе.",
+        check: (h, max) => max >= 20,
+        progress: (h, max) => ({ current: Math.min(max, 20), target: 20 })
+    },
+    {
+        id: "record25",
+        icon: "👑",
+        title: "Рекорд 25",
+        desc: "25 повторов в подходе",
+        how: "Сделай 25 повторов в одном подходе.",
+        check: (h, max) => max >= 25,
+        progress: (h, max) => ({ current: Math.min(max, 25), target: 25 })
+    },
+    {
+        id: "first_test",
+        icon: "🎓",
+        title: "Первый тест",
+        desc: "Тест на максимум пройден",
+        how: "Дойди до тестовой недели (каждая 6-я) и пройди тест.",
+        check: (h) => h.some(r => r.isTest)
+    },
+    {
+        id: "extra",
+        icon: "➕",
+        title: "Сверх плана",
+        desc: "Первая дополнительная тренировка",
+        how: "Сделай первую дополнительную тренировку сверх программы.",
+        check: (h) => h.some(r => r.isExtra),
+        progress: (h) => ({ current: Math.min(h.filter(r => r.isExtra).length, 1), target: 1 })
+    },
+    {
+        id: "extra5",
+        icon: "🔥",
+        title: "Рвение",
+        desc: "5 дополнительных тренировок",
+        how: "Сделай 5 дополнительных тренировок сверх программы.",
+        check: (h) => h.filter(r => r.isExtra).length >= 5,
+        progress: (h) => ({ current: Math.min(h.filter(r => r.isExtra).length, 5), target: 5 })
+    }
 ];
 
 
 let editingHistoryIndex = -1;
 let editingHistoryDraft = null;
 let achievementQueue = [];
+let achievementModalMode = "new";
 
 
 /* =========================================
@@ -200,9 +299,9 @@ function renderHome() {
     document.getElementById("currentWeight").textContent =
         settings.weight
             ? `${settings.weight} кг`
-            : "не указан";
+            : "—";
 
-    renderMaxPushups();
+    renderProgressStats();
     renderMissedBanner();
     renderCompare();
 
@@ -219,9 +318,16 @@ function renderHome() {
 }
 
 
-function renderMaxPushups() {
+/* =========================================
+   БЛОК ПРОГРЕССА НА ГЛАВНОЙ
+   ========================================= */
+
+
+function renderProgressStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
+
+    // Рекорд за всё время
     let maxPushups = 0;
 
     history.forEach(record => {
@@ -233,8 +339,69 @@ function renderMaxPushups() {
         });
     });
 
-    document.getElementById("maxPushups").textContent =
-        maxPushups > 0 ? maxPushups : "—";
+    const maxEl = document.getElementById("maxPushups");
+    if (maxEl) {
+        maxEl.textContent = maxPushups > 0 ? maxPushups : "—";
+    }
+
+    // Рекорды за неделю и прошлую неделю
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+
+    let weekly = 0;
+    let prevWeekly = 0;
+
+    history.forEach(record => {
+        const t = new Date(record.date).getTime();
+        let best = 0;
+        record.results?.forEach(r => {
+            const a = Number(r.actual);
+            if (a > best) best = a;
+        });
+
+        if (t >= weekAgo) {
+            if (best > weekly) weekly = best;
+        } else if (t >= twoWeeksAgo) {
+            if (best > prevWeekly) prevWeekly = best;
+        }
+    });
+
+    const weeklyEl = document.getElementById("weeklyPushups");
+    if (weeklyEl) {
+        weeklyEl.textContent = weekly > 0 ? weekly : "—";
+    }
+
+    const deltaLine = document.getElementById("weeklyDeltaLine");
+
+    if (deltaLine) {
+
+        if (weekly > 0 && prevWeekly > 0) {
+
+            const d = weekly - prevWeekly;
+
+            if (d > 0) {
+                deltaLine.textContent =
+                    `🔥 Прирост: +${d} к прошлой неделе`;
+                deltaLine.className = "delta-line delta-up";
+            } else if (d < 0) {
+                deltaLine.textContent =
+                    `Снижение: ${d} к прошлой неделе`;
+                deltaLine.className = "delta-line";
+            } else {
+                deltaLine.textContent =
+                    "На уровне прошлой недели";
+                deltaLine.className = "delta-line";
+            }
+
+        } else if (weekly > 0) {
+            deltaLine.textContent =
+                "Первая тренировка за последние 7 дней";
+            deltaLine.className = "delta-line";
+        } else {
+            deltaLine.textContent = "";
+            deltaLine.className = "delta-line hidden";
+        }
+    }
 }
 
 
@@ -823,6 +990,81 @@ function showNextAchievement() {
     document.getElementById("achievementModalTitle").textContent = a.title;
     document.getElementById("achievementModalText").textContent = a.desc;
 
+    const extraEl = document.getElementById("achievementModalExtra");
+    if (extraEl) {
+        extraEl.innerHTML = "";
+        extraEl.classList.add("hidden");
+    }
+
+    document.getElementById("achievementModalClose").textContent = "Класс";
+
+    achievementModalMode = "new";
+
+    document.getElementById("achievementModal")
+        .classList.remove("hidden");
+}
+
+
+function openAchievementInfo(id) {
+
+    const a = ACHIEVEMENTS.find(x => x.id === id);
+    if (!a) return;
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const max = getRecord();
+    const unlocked = getUnlockedAchievements();
+    const isUnlocked = unlocked.includes(a.id);
+
+    document.getElementById("achievementModalIcon").textContent = a.icon;
+    document.getElementById("achievementModalTitle").textContent = a.title;
+
+    const textEl = document.getElementById("achievementModalText");
+    textEl.textContent = isUnlocked
+        ? "✅ Открыто"
+        : a.desc;
+
+    const extraEl = document.getElementById("achievementModalExtra");
+    extraEl.innerHTML = "";
+
+    if (a.how) {
+        const howEl = document.createElement("div");
+        howEl.className = "achievement-how";
+        howEl.innerHTML =
+            `<strong>Как получить:</strong><br>${escapeHtml(a.how)}`;
+        extraEl.appendChild(howEl);
+    }
+
+    if (!isUnlocked && a.progress) {
+        try {
+            const p = a.progress(history, max);
+            if (p && p.target > 0) {
+                const pct = Math.min(
+                    100,
+                    Math.round((p.current / p.target) * 100)
+                );
+
+                const progEl = document.createElement("div");
+                progEl.className = "achievement-progress";
+                progEl.innerHTML = `
+                    <div class="achievement-progress-head">
+                        <strong>Прогресс:</strong>
+                        <span>${p.current} / ${p.target}</span>
+                    </div>
+                    <div class="achievement-progress-bar">
+                        <div class="achievement-progress-fill" style="width: ${pct}%"></div>
+                    </div>
+                `;
+                extraEl.appendChild(progEl);
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    extraEl.classList.remove("hidden");
+
+    document.getElementById("achievementModalClose").textContent = "Понятно";
+
+    achievementModalMode = "info";
+
     document.getElementById("achievementModal")
         .classList.remove("hidden");
 }
@@ -833,7 +1075,14 @@ function closeAchievementModal() {
     document.getElementById("achievementModal")
         .classList.add("hidden");
 
-    if (achievementQueue.length > 0) {
+    const extraEl = document.getElementById("achievementModalExtra");
+    if (extraEl) {
+        extraEl.innerHTML = "";
+        extraEl.classList.add("hidden");
+    }
+
+    if (achievementModalMode === "new" &&
+        achievementQueue.length > 0) {
         setTimeout(showNextAchievement, 300);
     }
 }
@@ -850,16 +1099,28 @@ function renderAchievements() {
         const isUnlocked = unlocked.includes(a.id);
 
         return `
-            <div class="achievement-item ${isUnlocked ? "unlocked" : "locked"}">
+            <button
+                type="button"
+                class="achievement-item ${isUnlocked ? "unlocked" : "locked"}"
+                data-ach-id="${a.id}"
+            >
                 <div class="achievement-item-icon">
                     ${isUnlocked ? a.icon : "🔒"}
                 </div>
                 <div class="achievement-item-title">
-                    ${a.title}
+                    ${escapeHtml(a.title)}
                 </div>
-            </div>
+            </button>
         `;
     }).join("");
+
+    container
+        .querySelectorAll(".achievement-item")
+        .forEach(btn => {
+            btn.addEventListener("click", () => {
+                openAchievementInfo(btn.dataset.achId);
+            });
+        });
 }
 
 
@@ -1674,7 +1935,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.4",
+            version: "1.9.5",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -1825,7 +2086,12 @@ function getStrengthStats() {
     const history = loadJSON(STORAGE_KEYS.history, []);
 
     if (history.length === 0) {
-        return { start: 0, now: 0 };
+        return {
+            start: 0,
+            now: 0,
+            weekly: 0,
+            prevWeekly: 0
+        };
     }
 
     let start = 0;
@@ -1842,7 +2108,28 @@ function getStrengthStats() {
         });
     });
 
-    return { start, now };
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+
+    let weekly = 0;
+    let prevWeekly = 0;
+
+    history.forEach(record => {
+        const t = new Date(record.date).getTime();
+        let best = 0;
+        record.results?.forEach(r => {
+            const a = Number(r.actual);
+            if (a > best) best = a;
+        });
+
+        if (t >= weekAgo) {
+            if (best > weekly) weekly = best;
+        } else if (t >= twoWeeksAgo) {
+            if (best > prevWeekly) prevWeekly = best;
+        }
+    });
+
+    return { start, now, weekly, prevWeekly };
 }
 
 
@@ -1938,22 +2225,18 @@ function renderInteractiveChart(containerId, data, options) {
     const stateKey = options.stateKey || "weight";
     const unit = options.unit || "";
     const label = options.label || "";
-    const xLabelFn = options.xLabel;
     const valueFormatter = options.valueFormatter ||
         (v => Math.round(v).toString());
 
-    // Период
     const currentPeriod = chartState[stateKey].period;
     const filtered = filterByPeriod(data, currentPeriod);
 
-    // Кнопки периодов
     const buttonsHtml = Object.entries(CHART_PERIODS)
         .map(([key, cfg]) =>
             `<button class="chart-period-btn ${currentPeriod === key ? "active" : ""}" data-period="${key}" data-chart="${stateKey}">${cfg.label}</button>`
         )
         .join("");
 
-    // Мало данных
     if (filtered.length < 2) {
 
         container.innerHTML = `
@@ -1984,11 +2267,9 @@ function renderInteractiveChart(containerId, data, options) {
         x: padL + (i / (filtered.length - 1)) * innerW,
         y: padT + innerH - ((d.value - minV) / range) * innerH,
         value: d.value,
-        date: d.date,
-        meta: d
+        date: d.date
     }));
 
-    // Плавная кривая через cardinal spline
     let pathD = "";
 
     if (points.length === 2) {
@@ -2017,13 +2298,11 @@ function renderInteractiveChart(containerId, data, options) {
         }
     }
 
-    // Площадь под кривой
     const areaD =
         pathD +
         ` L ${points[points.length - 1].x.toFixed(1)},${(padT + innerH).toFixed(1)}` +
         ` L ${points[0].x.toFixed(1)},${(padT + innerH).toFixed(1)} Z`;
 
-    // Точки — только последние N, чтобы не загромождать
     const showEveryN = points.length > 15
         ? Math.ceil(points.length / 8)
         : 1;
@@ -2050,7 +2329,6 @@ function renderInteractiveChart(containerId, data, options) {
         })
         .join("");
 
-    // Метки
     const maxLabel = valueFormatter(maxV);
     const minLabel = valueFormatter(minV);
 
@@ -2058,14 +2336,11 @@ function renderInteractiveChart(containerId, data, options) {
     const lastDate = new Date(points[points.length - 1].date);
 
     const fmtDate = (d) =>
-        xLabelFn
-            ? xLabelFn(d)
-            : `${d.getDate()}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+        `${d.getDate()}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
 
     const startDateLabel = fmtDate(firstDate);
     const endDateLabel = fmtDate(lastDate);
 
-    // Итог: разница
     const firstVal = points[0].value;
     const lastVal = points[points.length - 1].value;
     const diff = Math.round((lastVal - firstVal) * 10) / 10;
@@ -2149,7 +2424,6 @@ function renderInteractiveChart(containerId, data, options) {
         </div>
     `;
 
-    // Анимация прорисовки линии
     const lineEl = container.querySelector(".chart-line");
 
     if (lineEl) {
@@ -2164,7 +2438,6 @@ function renderInteractiveChart(containerId, data, options) {
         });
     }
 
-    // Обработка тапа на точки
     bindChartInteractions(container, points, {
         unit,
         valueFormatter,
@@ -2187,7 +2460,6 @@ function bindChartPeriodButtons(container) {
 
                 chartState[stateKey].period = period;
 
-                // Перерисовываем только нужный график
                 if (stateKey === "weight") {
                     renderWeightChart();
                 } else if (stateKey === "volume") {
@@ -2210,19 +2482,15 @@ function bindChartInteractions(container, points, opts) {
 
     function showTooltip(point) {
 
-        const localDate = new Date(point.date);
-
         valueEl.textContent =
             opts.valueFormatter(point.value) +
             (opts.unit ? " " + opts.unit : "");
 
-        dateEl.textContent = opts.xLabel
-            ? new Date(point.date).toLocaleDateString("ru-RU")
-            : new Date(point.date).toLocaleDateString("ru-RU");
+        dateEl.textContent = new Date(point.date)
+            .toLocaleDateString("ru-RU");
 
         tooltip.classList.remove("hidden");
 
-        // Позиция тултипа: над точкой
         const svg = container.querySelector(".interactive-chart");
         const rect = svg.getBoundingClientRect();
         const wrapRect = container
@@ -2235,14 +2503,13 @@ function bindChartInteractions(container, points, opts) {
         const x = point.x * scaleX;
         const y = point.y * scaleY;
 
-        let left = x - wrapRect.width / 2;
+        let left = x - 60;
         let top = y - 60;
 
-        // Не вылезаем за края
-        left = Math.max(8, Math.min(left, wrapRect.width - 120));
+        left = Math.max(8, Math.min(left, wrapRect.width - 128));
         top = Math.max(4, top);
 
-        tooltip.style.left = (left + wrapRect.width / 2 - 60) + "px";
+        tooltip.style.left = left + "px";
         tooltip.style.top = top + "px";
     }
 
@@ -2264,13 +2531,12 @@ function bindChartInteractions(container, points, opts) {
         }, { passive: true });
     });
 
-    // Тап вне точек — скрыть
     container.addEventListener("click", hideTooltip);
 }
 
 
 /* =========================================
-   ГРАФИКИ — обёртки
+   ГРАФИКИ
    ========================================= */
 
 
@@ -2295,7 +2561,7 @@ function renderVolumeChart() {
 
     const volume = getWeeklyVolume()
         .map(d => ({
-            date: new Date(2025, 0, d.week).toISOString(),
+            date: new Date().toISOString(),
             value: d.volume,
             week: d.week
         }));
@@ -2304,12 +2570,7 @@ function renderVolumeChart() {
         stateKey: "volume",
         unit: "",
         label: "Последняя неделя",
-        valueFormatter: v => Math.round(v).toString(),
-        xLabel: (d) => {
-            // Для графика объёма даты — фейковые, показываем "нед. N"
-            // Определяем номер недели через метаданные
-            return "нед.";
-        }
+        valueFormatter: v => Math.round(v).toString()
     });
 }
 
@@ -2333,6 +2594,46 @@ function renderProgress() {
         strength.now && strength.start
             ? formatDelta(strength.now - strength.start, "повторов")
             : "Нет данных";
+
+    const weeklyEl = document.getElementById("strengthWeekly");
+    const prevWeeklyEl = document.getElementById("strengthPrevWeekly");
+    const weeklyDeltaEl = document.getElementById("weeklyDelta");
+
+    if (weeklyEl) {
+        weeklyEl.textContent =
+            strength.weekly > 0 ? strength.weekly : "—";
+    }
+
+    if (prevWeeklyEl) {
+        prevWeeklyEl.textContent =
+            strength.prevWeekly > 0 ? strength.prevWeekly : "—";
+    }
+
+    if (weeklyDeltaEl) {
+        if (strength.weekly > 0 && strength.prevWeekly > 0) {
+            const d = strength.weekly - strength.prevWeekly;
+            if (d > 0) {
+                weeklyDeltaEl.textContent =
+                    `🔥 Прирост +${d} к прошлой неделе`;
+                weeklyDeltaEl.className = "delta-line delta-up";
+            } else if (d < 0) {
+                weeklyDeltaEl.textContent =
+                    `Снижение ${d} к прошлой неделе`;
+                weeklyDeltaEl.className = "delta-line";
+            } else {
+                weeklyDeltaEl.textContent =
+                    "На уровне прошлой недели";
+                weeklyDeltaEl.className = "delta-line";
+            }
+        } else if (strength.weekly > 0) {
+            weeklyDeltaEl.textContent =
+                "Первая тренировка за последние 7 дней";
+            weeklyDeltaEl.className = "delta-line";
+        } else {
+            weeklyDeltaEl.textContent = "";
+            weeklyDeltaEl.className = "delta-line";
+        }
+    }
 
 
     const weightHistory = loadJSON(STORAGE_KEYS.weightHistory, []);
