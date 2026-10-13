@@ -322,6 +322,7 @@ function renderProgressStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
 
+    // Рекорд за всё время (макс в подходе)
     let maxPushups = 0;
 
     history.forEach(record => {
@@ -338,55 +339,65 @@ function renderProgressStats() {
         maxEl.textContent = maxPushups > 0 ? maxPushups : "—";
     }
 
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
-
-    let weeklyVolume = 0;
-    let prevWeeklyVolume = 0;
+    // Объёмы по календарным неделям (Пн–Вс)
+    const weekVolumes = {};
 
     history.forEach(record => {
+
         if (record.isRest) return;
 
-        const t = new Date(record.date).getTime();
-        const total = Number(record.totalActual) || 0;
+        const d = new Date(record.date);
+        const t = d.getTime();
+        if (!Number.isFinite(t)) return;
 
-        if (t >= weekAgo) {
-            weeklyVolume += total;
-        } else if (t >= twoWeeksAgo) {
-            prevWeeklyVolume += total;
-        }
+        const day = d.getDay();
+        const diffToMonday = day === 0 ? -6 : 1 - day;
+
+        const monday = new Date(d);
+        monday.setDate(d.getDate() + diffToMonday);
+        monday.setHours(0, 0, 0, 0);
+
+        const key = monday.toISOString().slice(0, 10);
+
+        const total = Number(record.totalActual) || 0;
+        if (!weekVolumes[key]) weekVolumes[key] = 0;
+        weekVolumes[key] += total;
     });
+
+    // Текущая и прошлая календарные недели
+    const now = new Date();
+    const nowDay = now.getDay();
+    const diffNow = nowDay === 0 ? -6 : 1 - nowDay;
+
+    const currentMonday = new Date(now);
+    currentMonday.setDate(now.getDate() + diffNow);
+    currentMonday.setHours(0, 0, 0, 0);
+
+    const currentKey =
+        currentMonday.toISOString().slice(0, 10);
+
+    const prevMonday = new Date(currentMonday);
+    prevMonday.setDate(currentMonday.getDate() - 7);
+
+    const prevKey =
+        prevMonday.toISOString().slice(0, 10);
+
+    const currentWeekVolume = weekVolumes[currentKey] || 0;
+    const prevWeekVolume = weekVolumes[prevKey] || 0;
 
     const weeklyEl = document.getElementById("weeklyVolume");
     if (weeklyEl) {
-        weeklyEl.textContent = weeklyVolume > 0 ? weeklyVolume : "—";
+        weeklyEl.textContent = currentWeekVolume > 0
+            ? currentWeekVolume
+            : "—";
     }
 
     const deltaLine = document.getElementById("weeklyDeltaLine");
 
     if (deltaLine) {
-
-        if (weeklyVolume > 0 && prevWeeklyVolume > 0) {
-
-            const d = weeklyVolume - prevWeeklyVolume;
-
-            if (d > 0) {
-                deltaLine.textContent =
-                    `🔥 Прирост: +${d} к прошлой неделе`;
-                deltaLine.className = "delta-line delta-up";
-            } else if (d < 0) {
-                deltaLine.textContent =
-                    `Снижение: ${d} к прошлой неделе`;
-                deltaLine.className = "delta-line delta-down";
-            } else {
-                deltaLine.textContent =
-                    "На уровне прошлой недели";
-                deltaLine.className = "delta-line";
-            }
-
-        } else if (weeklyVolume > 0) {
+        if (prevWeekVolume > 0) {
             deltaLine.textContent =
-                "Первая активная неделя";
+                `Прошлая неделя: ${prevWeekVolume} раз`;
             deltaLine.className = "delta-line";
         } else {
             deltaLine.textContent = "";
