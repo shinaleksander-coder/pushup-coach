@@ -45,6 +45,10 @@ on("extraWorkout", "click", () => {
     if (typeof openExtraConfigModal === "function") openExtraConfigModal();
 });
 
+on("takeRestDay", "click", () => {
+    if (typeof handleTakeRestDay === "function") handleTakeRestDay();
+});
+
 on("minusRep", "click", () => {
     if (typeof decreaseReps === "function") decreaseReps();
 });
@@ -168,7 +172,7 @@ on("welcomeStart", "click", handleWelcomeStart);
 
 
 /* =========================================
-   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА — МОДАЛКА
+   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА
    ========================================= */
 
 
@@ -189,7 +193,7 @@ on("extraConfigModal", "click", event => {
 
 
 /* =========================================
-   РЕЙТИНГ — ОБРАБОТЧИКИ
+   РЕЙТИНГ
    ========================================= */
 
 
@@ -218,7 +222,7 @@ on("lbRefresh", "click", () => {
 
 
 /* =========================================
-   PUSH — КНОПКИ
+   PUSH
    ========================================= */
 
 
@@ -321,7 +325,7 @@ document
 
 
 /* =========================================
-   СОХРАНЕНИЕ НАСТРОЕК С ПРОВЕРКОЙ КОНФЛИКТА
+   СОХРАНЕНИЕ НАСТРОЕК
    ========================================= */
 
 
@@ -465,7 +469,7 @@ function runSplash() {
 
 
 /* =========================================
-   СМЕНА РЕЖИМА ПРОГРАММЫ
+   СМЕНА РЕЖИМА
    ========================================= */
 
 
@@ -476,11 +480,8 @@ document
 
             const mode = btn.dataset.mode;
 
-            const history =
-                loadJSON(STORAGE_KEYS.history, []);
-
-            const programIndex =
-                history.filter(r => !r.isExtra).length;
+            const history = loadJSON(STORAGE_KEYS.history, []);
+            const programIndex = getPlanRecords(history).length;
 
             if (programIndex > 0 && mode !== "custom") {
 
@@ -519,7 +520,7 @@ document
 
 
 /* =========================================
-   ИНДИВИДУАЛЬНАЯ ПРОГРАММА
+   СВОЯ ПРОГРАММА
    ========================================= */
 
 
@@ -544,8 +545,7 @@ on("saveCustom", "click", () => {
     }
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const programIndex =
-        history.filter(r => !r.isExtra).length;
+    const programIndex = getPlanRecords(history).length;
 
     if (programIndex > 0) {
 
@@ -619,7 +619,7 @@ on("restInput", "change", event => {
 
 
 /* =========================================
-   РЕДАКТИРОВАНИЕ ИСТОРИИ
+   ИСТОРИЯ
    ========================================= */
 
 
@@ -780,7 +780,7 @@ if ("serviceWorker" in navigator) {
 
 
 /* =========================================
-   ВОЗВРАТ НА ВКЛАДКУ
+   ВОЗВРАТ
    ========================================= */
 
 

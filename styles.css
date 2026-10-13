@@ -2466,3 +2466,107 @@ input:focus-visible {
     font-size: 9px;
     opacity: 0.6;
 }
+/* ========================================= */
+/* V1.9.7 — REST & OVERTRAINING              */
+/* ========================================= */
+
+
+.rest-button {
+    background: #e3f2fd;
+    color: #0d47a1;
+    margin-top: 10px;
+}
+
+
+.rest-button:active {
+    background: #bbdefb;
+}
+
+
+.overtraining-banner {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+
+.overtraining-banner.warning {
+    background: linear-gradient(135deg, #fff8e1, #ffe082);
+    color: #7a4d00;
+}
+
+
+.overtraining-banner.critical {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    color: #b71c1c;
+}
+
+
+.overtraining-text {
+    margin-bottom: 12px;
+}
+
+
+.overtraining-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+
+.history-item.history-rest {
+    padding-left: 8px;
+    border-left: 3px solid #2196f3;
+    opacity: 0.85;
+}
+
+
+.history-item.history-rest .history-main {
+    color: #0d47a1;
+}
+
+
+.hint-warning {
+    background: #fff8e1 !important;
+    color: #7a4d00 !important;
+}
+
+
+@media (prefers-color-scheme: dark) {
+
+    .rest-button {
+        background: #1a237e;
+        color: #bbdefb;
+    }
+
+
+    .overtraining-banner.warning {
+        background: linear-gradient(135deg, #3d2f0f, #7a4d00);
+        color: #ffe082;
+    }
+
+
+    .overtraining-banner.critical {
+        background: linear-gradient(135deg, #3d1a1a, #b71c1c);
+        color: #ffcdd2;
+    }
+
+
+    .history-item.history-rest {
+        border-left-color: #64b5f6;
+    }
+
+
+    .history-item.history-rest .history-main {
+        color: #90caf9;
+    }
+
+
+    .hint-warning {
+        background: #3d2f0f !important;
+        color: #ffe082 !important;
+    }
+
+}

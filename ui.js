@@ -24,8 +24,8 @@ const ACHIEVEMENTS = [
         title: "Первая тренировка",
         desc: "Программа началась",
         how: "Просто начни — первая тренировка откроет эту веху.",
-        check: (h) => h.filter(r => !r.isExtra).length >= 1,
-        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 1), target: 1 })
+        check: (h) => h.filter(r => !r.isExtra && !r.isRest).length >= 1,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra && !r.isRest).length, 1), target: 1 })
     },
     {
         id: "week1",
@@ -33,9 +33,9 @@ const ACHIEVEMENTS = [
         title: "Первая неделя",
         desc: "Первая неделя программы пройдена",
         how: "Пройди полностью первую неделю по программе.",
-        check: (h) => h.filter(r => !r.isExtra).length >= (getActiveConfig().daysPerWeek || 3),
+        check: (h) => h.filter(r => !r.isExtra && !r.isRest).length >= (getActiveConfig().daysPerWeek || 3),
         progress: (h) => ({
-            current: Math.min(h.filter(r => !r.isExtra).length, getActiveConfig().daysPerWeek || 3),
+            current: Math.min(h.filter(r => !r.isExtra && !r.isRest).length, getActiveConfig().daysPerWeek || 3),
             target: getActiveConfig().daysPerWeek || 3
         })
     },
@@ -45,8 +45,8 @@ const ACHIEVEMENTS = [
         title: "10 тренировок",
         desc: "Уже не новичок",
         how: "Пройди 10 плановых тренировок.",
-        check: (h) => h.filter(r => !r.isExtra).length >= 10,
-        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 10), target: 10 })
+        check: (h) => h.filter(r => !r.isExtra && !r.isRest).length >= 10,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra && !r.isRest).length, 10), target: 10 })
     },
     {
         id: "twentyfive",
@@ -54,8 +54,8 @@ const ACHIEVEMENTS = [
         title: "25 тренировок",
         desc: "Четверть пути",
         how: "Пройди 25 плановых тренировок.",
-        check: (h) => h.filter(r => !r.isExtra).length >= 25,
-        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 25), target: 25 })
+        check: (h) => h.filter(r => !r.isExtra && !r.isRest).length >= 25,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra && !r.isRest).length, 25), target: 25 })
     },
     {
         id: "fifty",
@@ -63,8 +63,8 @@ const ACHIEVEMENTS = [
         title: "50 тренировок",
         desc: "Больше половины программы",
         how: "Пройди 50 плановых тренировок.",
-        check: (h) => h.filter(r => !r.isExtra).length >= 50,
-        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra).length, 50), target: 50 })
+        check: (h) => h.filter(r => !r.isExtra && !r.isRest).length >= 50,
+        progress: (h) => ({ current: Math.min(h.filter(r => !r.isExtra && !r.isRest).length, 50), target: 50 })
     },
     {
         id: "record10",
@@ -127,6 +127,15 @@ const ACHIEVEMENTS = [
         how: "Сделай 5 дополнительных тренировок сверх программы.",
         check: (h) => h.filter(r => r.isExtra).length >= 5,
         progress: (h) => ({ current: Math.min(h.filter(r => r.isExtra).length, 5), target: 5 })
+    },
+    {
+        id: "rest",
+        icon: "😴",
+        title: "Правильный отдых",
+        desc: "Первый осознанный выходной",
+        how: "Возьми выходной по плану — отдых так же важен, как и тренировка.",
+        check: (h) => h.some(r => r.isRest),
+        progress: (h) => ({ current: Math.min(h.filter(r => r.isRest).length, 1), target: 1 })
     }
 ];
 
@@ -160,6 +169,11 @@ function showScreen(id) {
 
     window.scrollTo(0, 0);
 }
+
+
+/* =========================================
+   ПРИВЕТСТВИЕ
+   ========================================= */
 
 
 function showWelcome() {
@@ -231,6 +245,11 @@ function updateWeightHistory(newWeight, weightWasEmpty) {
 }
 
 
+/* =========================================
+   ГЛАВНЫЙ ЭКРАН
+   ========================================= */
+
+
 function renderHome() {
 
     const activeWorkout = loadJSON(
@@ -284,6 +303,7 @@ function renderHome() {
     renderProgressStats();
     renderMissedBanner();
     renderCompare();
+    renderOvertrainingBanner();
 
     const startButton = document.getElementById("startWorkout");
     const continueButton = document.getElementById("continueWorkout");
@@ -325,6 +345,8 @@ function renderProgressStats() {
     let prevWeeklyVolume = 0;
 
     history.forEach(record => {
+        if (record.isRest) return;
+
         const t = new Date(record.date).getTime();
         const total = Number(record.totalActual) || 0;
 
@@ -371,6 +393,137 @@ function renderProgressStats() {
             deltaLine.className = "delta-line hidden";
         }
     }
+}
+
+
+/* =========================================
+   БАННЕР ПЕРЕТРЕНИРОВАННОСТИ
+   ========================================= */
+
+
+function renderOvertrainingBanner() {
+
+    const existing = document.getElementById(
+        "homeOvertrainingBanner"
+    );
+
+    if (existing) {
+        existing.remove();
+    }
+
+    const load = getTrainingLoad();
+    if (load.level === "ok") return;
+
+    const card = document.querySelector(
+        "#screenHome .today-card"
+    );
+    if (!card) return;
+
+    const banner = document.createElement("div");
+    banner.id = "homeOvertrainingBanner";
+    banner.className = "overtraining-banner " +
+        (load.level === "critical" ? "critical" : "warning");
+
+    if (load.level === "critical") {
+        banner.innerHTML = `
+            <div class="overtraining-text">
+                <strong>⚠️ Признаки перетренированности.</strong><br>
+                За последние 7 дней: ${load.total} тренировок,
+                ${load.hard} из них — тяжёлые.
+                Срочно нужен отдых.
+            </div>
+            <div class="overtraining-actions">
+                <button class="freeze-button freeze-continue" id="overtrainingRest">
+                    Взять выходной
+                </button>
+                <button class="freeze-button freeze-skip" id="overtrainingSkip">
+                    Позже
+                </button>
+            </div>
+        `;
+    } else {
+        banner.innerHTML = `
+            <div class="overtraining-text">
+                <strong>Копится усталость.</strong><br>
+                За 7 дней: ${load.total} тренировок,
+                ${load.hard} тяжёлых. Рекомендуем выходной
+                или более лёгкую тренировку.
+            </div>
+            <div class="overtraining-actions">
+                <button class="freeze-button freeze-continue" id="overtrainingRest">
+                    Взять выходной
+                </button>
+                <button class="freeze-button freeze-skip" id="overtrainingSkip">
+                    Понятно
+                </button>
+            </div>
+        `;
+    }
+
+    // Вставляем после баннера missed или в начало карточки
+    const missed = document.getElementById("homeFreezeBanner");
+
+    if (missed && !missed.classList.contains("hidden")) {
+        missed.parentNode.insertBefore(banner, missed);
+    } else {
+        card.insertBefore(banner, card.firstChild);
+    }
+
+    const restBtn = document.getElementById("overtrainingRest");
+    const skipBtn = document.getElementById("overtrainingSkip");
+
+    if (restBtn) {
+        restBtn.addEventListener("click", () => {
+            handleTakeRestDay();
+        });
+    }
+
+    if (skipBtn) {
+        skipBtn.addEventListener("click", () => {
+            banner.remove();
+        });
+    }
+}
+
+
+/* =========================================
+   ОТДЫХ ПО ПЛАНУ
+   ========================================= */
+
+
+function handleTakeRestDay() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    // Проверяем, не было ли уже отдыха за последние 3 дня
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+
+    const recentRest = history.filter(r =>
+        r.isRest &&
+        new Date(r.date).getTime() >= threeDaysAgo
+    );
+
+    if (recentRest.length >= 1) {
+        alert(
+            "Ты уже брал выходной за последние 3 дня. " +
+            "Ещё один — это уже пропуск. Двигайся дальше."
+        );
+        return;
+    }
+
+    const ok = confirm(
+        "Взять выходной?\n\n" +
+        "Тренировка сдвигается на 1 день. " +
+        "Прогресс и серия не пострадают."
+    );
+
+    if (!ok) return;
+
+    addRestDay("Отдых по плану");
+
+    alert("Отдых записан. Отдохни — и возвращайся сильнее.");
+
+    renderHome();
 }
 
 
@@ -541,6 +694,7 @@ function getStrengthBefore(daysAgo) {
     let record = null;
 
     for (let i = history.length - 1; i >= 0; i--) {
+        if (history[i].isRest) continue;
         const t = new Date(history[i].date).getTime();
         if (t <= target) { record = history[i]; break; }
     }
@@ -588,6 +742,11 @@ function renderWorkoutRecord() {
         recordEl.classList.add("hidden");
     }
 }
+
+
+/* =========================================
+   ЭКРАН ТРЕНИРОВКИ
+   ========================================= */
 
 
 function renderWorkoutScreen() {
@@ -718,6 +877,11 @@ function closeGripModal() {
 }
 
 
+/* =========================================
+   ДОПОЛНИТЕЛЬНАЯ ТРЕНИРОВКА
+   ========================================= */
+
+
 function getAvailableGrips() {
 
     const stats = getProgramStats();
@@ -737,6 +901,13 @@ function getAvailableGrips() {
 
 
 function openExtraConfigModal() {
+
+    const check = canDoExtra();
+
+    if (!check.allowed) {
+        alert(check.reason);
+        return;
+    }
 
     const gripSelect = document.getElementById("extraGrip");
     const setsSelect = document.getElementById("extraSets");
@@ -771,13 +942,18 @@ function openExtraConfigModal() {
     repsSelect.innerHTML = repsHtml;
 
     if (hintEl) {
-        if (grips.length === 1) {
+        if (check.warning) {
+            hintEl.textContent = "⚠️ " + check.warning;
+            hintEl.classList.add("hint-warning");
+        } else if (grips.length === 1) {
             hintEl.textContent =
                 "Пока доступен только «Обычный» хват. " +
                 "Остальные откроются по мере прохождения программы.";
+            hintEl.classList.remove("hint-warning");
         } else {
             hintEl.textContent =
                 `Доступно ${grips.length} хватов — открываются по мере прохождения блоков.`;
+            hintEl.classList.remove("hint-warning");
         }
     }
 
@@ -810,6 +986,11 @@ function submitExtraConfig() {
         startExtraWorkout({ grip, sets, reps });
     }
 }
+
+
+/* =========================================
+   РЕЗУЛЬТАТ
+   ========================================= */
 
 
 function renderDoneScreen(record, saved, isNewRecord) {
@@ -872,6 +1053,11 @@ function renderDoneScreen(record, saved, isNewRecord) {
         }
     }, 1500);
 }
+
+
+/* =========================================
+   ДОСТИЖЕНИЯ
+   ========================================= */
 
 
 function getUnlockedAchievements() {
@@ -1063,6 +1249,11 @@ function renderAchievements() {
 }
 
 
+/* =========================================
+   ИСТОРИЯ
+   ========================================= */
+
+
 function renderHistory() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
@@ -1088,13 +1279,32 @@ function renderHistory() {
 
         const item = document.createElement("div");
         item.className = "history-item";
+
+        const date = new Date(record.date);
+
+        // Отдых по плану
+        if (record.isRest) {
+            item.classList.add("history-rest");
+            item.innerHTML = `
+                <div class="history-date">
+                    ${date.toLocaleString("ru-RU")}
+                </div>
+                <div class="history-main">
+                    😴 Отдых по плану
+                </div>
+                <div class="history-total">
+                    ${escapeHtml(record.reason || "Плановый отдых")}
+                </div>
+            `;
+            list.appendChild(item);
+            return;
+        }
+
         item.dataset.index = originalIndex;
 
         if (record.isExtra) {
             item.classList.add("history-extra");
         }
-
-        const date = new Date(record.date);
 
         const title = record.isTest
             ? `Тест · ${record.grip}`
@@ -1140,6 +1350,11 @@ function openHistoryEdit(index) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     if (!history[index]) return;
+
+    if (history[index].isRest) {
+        alert("Запись об отдыхе нельзя редактировать.");
+        return;
+    }
 
     editingHistoryIndex = index;
     editingHistoryDraft = JSON.parse(JSON.stringify(history[index]));
@@ -1284,6 +1499,11 @@ function saveHistoryEdit() {
 }
 
 
+/* =========================================
+   ПРОГРАММА
+   ========================================= */
+
+
 function renderProgram() {
     renderProgramModeButtons();
     renderCustomConfig();
@@ -1340,8 +1560,8 @@ function renderProgramList() {
     const history = loadJSON(STORAGE_KEYS.history, []);
     const stats = getProgramStats();
     const missedInfo = getMissedInfo();
-    const planRecords = history.filter(r => !r.isExtra);
-    const extras = history.filter(r => r.isExtra);
+    const planRecords = getPlanRecords(history);
+    const extras = getExtraRecords(history);
 
     document.getElementById("programProgress").textContent =
         `${stats.planDone} / ${stats.planTotal}`;
@@ -1486,6 +1706,11 @@ function renderProgramList() {
 }
 
 
+/* =========================================
+   НАСТРОЙКИ
+   ========================================= */
+
+
 function renderSettings() {
 
     document.getElementById("nameInput").value =
@@ -1498,6 +1723,12 @@ function renderSettings() {
 
     document.getElementById("voiceInput").checked =
         settings.voiceCountdown !== false;
+
+    const aggressiveEl = document.getElementById("aggressiveInput");
+    if (aggressiveEl) {
+        aggressiveEl.checked =
+            settings.aggressiveProgression === true;
+    }
 
     document.getElementById("restInput").value =
         settings.restOverride === null ||
@@ -1630,14 +1861,23 @@ function renderAbout() {
         settings.name || "—";
 
     document.getElementById("aboutWorkouts").textContent =
-        history.length;
+        history.filter(r => !r.isRest).length;
 
-    if (history.length === 0) {
+    const restCount = history.filter(r => r.isRest).length;
+
+    const restEl = document.getElementById("aboutRests");
+    if (restEl) {
+        restEl.textContent = restCount;
+    }
+
+    const workouts = history.filter(r => !r.isRest);
+
+    if (workouts.length === 0) {
         document.getElementById("aboutFirstDate").textContent = "—";
         return;
     }
 
-    const first = new Date(history[0].date);
+    const first = new Date(workouts[0].date);
 
     document.getElementById("aboutFirstDate").textContent =
         first.toLocaleDateString("ru-RU");
@@ -1650,6 +1890,7 @@ function collectSettingsFromForm() {
     const weightInput = document.getElementById("weightInput");
     const voiceInput = document.getElementById("voiceInput");
     const restInput = document.getElementById("restInput");
+    const aggressiveInput = document.getElementById("aggressiveInput");
 
     const name = nameInput.value.trim() || "Спортсмен";
 
@@ -1695,7 +1936,9 @@ function collectSettingsFromForm() {
         weightWasEmpty,
         voiceCountdown: voiceInput.checked,
         restOverride,
-        trainingDays
+        trainingDays,
+        aggressiveProgression:
+            aggressiveInput ? aggressiveInput.checked : false
     };
 }
 
@@ -1707,6 +1950,7 @@ function applySettings(data) {
     settings.voiceCountdown = data.voiceCountdown;
     settings.restOverride = data.restOverride;
     settings.trainingDays = data.trainingDays;
+    settings.aggressiveProgression = data.aggressiveProgression;
 
     saveJSON(STORAGE_KEYS.settings, settings);
 
@@ -1725,6 +1969,11 @@ function pluralDays(n) {
         (mod100 < 10 || mod100 >= 20)) return "тренировки";
     return "тренировок";
 }
+
+
+/* =========================================
+   РЕЙТИНГ
+   ========================================= */
 
 
 let leaderboardData = null;
@@ -1842,6 +2091,11 @@ function renderLeaderboard() {
 }
 
 
+/* =========================================
+   ЭКСПОРТ / ИМПОРТ
+   ========================================= */
+
+
 function exportData() {
 
     let json;
@@ -1849,7 +2103,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.6",
+            version: "1.9.7",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -1990,9 +2244,15 @@ function importDataFile(file) {
 }
 
 
+/* =========================================
+   ПРОГРЕСС
+   ========================================= */
+
+
 function getStrengthStats() {
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
+    const history = loadJSON(STORAGE_KEYS.history, [])
+        .filter(r => !r.isRest);
 
     if (history.length === 0) {
         return {
@@ -2067,12 +2327,13 @@ function getWeeklyVolume() {
 
     history.forEach(record => {
 
+        if (record.isRest) return;
+
         const d = new Date(record.date);
         const t = d.getTime();
         if (!Number.isFinite(t)) return;
 
-        // Находим понедельник текущей календарной недели
-        const day = d.getDay(); // 0 = вс, 1 = пн, ...
+        const day = d.getDay();
         const diffToMonday = day === 0 ? -6 : 1 - day;
 
         const monday = new Date(d);
@@ -2102,6 +2363,11 @@ function formatDelta(value, unit) {
     if (value < 0) return `${value} ${unit}`;
     return "без изменений";
 }
+
+
+/* =========================================
+   ИНТЕРАКТИВНЫЙ ГРАФИК
+   ========================================= */
 
 
 const CHART_PERIODS = {
@@ -2182,7 +2448,6 @@ function renderInteractiveChart(containerId, data, options) {
     const innerW = width - padL - padR;
     const innerH = height - padT - padB;
 
-    // 5 уровней на оси Y: 0%, 25%, 50%, 75%, 100%
     const gridLevels = [];
 
     for (let i = 0; i <= 4; i++) {
@@ -2192,7 +2457,6 @@ function renderInteractiveChart(containerId, data, options) {
         gridLevels.push({ value, y, ratio });
     }
 
-    // Убираем дубликаты после форматирования
     const seenLabels = new Set();
     const filteredLevels = [];
 
@@ -2521,11 +2785,7 @@ function renderVolumeChart() {
         stateKey: "volume",
         unit: "",
         label: "Объём за неделю",
-        valueFormatter: v => Math.round(v).toString(),
-        xLabel: (d) => {
-            const dt = new Date(d);
-            return `${dt.getDate()}.${(dt.getMonth() + 1).toString().padStart(2, "0")}`;
-        }
+        valueFormatter: v => Math.round(v).toString()
     });
 }
 
