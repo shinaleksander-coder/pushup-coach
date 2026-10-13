@@ -2114,7 +2114,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.7",
+            version: "1.9.8",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
