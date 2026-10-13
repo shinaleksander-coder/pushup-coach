@@ -240,7 +240,23 @@ function canDoExtra() {
     const planRecords = getPlanRecords(history);
     const planDone = planRecords.length;
 
-    // Сколько плановых сделано на текущей неделе
+    // Сколько допов за последние 7 дней
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const extrasThisWeek = getExtraRecords(history).filter(r =>
+        new Date(r.date).getTime() >= weekAgo
+    ).length;
+
+    // Жёсткий лимит — 3 допа в неделю. Свыше — стоп.
+    if (extrasThisWeek >= 3) {
+        return {
+            allowed: false,
+            reason:
+                "Уже 3 дополнительные тренировки за последнюю неделю. " +
+                "Дальше — только во вред."
+        };
+    }
+
+    // Не пройдены все плановые этой недели
     const currentWeekIndex = Math.floor(planDone / daysPerWeek);
     const weekStartIndex = currentWeekIndex * daysPerWeek;
     const planThisWeek = Math.max(
@@ -250,29 +266,15 @@ function canDoExtra() {
 
     if (planThisWeek < daysPerWeek) {
         return {
-            allowed: false,
-            reason:
-                "Сначала закончи плановые тренировки этой недели. " +
-                `Осталось: ${daysPerWeek - planThisWeek}.`
+            allowed: true,
+            warning:
+                `На этой неделе не закрыто плановых: ` +
+                `${daysPerWeek - planThisWeek} из ${daysPerWeek}. ` +
+                `Дополнительная тренировка может помешать восстановлению.`
         };
     }
 
-    // Сколько допов за последние 7 дней
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const extrasThisWeek = getExtraRecords(history).filter(r =>
-        new Date(r.date).getTime() >= weekAgo
-    ).length;
-
-    if (extrasThisWeek >= 2) {
-        return {
-            allowed: false,
-            reason:
-                "Уже 2 дополнительные тренировки на этой неделе. " +
-                "Дай телу восстановиться."
-        };
-    }
-
-    // Объём недели vs средний за 4 недели
+    // Мягкое предупреждение — объём недели выше среднего
     let weeklyVolume = 0;
     history.forEach(r => {
         const t = new Date(r.date).getTime();

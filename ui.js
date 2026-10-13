@@ -915,9 +915,20 @@ function openExtraConfigModal() {
 
     const check = canDoExtra();
 
+    // Жёсткий стоп — только превышение количества допов.
     if (!check.allowed) {
         alert(check.reason);
         return;
+    }
+
+    // Мягкое предупреждение — спрашиваем подтверждение.
+    if (check.warning) {
+        const ok = confirm(
+            "⚠️ " + check.warning + "\n\n" +
+            "Всё равно начать дополнительную тренировку?\n\n" +
+            "Беру риски на себя."
+        );
+        if (!ok) return;
     }
 
     const gripSelect = document.getElementById("extraGrip");
