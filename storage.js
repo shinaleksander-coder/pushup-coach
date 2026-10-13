@@ -3,6 +3,11 @@
    ========================================= */
 
 
+// Единый источник правды для версии приложения.
+// При релизе меняем ТОЛЬКО эту строку.
+const APP_VERSION = "1.9.20";
+
+
 const STORAGE_KEYS = {
     history: "workoutHistory",
     activeWorkout: "activeWorkout",
@@ -78,3 +83,22 @@ const settings = {
     ...defaultSettings,
     ...loadJSON(STORAGE_KEYS.settings, {})
 };
+/* =========================================
+   УТИЛИТЫ ОКРУЖЕНИЯ
+   ========================================= */
+
+
+// Приложение запущено как установленное (PWA, standalone)
+function isStandalone() {
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+    );
+}
+
+
+// Устройство на iOS / iPadOS
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+        !window.MSStream;
+}

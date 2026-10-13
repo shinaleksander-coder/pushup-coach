@@ -14,6 +14,7 @@ let timerInterval = null;
 let startedAt = 0;
 let lastCountdownSecond = -1;
 let isExtraWorkout = false;
+let restTotalSeconds = 0;
 
 
 /* =========================================
@@ -248,6 +249,7 @@ function enterRestPhase() {
 
     restEndsAt = Date.now() + workout.rest * 1000;
     remainingSeconds = workout.rest;
+    restTotalSeconds = workout.rest;
     lastCountdownSecond = -1;
 
     showRestControls();
@@ -329,6 +331,7 @@ function addRest() {
     if (!restEndsAt) return;
 
     restEndsAt += 30 * 1000;
+    restTotalSeconds += 30;
 
     remainingSeconds = Math.max(
         0,

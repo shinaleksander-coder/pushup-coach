@@ -464,7 +464,7 @@ function runSplash() {
             }
             showWelcomeOnFirstLaunch();
         }, 600);
-    }, 1400);
+    }, 2000);
 }
 
 
@@ -685,20 +685,6 @@ let deferredInstallPrompt = null;
 const installButton = document.getElementById("installApp");
 
 
-function isStandalone() {
-    return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true
-    );
-}
-
-
-function isIOS() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-        !window.MSStream;
-}
-
-
 function showInstallButton() {
     if (!installButton) return;
     if (isStandalone()) {
@@ -711,7 +697,7 @@ function showInstallButton() {
 
 function showInstallInstructions() {
 
-    if (isIOS()) {
+    if (isIOSDevice()) {
         alert(
             "Установка на iPhone:\n\n" +
             "1. Нажмите кнопку «Поделиться»\n" +
@@ -819,4 +805,4 @@ if (firstStartupError) {
 }
 
 
-console.log("Push-Up Coach v1.9.8 запущен");
+console.log("Push-Up Coach v" + APP_VERSION + " запущен");

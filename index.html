@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=35">
+    <link rel="stylesheet" href="styles.css?v=47">
 
 </head>
 
@@ -151,6 +151,28 @@
                     Сделай 5 чистых повторений
                 </div>
 
+                <div id="restTimer" class="rest-timer hidden">
+    <svg class="rest-timer-svg" viewBox="0 0 200 200">
+        <circle
+            class="rest-timer-bg"
+            cx="100"
+            cy="100"
+            r="88"
+        />
+        <circle
+            class="rest-timer-progress"
+            id="restTimerProgress"
+            cx="100"
+            cy="100"
+            r="88"
+        />
+    </svg>
+    <div class="rest-timer-content">
+        <div class="rest-timer-label">ОТДЫХ</div>
+        <div class="rest-timer-value" id="restTimerValue">0:00</div>
+    </div>
+</div>
+
                 <div id="repControls" class="rep-controls">
                     <button class="rep-button" id="minusRep" aria-label="Уменьшить">−</button>
                     <div class="rep-display">
@@ -178,12 +200,16 @@
 
         <section id="screenDone" class="screen" hidden>
 
-            <section class="today-card">
+    <section class="today-card">
 
-                <div class="today-label">ГОТОВО</div>
-                <h1>Тренировка завершена</h1>
+        <div class="done-hero">
+            <div class="done-emoji" id="doneEmoji">🎉</div>
+            <div class="today-label">ГОТОВО</div>
+            <h1 id="doneTitle">Тренировка завершена</h1>
+            <p id="donePraise" class="done-praise"></p>
+        </div>
 
-                <div id="doneRecordBadge" class="record-badge hidden"></div>
+        <div id="doneRecordBadge" class="record-badge hidden"></div>
 
                 <div class="workout-info">
                     <div class="info-item">
@@ -252,6 +278,7 @@
 
             <section class="progress-card">
                 <div class="section-title">Достижения</div>
+                <div id="achievementsProgress" class="achievements-progress"></div>
                 <div id="achievementsList" class="achievements-grid"></div>
             </section>
 
@@ -500,7 +527,7 @@
                 <div class="section-title">О приложении</div>
 
                 <div class="about-grid">
-                    <div class="about-row"><span>Версия</span><strong>1.9.7</strong></div>
+                    <div class="about-row"><span>Версия</span><strong id="aboutVersion">—</strong></div>
                     <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
                     <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
                     <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
@@ -561,10 +588,12 @@
 
 
     <div id="achievementModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div id="confettiContainer" class="confetti-container"></div>
         <div class="modal-content achievement-modal-content">
             <div id="achievementModalIcon" class="achievement-modal-icon">🏆</div>
             <h2 id="achievementModalTitle" class="modal-title">Достижение</h2>
             <p id="achievementModalText" class="modal-text" style="text-align:center"></p>
+            <div id="achievementModalExtra" class="achievement-modal-extra hidden"></div>
             <button class="primary-button" id="achievementModalClose">Класс</button>
         </div>
     </div>
@@ -671,22 +700,32 @@
 
     <div id="splash" class="splash">
         <div class="splash-content">
-            <div class="splash-logo">PC</div>
-            <div class="splash-name">Push-Up Coach</div>
-            <div class="splash-author">Александр Шин</div>
+
+            <div class="splash-logo-wrap">
+                <div class="splash-logo-glow"></div>
+                <div class="splash-logo">PC</div>
+            </div>
+
+        <div class="splash-name">Push-Up Coach</div>
+        <div class="splash-author">Александр Шин</div>
+
+        <div class="splash-progress">
+            <div class="splash-progress-bar"></div>
         </div>
+
     </div>
+</div>
 
 
 
-    <script src="storage.js?v=35"></script>
-    <script src="grips.js?v=35"></script>
-    <script src="program.js?v=35"></script>
-    <script src="workout.js?v=35"></script>
-    <script src="push.js?v=35"></script>
-    <script src="leaderboard.js?v=35"></script>
-    <script src="ui.js?v=35"></script>
-    <script src="app.js?v=35"></script>
+    <script src="storage.js?v=47"></script>
+    <script src="grips.js?v=47"></script>
+    <script src="program.js?v=47"></script>
+    <script src="workout.js?v=47"></script>
+    <script src="push.js?v=47"></script>
+    <script src="leaderboard.js?v=47"></script>
+    <script src="ui.js?v=47"></script>
+    <script src="app.js?v=47"></script>
 
 </body>
 

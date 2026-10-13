@@ -66,9 +66,11 @@ function collectLeaderboardStats() {
         new Date(r.date).getTime() >= thirtyDaysAgo
     ).length;
 
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        // Текущая календарная неделя (Пн–Вс) — как в ограничениях допов
+    const currentWeekKey = getWeekStartKey(new Date());
+
     const weekly = history.filter(r =>
-        new Date(r.date).getTime() >= sevenDaysAgo
+        getWeekStartKey(r.date) === currentWeekKey
     );
 
     let weeklyBestSet = 0;

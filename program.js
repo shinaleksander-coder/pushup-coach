@@ -206,16 +206,14 @@ function applyRestOverride(rest) {
 function getTrainingLoad() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-    const lastWeek = history.filter(r => {
+    const thisWeek = history.filter(r => {
         if (r.isRest) return false;
-        const t = new Date(r.date).getTime();
-        return t >= weekAgo;
+        return isDateInCurrentWeek(r.date);
     });
 
-    const total = lastWeek.length;
-    const hard = lastWeek.filter(r =>
+    const total = thisWeek.length;
+    const hard = thisWeek.filter(r =>
         r.difficulty === "hard" || r.difficulty === "very_hard"
     ).length;
 
@@ -224,6 +222,62 @@ function getTrainingLoad() {
     else if (total >= 5 && hard >= 2) level = "warning";
 
     return { total, hard, level };
+}
+
+/* =========================================
+   НЕДЕЛИ ПН–ВС
+   ========================================= */
+
+
+// Возвращает ключ "YYYY-MM-DD" понедельника недели,
+// в которую попадает дата. Работает по локальному времени.
+function getWeekStartKey(dateInput) {
+
+    const d = new Date(dateInput);
+    const t = d.getTime();
+    if (!Number.isFinite(t)) return null;
+
+    const day = d.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    // Форматируем в ЛОКАЛЬНОМ времени,
+    // а не через toISOString (он переводит в UTC и сдвигает)
+    const y = monday.getFullYear();
+    const m = String(monday.getMonth() + 1).padStart(2, "0");
+    const dd = String(monday.getDate()).padStart(2, "0");
+
+    return `${y}-${m}-${dd}`;
+}
+
+// Проверяет, попадает ли дата в текущую календарную неделю (Пн–Вс)
+function isDateInCurrentWeek(dateInput) {
+    const key = getWeekStartKey(dateInput);
+    if (!key) return false;
+    return key === getWeekStartKey(new Date());
+}
+
+
+// Карта: ключ понедельника → суммарный объём за неделю
+function buildWeeklyVolumeMap(history) {
+
+    const map = {};
+
+    history.forEach(record => {
+        if (record.isRest) return;
+
+        const key = getWeekStartKey(record.date);
+        if (!key) return;
+
+        const total = Number(record.totalActual) || 0;
+        if (!map[key]) map[key] = 0;
+        map[key] += total;
+    });
+
+    return map;
 }
 
 
@@ -238,63 +292,59 @@ function canDoExtra() {
     const daysPerWeek = getActiveConfig().daysPerWeek || 3;
 
     const planRecords = getPlanRecords(history);
-    const planDone = planRecords.length;
 
-    // Сколько допов за последние 7 дней
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    // Сколько допов на текущей календарной неделе (Пн–Вс)
     const extrasThisWeek = getExtraRecords(history).filter(r =>
-        new Date(r.date).getTime() >= weekAgo
+        isDateInCurrentWeek(r.date)
     ).length;
 
-    // Жёсткий лимит — 3 допа в неделю. Свыше — стоп.
+    // Жёсткий лимит — 3 допа на неделе
     if (extrasThisWeek >= 3) {
         return {
             allowed: false,
             reason:
-                "Уже 3 дополнительные тренировки за последнюю неделю. " +
+                "Уже 3 дополнительные тренировки на этой неделе. " +
                 "Дальше — только во вред."
         };
     }
 
-    // Не пройдены все плановые этой недели
-    const currentWeekIndex = Math.floor(planDone / daysPerWeek);
-    const weekStartIndex = currentWeekIndex * daysPerWeek;
-    const planThisWeek = Math.max(
-        0,
-        planRecords.length - weekStartIndex
-    );
+    // Сколько плановых уже сделано на этой неделе
+    const doneThisWeek = planRecords.filter(r =>
+        isDateInCurrentWeek(r.date)
+    ).length;
 
-    if (planThisWeek < daysPerWeek) {
+    if (doneThisWeek < daysPerWeek) {
         return {
             allowed: true,
             warning:
                 `На этой неделе не закрыто плановых: ` +
-                `${daysPerWeek - planThisWeek} из ${daysPerWeek}. ` +
+                `${daysPerWeek - doneThisWeek} из ${daysPerWeek}. ` +
                 `Дополнительная тренировка может помешать восстановлению.`
         };
     }
 
     // Мягкое предупреждение — объём недели выше среднего
-    let weeklyVolume = 0;
-    history.forEach(r => {
-        const t = new Date(r.date).getTime();
-        if (t >= weekAgo) {
-            weeklyVolume += Number(r.totalActual) || 0;
-        }
-    });
+    // по последним 4 календарным неделям
+    const currentWeekVolume = history
+        .filter(r => !r.isRest && isDateInCurrentWeek(r.date))
+        .reduce((sum, r) =>
+            sum + (Number(r.totalActual) || 0), 0);
 
     const last4 = [];
+    const now = new Date();
 
     for (let i = 1; i <= 4; i++) {
 
-        const wEnd = Date.now() - i * 7 * 24 * 60 * 60 * 1000;
-        const wStart = wEnd - 7 * 24 * 60 * 60 * 1000;
+        const weekDate = new Date(
+            now.getTime() - i * 7 * 24 * 60 * 60 * 1000
+        );
+        const weekKey = getWeekStartKey(weekDate);
 
         let vol = 0;
 
         history.forEach(r => {
-            const t = new Date(r.date).getTime();
-            if (t >= wStart && t < wEnd) {
+            if (r.isRest) return;
+            if (getWeekStartKey(r.date) === weekKey) {
                 vol += Number(r.totalActual) || 0;
             }
         });
@@ -305,10 +355,9 @@ function canDoExtra() {
     let warning = null;
 
     if (last4.length >= 2) {
-
         const avg = last4.reduce((a, b) => a + b, 0) / last4.length;
 
-        if (weeklyVolume > avg * 1.4) {
+        if (currentWeekVolume > avg * 1.4) {
             warning =
                 "Объём недели уже на 40% выше среднего. " +
                 "Восстановление может не успеть.";
@@ -343,10 +392,9 @@ function addRestDay(reason) {
    ========================================= */
 
 
-function getLastWorkoutDate() {
+function getLastWorkoutDateFor(history) {
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
-    if (history.length === 0) return null;
+    if (!Array.isArray(history) || history.length === 0) return null;
 
     // Ищем последнюю настоящую тренировку (не отдых)
     for (let i = history.length - 1; i >= 0; i--) {
@@ -359,7 +407,13 @@ function getLastWorkoutDate() {
 }
 
 
-function getMissedInfo() {
+function getLastWorkoutDate() {
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    return getLastWorkoutDateFor(history);
+}
+
+
+function getMissedInfoFor(history) {
 
     const empty = {
         level: "none",
@@ -371,7 +425,7 @@ function getMissedInfo() {
         byExactDays: false
     };
 
-    const last = getLastWorkoutDate();
+    const last = getLastWorkoutDateFor(history);
     if (!last) return empty;
 
     const daysSince = Math.floor(
@@ -380,11 +434,9 @@ function getMissedInfo() {
 
     const weeklyTarget = getActiveConfig().daysPerWeek || 3;
 
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const history = loadJSON(STORAGE_KEYS.history, []);
 
-    const weeklyDone = getPlanRecords(history).filter(r =>
-        new Date(r.date).getTime() >= weekAgo
+        const weeklyDone = getPlanRecords(history).filter(r =>
+        isDateInCurrentWeek(r.date)
     ).length;
 
     const weeklyMissed = Math.max(0, weeklyTarget - weeklyDone);
@@ -433,6 +485,10 @@ function getMissedInfo() {
     };
 }
 
+function getMissedInfo() {
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    return getMissedInfoFor(history);
+}
 
 function isBannerSkippedToday() {
 
@@ -614,8 +670,9 @@ function getNextWorkoutFor(history, forceRepeatLast) {
 
     reps = Math.max(3, reps);
 
-    // После перерыва
-    const missedInfo = getMissedInfo();
+    // После перерыва — считаем от переданной истории,
+    // чтобы работало и для реального движка, и для прогноза
+    const missedInfo = getMissedInfoFor(history);
 
     if (missedInfo.level === "strong") {
         reps = Math.max(3, reps - 1);

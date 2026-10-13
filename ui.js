@@ -339,48 +339,16 @@ function renderProgressStats() {
         maxEl.textContent = maxPushups > 0 ? maxPushups : "—";
     }
 
-    // Объёмы по календарным неделям (Пн–Вс)
-    const weekVolumes = {};
-
-    history.forEach(record => {
-
-        if (record.isRest) return;
-
-        const d = new Date(record.date);
-        const t = d.getTime();
-        if (!Number.isFinite(t)) return;
-
-        const day = d.getDay();
-        const diffToMonday = day === 0 ? -6 : 1 - day;
-
-        const monday = new Date(d);
-        monday.setDate(d.getDate() + diffToMonday);
-        monday.setHours(0, 0, 0, 0);
-
-        const key = monday.toISOString().slice(0, 10);
-
-        const total = Number(record.totalActual) || 0;
-        if (!weekVolumes[key]) weekVolumes[key] = 0;
-        weekVolumes[key] += total;
-    });
+   // Объёмы по календарным неделям (Пн–Вс)
+    const weekVolumes = buildWeeklyVolumeMap(history);
 
     // Текущая и прошлая календарные недели
-    const now = new Date();
-    const nowDay = now.getDay();
-    const diffNow = nowDay === 0 ? -6 : 1 - nowDay;
+    const currentKey = getWeekStartKey(new Date());
 
-    const currentMonday = new Date(now);
-    currentMonday.setDate(now.getDate() + diffNow);
-    currentMonday.setHours(0, 0, 0, 0);
-
-    const currentKey =
-        currentMonday.toISOString().slice(0, 10);
-
-    const prevMonday = new Date(currentMonday);
-    prevMonday.setDate(currentMonday.getDate() - 7);
-
-    const prevKey =
-        prevMonday.toISOString().slice(0, 10);
+    const lastWeekDate = new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000
+    );
+    const prevKey = getWeekStartKey(lastWeekDate);
 
     const currentWeekVolume = weekVolumes[currentKey] || 0;
     const prevWeekVolume = weekVolumes[prevKey] || 0;
@@ -439,7 +407,7 @@ function renderOvertrainingBanner() {
         banner.innerHTML = `
             <div class="overtraining-text">
                 <strong>⚠️ Признаки перетренированности.</strong><br>
-                За последние 7 дней: ${load.total} тренировок,
+                На этой неделе: ${load.total} тренировок,
                 ${load.hard} из них — тяжёлые.
                 Срочно нужен отдых.
             </div>
@@ -456,7 +424,7 @@ function renderOvertrainingBanner() {
         banner.innerHTML = `
             <div class="overtraining-text">
                 <strong>Копится усталость.</strong><br>
-                За 7 дней: ${load.total} тренировок,
+                На этой неделе: ${load.total} тренировок,
                 ${load.hard} тяжёлых. Рекомендуем выходной
                 или более лёгкую тренировку.
             </div>
@@ -678,7 +646,7 @@ function renderCompare() {
         return;
     }
 
-    const weekAgo = getStrengthBefore(7);
+    const weekAgo = getBestSetBefore(7);
 
     if (!weekAgo || weekAgo === nowMax) {
         el.classList.add("hidden");
@@ -694,7 +662,7 @@ function renderCompare() {
 }
 
 
-function getStrengthBefore(daysAgo) {
+function getBestSetBefore(daysAgo) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     if (history.length === 0) return null;
@@ -820,6 +788,10 @@ function showSetControls() {
     document.getElementById("failedSet").classList.remove("hidden");
     document.getElementById("restControls").classList.add("hidden");
 
+    // Скрываем круг таймера, показываем обычный статус
+    document.getElementById("workoutStatus").classList.remove("hidden");
+    document.getElementById("restTimer").classList.add("hidden");
+
     setControlsEnabled(true);
 }
 
@@ -830,6 +802,10 @@ function showRestControls() {
     document.getElementById("completeSet").classList.add("hidden");
     document.getElementById("failedSet").classList.add("hidden");
     document.getElementById("restControls").classList.remove("hidden");
+
+    // Прячем текстовый статус, показываем круг таймера
+    document.getElementById("workoutStatus").classList.add("hidden");
+    document.getElementById("restTimer").classList.remove("hidden");
 
     setControlsEnabled(false);
 }
@@ -853,15 +829,49 @@ function updateTimer() {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
 
+    const timeText =
+        `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+    // 1) Обновляем цифры в центре круга
+    const valueEl = document.getElementById("restTimerValue");
+    if (valueEl) {
+        valueEl.textContent = timeText;
+    }
+
+    // 2) Обновляем прогресс круга
+    const progressEl = document.getElementById("restTimerProgress");
+    const timerEl = document.getElementById("restTimer");
+
+    if (progressEl && timerEl && restTotalSeconds > 0) {
+
+        // Прогресс: 0 — только начали отдых, 1 — отдых закончился
+        const progress = 1 - (remainingSeconds / restTotalSeconds);
+        const circumference = 552.92;
+        const offset = circumference * progress;
+
+        progressEl.style.strokeDashoffset = offset.toFixed(2);
+
+        // Смена цвета по мере приближения к концу
+        timerEl.classList.remove("warning", "danger");
+
+        if (remainingSeconds <= 5 && remainingSeconds > 0) {
+            timerEl.classList.add("danger");
+        } else if (remainingSeconds <= 15 && remainingSeconds > 0) {
+            timerEl.classList.add("warning");
+        }
+    }
+
+    // 3) Совместимость: старый текстовый статус (сейчас скрыт,
+    //    но пусть остаётся рабочим — пригодится)
     const statusEl = document.getElementById("workoutStatus");
+    if (statusEl) {
+        statusEl.textContent = `Отдых: ${timeText}`;
 
-    statusEl.textContent =
-        `Отдых: ${minutes}:${seconds.toString().padStart(2, "0")}`;
-
-    if (remainingSeconds > 0 && remainingSeconds <= 5) {
-        statusEl.classList.add("countdown-final");
-    } else {
-        statusEl.classList.remove("countdown-final");
+        if (remainingSeconds > 0 && remainingSeconds <= 5) {
+            statusEl.classList.add("countdown-final");
+        } else {
+            statusEl.classList.remove("countdown-final");
+        }
     }
 }
 
@@ -1014,8 +1024,97 @@ function submitExtraConfig() {
    РЕЗУЛЬТАТ
    ========================================= */
 
+   function getDoneHeroText(record, percent, isNewRecord) {
+
+    // Тест на максимум — особый случай
+    if (record.isTest) {
+        return {
+            emoji: "🎓",
+            title: "Тест пройден!",
+            praise: `Твой максимум: ${record.bestSet} повторений. Так держать!`
+        };
+    }
+
+    // Новый рекорд
+    if (isNewRecord) {
+        return {
+            emoji: "🏆",
+            title: "Новый рекорд!",
+            praise: `${record.bestSet} повторений в подходе — это лучше, чем когда-либо.`
+        };
+    }
+
+    // 100%+ плана выполнено
+    if (percent >= 100) {
+        const options = [
+            "Все подходы выполнены. Сильная работа!",
+            "Полный план закрыт. Так и надо!",
+            "Отлично отработал. Продолжай в том же духе!",
+            "Точно в цель — весь план закрыт."
+        ];
+        const emojis = ["💪", "🔥", "⚡", "🎯"];
+
+        const idx = Math.floor(Math.random() * options.length);
+
+        return {
+            emoji: emojis[idx],
+            title: "Отличная работа!",
+            praise: options[idx]
+        };
+    }
+
+    // 70–99%
+    if (percent >= 70) {
+        const options = [
+            "Хороший результат. Ещё немного — и будет идеально.",
+            "Крепкая тренировка. Прогресс идёт!",
+            "Большая часть плана закрыта. Молодец!"
+        ];
+        const emojis = ["👍", "✨", "🌟"];
+
+        const idx = Math.floor(Math.random() * options.length);
+
+        return {
+            emoji: emojis[idx],
+            title: "Хорошо получилось",
+            praise: options[idx]
+        };
+    }
+
+    // 40–69%
+    if (percent >= 40) {
+        return {
+            emoji: "💪",
+            title: "Работаем дальше",
+            praise: "Не всё получилось, но ты сделал шаг. Завтра будет легче."
+        };
+    }
+
+    // <40%
+    return {
+        emoji: "🌱",
+        title: "Главное — не сдаваться",
+        praise: "Сегодня было тяжело. Но ты здесь и продолжаешь — это уже победа."
+    };
+}
 
 function renderDoneScreen(record, saved, isNewRecord) {
+
+        // Считаем процент выполнения
+    const percent = record.totalPlanned > 0
+        ? Math.round((record.totalActual / record.totalPlanned) * 100)
+        : 0;
+
+    // Заполняем «героя» экрана
+    const hero = getDoneHeroText(record, percent, isNewRecord);
+
+    const emojiEl = document.getElementById("doneEmoji");
+    const titleEl = document.getElementById("doneTitle");
+    const praiseEl = document.getElementById("donePraise");
+
+    if (emojiEl) emojiEl.textContent = hero.emoji;
+    if (titleEl) titleEl.textContent = hero.title;
+    if (praiseEl) praiseEl.textContent = hero.praise;
 
     document.getElementById("doneSets").textContent =
         record.results.length;
@@ -1126,6 +1225,55 @@ function checkAchievements(silent) {
     setTimeout(showNextAchievement, 400);
 }
 
+function launchConfetti() {
+
+    const container = document.getElementById("confettiContainer");
+    if (!container) return;
+
+    // Очистим от старых частиц, если остались
+    container.innerHTML = "";
+
+    const colors = [
+        "#FF3B30", // красный
+        "#FF9500", // оранжевый
+        "#FFCC00", // жёлтый
+        "#34C759", // зелёный
+        "#007AFF", // синий
+        "#AF52DE", // фиолетовый
+        "#FF2D55"  // розовый
+    ];
+
+    const count = 35;
+
+    for (let i = 0; i < count; i++) {
+
+        const particle = document.createElement("div");
+        particle.className = "confetti-particle";
+
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const left = Math.random() * 100;              // % по горизонтали
+        const delay = Math.random() * 0.4;              // задержка старта
+        const duration = 1.8 + Math.random() * 1.2;     // длительность падения
+        const width = 6 + Math.random() * 8;            // 6–14 px
+        const height = width * 0.4;                     // тонкая полоска
+        const rotate = Math.random() * 360;
+
+        particle.style.left = left + "%";
+        particle.style.backgroundColor = color;
+        particle.style.width = width + "px";
+        particle.style.height = height + "px";
+        particle.style.animationDelay = delay + "s";
+        particle.style.animationDuration = duration + "s";
+        particle.style.transform = `rotate(${rotate}deg)`;
+
+        container.appendChild(particle);
+    }
+
+    // Убираем контейнер через 4 секунды — чтобы DOM не засорялся
+    setTimeout(() => {
+        if (container) container.innerHTML = "";
+    }, 4000);
+}
 
 function showNextAchievement() {
 
@@ -1149,6 +1297,9 @@ function showNextAchievement() {
 
     document.getElementById("achievementModal")
         .classList.remove("hidden");
+
+        // 🎉 Запускаем конфетти
+    launchConfetti();
 }
 
 
@@ -1222,6 +1373,10 @@ function closeAchievementModal() {
     document.getElementById("achievementModal")
         .classList.add("hidden");
 
+    // Очищаем конфетти
+    const confettiEl = document.getElementById("confettiContainer");
+    if (confettiEl) confettiEl.innerHTML = "";
+
     const extraEl = document.getElementById("achievementModalExtra");
     if (extraEl) {
         extraEl.innerHTML = "";
@@ -1241,6 +1396,15 @@ function renderAchievements() {
     if (!container) return;
 
     const unlocked = getUnlockedAchievements();
+
+    // Счётчик «Открыто N из M»
+    const progressEl = document.getElementById("achievementsProgress");
+    if (progressEl) {
+        const total = ACHIEVEMENTS.length;
+        const done = unlocked.length;
+        progressEl.innerHTML =
+            `Открыто <strong>${done}</strong> из ${total}`;
+    }
 
     container.innerHTML = ACHIEVEMENTS.map(a => {
         const isUnlocked = unlocked.includes(a.id);
@@ -1878,6 +2042,10 @@ function refreshPushAfterAction() {
 function renderAbout() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
+        const versionEl = document.getElementById("aboutVersion");
+    if (versionEl) {
+        versionEl.textContent = APP_VERSION;
+    }
 
     document.getElementById("aboutName").textContent =
         settings.name || "—";
@@ -2058,8 +2226,8 @@ function renderLeaderboard() {
     if (metaEl) {
         if (leaderboardTab === "weekly") {
             metaEl.innerHTML =
-                "🏆 <strong>Топ недели по общему количеству отжиманий.</strong><br>" +
-                "Большая цифра справа — сколько всего отжался за неделю. " +
+                "🏆 <strong>Топ текущей недели (Пн–Вс).</strong><br>" +
+                "Большая цифра справа — сколько всего отжался с понедельника. " +
                 "Под именем — личный рекорд за один подход.";
         } else {
             metaEl.innerHTML =
@@ -2125,7 +2293,7 @@ function exportData() {
 
     try {
         const data = {
-            version: "1.9.8",
+            version: "APP_VERSION",
             exportedAt: new Date().toISOString(),
             settings: loadJSON(STORAGE_KEYS.settings, {}),
             history: loadJSON(STORAGE_KEYS.history, []),
@@ -2299,26 +2467,8 @@ function getStrengthStats() {
         });
     });
 
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
-
-    let weekly = 0;
-    let prevWeekly = 0;
-
-    history.forEach(record => {
-        const t = new Date(record.date).getTime();
-        let best = 0;
-        record.results?.forEach(r => {
-            const a = Number(r.actual);
-            if (a > best) best = a;
-        });
-
-        if (t >= weekAgo) {
-            if (best > weekly) weekly = best;
-        } else if (t >= twoWeeksAgo) {
-            if (best > prevWeekly) prevWeekly = best;
-        }
-    });
+    const weekly = getBestSetBefore(7) || 0;
+    const prevWeekly = getBestSetBefore(14) || 0;
 
     return { start, now, weekly, prevWeekly };
 }
@@ -2345,29 +2495,7 @@ function getMaxByGrip() {
 function getWeeklyVolume() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const map = {};
-
-    history.forEach(record => {
-
-        if (record.isRest) return;
-
-        const d = new Date(record.date);
-        const t = d.getTime();
-        if (!Number.isFinite(t)) return;
-
-        const day = d.getDay();
-        const diffToMonday = day === 0 ? -6 : 1 - day;
-
-        const monday = new Date(d);
-        monday.setDate(d.getDate() + diffToMonday);
-        monday.setHours(0, 0, 0, 0);
-
-        const key = monday.toISOString().slice(0, 10);
-
-        const total = Number(record.totalActual) || 0;
-        if (!map[key]) map[key] = 0;
-        map[key] += total;
-    });
+    const map = buildWeeklyVolumeMap(history);
 
     return Object.entries(map)
         .map(([dateStr, volume]) => ({
@@ -2552,6 +2680,20 @@ function renderInteractiveChart(containerId, data, options) {
         ? Math.ceil(points.length / 8)
         : 1;
 
+            // Подписи значений над точками — если их немного
+    const showValueLabels = points.length <= 10;
+
+    const valueLabels = showValueLabels
+        ? points.map((p) => `
+            <text
+                class="chart-dot-label"
+                x="${p.x.toFixed(1)}"
+                y="${(p.y - 12).toFixed(1)}"
+                text-anchor="middle"
+            >${valueFormatter(p.value)}</text>
+        `).join("")
+        : "";
+
     const circles = points
         .map((p, i) => {
 
@@ -2634,6 +2776,8 @@ function renderInteractiveChart(containerId, data, options) {
                 />
 
                 ${circles}
+
+                ${valueLabels}
 
                 <text
                     class="chart-label"

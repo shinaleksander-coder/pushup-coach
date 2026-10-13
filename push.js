@@ -18,19 +18,6 @@ const PUSH_KEYS = {
 };
 
 
-function isIOSDevice() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-        !window.MSStream;
-}
-
-
-function isStandalone() {
-    return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true
-    );
-}
-
 
 function pushSupported() {
 
