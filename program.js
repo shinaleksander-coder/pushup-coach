@@ -147,6 +147,32 @@ function rebuildProgram() {
 }
 
 
+/* =========================================
+   ФИЛЬТРАЦИЯ ИСТОРИИ
+   ========================================= */
+
+
+// Только плановые тренировки (не допы, не тесты, не отдых)
+function getPlanRecords(history) {
+    return history.filter(r => !r.isExtra && !r.isTest && !r.isRest);
+}
+
+
+function getExtraRecords(history) {
+    return history.filter(r => r.isExtra === true);
+}
+
+
+function getRestRecords(history) {
+    return history.filter(r => r.isRest === true);
+}
+
+
+/* =========================================
+   УТИЛИТЫ
+   ========================================= */
+
+
 function getEffectiveReps(record) {
 
     if (!record || !Array.isArray(record.results) ||
@@ -173,6 +199,144 @@ function applyRestOverride(rest) {
 
 
 /* =========================================
+   НАГРУЗКА / ПЕРЕТРЕНИРОВАННОСТЬ
+   ========================================= */
+
+
+function getTrainingLoad() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    const lastWeek = history.filter(r => {
+        if (r.isRest) return false;
+        const t = new Date(r.date).getTime();
+        return t >= weekAgo;
+    });
+
+    const total = lastWeek.length;
+    const hard = lastWeek.filter(r =>
+        r.difficulty === "hard" || r.difficulty === "very_hard"
+    ).length;
+
+    let level = "ok";
+    if (total >= 6 && hard >= 3) level = "critical";
+    else if (total >= 5 && hard >= 2) level = "warning";
+
+    return { total, hard, level };
+}
+
+
+/* =========================================
+   ДОП. ТРЕНИРОВКА — ПРОВЕРКА
+   ========================================= */
+
+
+function canDoExtra() {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    const daysPerWeek = getActiveConfig().daysPerWeek || 3;
+
+    const planRecords = getPlanRecords(history);
+    const planDone = planRecords.length;
+
+    // Сколько плановых сделано на текущей неделе
+    const currentWeekIndex = Math.floor(planDone / daysPerWeek);
+    const weekStartIndex = currentWeekIndex * daysPerWeek;
+    const planThisWeek = Math.max(
+        0,
+        planRecords.length - weekStartIndex
+    );
+
+    if (planThisWeek < daysPerWeek) {
+        return {
+            allowed: false,
+            reason:
+                "Сначала закончи плановые тренировки этой недели. " +
+                `Осталось: ${daysPerWeek - planThisWeek}.`
+        };
+    }
+
+    // Сколько допов за последние 7 дней
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const extrasThisWeek = getExtraRecords(history).filter(r =>
+        new Date(r.date).getTime() >= weekAgo
+    ).length;
+
+    if (extrasThisWeek >= 2) {
+        return {
+            allowed: false,
+            reason:
+                "Уже 2 дополнительные тренировки на этой неделе. " +
+                "Дай телу восстановиться."
+        };
+    }
+
+    // Объём недели vs средний за 4 недели
+    let weeklyVolume = 0;
+    history.forEach(r => {
+        const t = new Date(r.date).getTime();
+        if (t >= weekAgo) {
+            weeklyVolume += Number(r.totalActual) || 0;
+        }
+    });
+
+    const last4 = [];
+
+    for (let i = 1; i <= 4; i++) {
+
+        const wEnd = Date.now() - i * 7 * 24 * 60 * 60 * 1000;
+        const wStart = wEnd - 7 * 24 * 60 * 60 * 1000;
+
+        let vol = 0;
+
+        history.forEach(r => {
+            const t = new Date(r.date).getTime();
+            if (t >= wStart && t < wEnd) {
+                vol += Number(r.totalActual) || 0;
+            }
+        });
+
+        if (vol > 0) last4.push(vol);
+    }
+
+    let warning = null;
+
+    if (last4.length >= 2) {
+
+        const avg = last4.reduce((a, b) => a + b, 0) / last4.length;
+
+        if (weeklyVolume > avg * 1.4) {
+            warning =
+                "Объём недели уже на 40% выше среднего. " +
+                "Восстановление может не успеть.";
+        }
+    }
+
+    return { allowed: true, warning };
+}
+
+
+/* =========================================
+   ЗАПИСЬ ОТДЫХА
+   ========================================= */
+
+
+function addRestDay(reason) {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    history.push({
+        date: new Date().toISOString(),
+        isRest: true,
+        reason: reason || "Отдых по плану"
+    });
+
+    saveJSON(STORAGE_KEYS.history, history);
+}
+
+
+/* =========================================
    ПРОПУСКИ И ДНИ БЕЗ ТРЕНИРОВКИ
    ========================================= */
 
@@ -182,19 +346,17 @@ function getLastWorkoutDate() {
     const history = loadJSON(STORAGE_KEYS.history, []);
     if (history.length === 0) return null;
 
-    return new Date(history[history.length - 1].date);
+    // Ищем последнюю настоящую тренировку (не отдых)
+    for (let i = history.length - 1; i >= 0; i--) {
+        if (!history[i].isRest) {
+            return new Date(history[i].date);
+        }
+    }
+
+    return null;
 }
 
 
-// Уровни:
-//   none   — 0-3 дня
-//   soft   — 4-6 дней
-//   strong — 7-13 дней (авто-снижение −1)
-//   freeze — 14+ дней (авто-снижение −2)
-//
-// Пропуски считаются по конкретным дням недели, только
-// если их количество совпадает с daysPerWeek программы.
-// Иначе — по интервалу 7/daysPerWeek.
 function getMissedInfo() {
 
     const empty = {
@@ -218,8 +380,9 @@ function getMissedInfo() {
 
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const weeklyDone = history.filter(r =>
-        !r.isExtra && new Date(r.date).getTime() >= weekAgo
+
+    const weeklyDone = getPlanRecords(history).filter(r =>
+        new Date(r.date).getTime() >= weekAgo
     ).length;
 
     const weeklyMissed = Math.max(0, weeklyTarget - weeklyDone);
@@ -228,8 +391,6 @@ function getMissedInfo() {
         ? settings.trainingDays
         : [];
 
-    // Используем конкретные дни недели, только если их
-    // количество совпадает с планом программы.
     const useExactDays =
         trainingDays.length > 0 &&
         trainingDays.length === weeklyTarget;
@@ -247,7 +408,6 @@ function getMissedInfo() {
         }
 
     } else {
-
         const interval = 7 / weeklyTarget;
         missedPlan = Math.max(
             0,
@@ -275,7 +435,6 @@ function getMissedInfo() {
 function isBannerSkippedToday() {
 
     const skipDate = loadJSON(STORAGE_KEYS.skipBannerDate, null);
-
     if (!skipDate) return false;
 
     const today = new Date().toISOString().slice(0, 10);
@@ -298,11 +457,9 @@ function getProgramStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
 
-    const planDone =
-        history.filter(r => !r.isExtra).length;
-
-    const extrasCount =
-        history.filter(r => r.isExtra).length;
+    const planDone = getPlanRecords(history).length;
+    const extrasCount = getExtraRecords(history).length;
+    const restsCount = getRestRecords(history).length;
 
     const planTotal = PROGRAM.length;
     const total = planTotal + extrasCount;
@@ -312,6 +469,7 @@ function getProgramStats() {
         planDone,
         planTotal,
         extrasCount,
+        restsCount,
         completed,
         total
     };
@@ -325,19 +483,12 @@ function getProgramStats() {
 
 function getNextWorkoutFor(history, forceRepeatLast) {
 
-    const programIndex =
-        history.filter(r => !r.isExtra).length;
+    const planRecords = getPlanRecords(history);
+    const programIndex = planRecords.length;
 
     if (forceRepeatLast && programIndex > 0) {
 
-        let last = null;
-
-        for (let i = history.length - 1; i >= 0; i--) {
-            if (!history[i].isExtra) {
-                last = history[i];
-                break;
-            }
-        }
+        const last = planRecords[programIndex - 1];
 
         if (last) {
             const template = PROGRAM.find(
@@ -347,12 +498,19 @@ function getNextWorkoutFor(history, forceRepeatLast) {
             ) || PROGRAM[programIndex - 1];
 
             if (template) {
-                const reps = getEffectiveReps(last) ||
-                    last.plannedReps || template.reps;
+
+                const prevPlanned =
+                    Number(last.plannedReps) || template.reps;
+                const prevEffective = getEffectiveReps(last);
+
+                const anchor = Math.min(
+                    prevPlanned + 1,
+                    Math.max(prevPlanned, prevEffective)
+                );
 
                 return {
                     ...template,
-                    reps,
+                    reps: Math.max(3, anchor),
                     rest: applyRestOverride(template.rest),
                     reason: "Повтор последней тренировки"
                 };
@@ -381,7 +539,9 @@ function getNextWorkoutFor(history, forceRepeatLast) {
     }
 
     const sameGrip = history.filter(
-        r => r.grip === base.grip && !r.isTest
+        r => r.grip === base.grip &&
+             !r.isTest &&
+             !r.isRest
     );
 
     if (sameGrip.length === 0) {
@@ -396,20 +556,17 @@ function getNextWorkoutFor(history, forceRepeatLast) {
 
     const prevEffective = getEffectiveReps(prev);
 
-    const recent = sameGrip.slice(-5);
+    const prevPlanned =
+        Number(prev.plannedReps) || base.reps;
 
-    let recentBest = 0;
-
-    recent.forEach(r => {
-        const e = getEffectiveReps(r);
-        if (e > recentBest) recentBest = e;
-    });
-
-    const anchor = Math.max(
-        base.reps,
-        prevEffective,
-        recentBest > 0 ? recentBest - 1 : 0
+    // Якорь: не выше плана прошлой + 1, не ниже плана прошлой
+    const anchorCapped = Math.min(
+        prevPlanned + 1,
+        Math.max(prevPlanned, prevEffective)
     );
+
+    // Также не ниже базы программы
+    const anchor = Math.max(base.reps, anchorCapped);
 
     const allDone = prev.results.every(
         r => Number(r.actual) >= Number(r.planned)
@@ -423,21 +580,39 @@ function getNextWorkoutFor(history, forceRepeatLast) {
     if (diff === "very_hard") {
         reps = anchor - 2;
         reason = "Очень тяжело — сбрасываем нагрузку";
-    } else if (!allDone || diff === "hard") {
-        reps = anchor - 1;
-        reason = allDone
-            ? "Было тяжело — закрепляем нагрузку"
-            : "Не всё получилось — чуть снижаем";
+    } else if (diff === "hard") {
+        reps = anchor;
+        reason = "Тяжело — рост на паузе";
+    } else if (!allDone) {
+        reps = anchor;
+        reason = "Не всё получилось — закрепляем";
     } else if (diff === "easy") {
         reps = anchor + 1;
-        reason = "Было легко — добавляем повтор";
+        reason = "Легко — добавляем повтор";
     } else {
-        reps = anchor;
-        reason = "Идём на твоём уровне";
+        // normal
+        if (settings.aggressiveProgression) {
+
+            const last2 = sameGrip.slice(-2);
+            const twoNormals = last2.length === 2 &&
+                last2.every(r => r.difficulty === "normal");
+
+            if (twoNormals) {
+                reps = anchor + 1;
+                reason = "Два раза нормально — добавляем повтор";
+            } else {
+                reps = anchor;
+                reason = "Нормально — оставляем как есть";
+            }
+        } else {
+            reps = anchor;
+            reason = "Нормально — оставляем как есть";
+        }
     }
 
-    reps = Math.max(3, Math.max(base.reps - 3, reps));
+    reps = Math.max(3, reps);
 
+    // После перерыва
     const missedInfo = getMissedInfo();
 
     if (missedInfo.level === "strong") {
@@ -474,8 +649,8 @@ function getNextWorkout(forceRepeatLast) {
 function predictFutureWorkouts() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const programIndex =
-        history.filter(r => !r.isExtra).length;
+    const planRecords = getPlanRecords(history);
+    const programIndex = planRecords.length;
 
     const virtual = [...history];
     const predictions = [];

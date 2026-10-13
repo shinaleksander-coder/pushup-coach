@@ -54,7 +54,7 @@ function startNewWorkout() {
 
 
 /* =========================================
-   СТАРТ ДОПОЛНИТЕЛЬНОЙ ТРЕНИРОВКИ
+   СТАРТ ДОП. ТРЕНИРОВКИ
    ========================================= */
 
 
@@ -63,6 +63,21 @@ function startExtraWorkout(config) {
     if (!config || !config.grip) {
         console.warn("startExtraWorkout: нет конфига");
         return;
+    }
+
+    // Проверка лимитов
+    const check = canDoExtra();
+
+    if (!check.allowed) {
+        alert(check.reason);
+        return;
+    }
+
+    if (check.warning) {
+        const ok = confirm(
+            check.warning + "\n\nВсё равно начать?"
+        );
+        if (!ok) return;
     }
 
     isExtraWorkout = true;
@@ -97,7 +112,7 @@ function startExtraWorkout(config) {
 
 
 /* =========================================
-   ВОССТАНОВЛЕНИЕ АКТИВНОЙ ТРЕНИРОВКИ
+   ВОССТАНОВЛЕНИЕ
    ========================================= */
 
 
@@ -152,7 +167,7 @@ function continueExistingWorkout() {
 
 
 /* =========================================
-   ЖИЗНЕННЫЙ ЦИКЛ ПОДХОДА
+   ПОДХОД
    ========================================= */
 
 
@@ -436,7 +451,7 @@ function saveWorkout(record) {
 
 
 /* =========================================
-   АКТИВНАЯ ТРЕНИРОВКА
+   АКТИВНАЯ
    ========================================= */
 
 
@@ -468,8 +483,13 @@ function setWorkoutDifficulty(level) {
 
     if (history.length === 0) return;
 
-    const last = history[history.length - 1];
-    last.difficulty = level;
+    // Ищем последнюю реальную тренировку
+    for (let i = history.length - 1; i >= 0; i--) {
+        if (!history[i].isRest) {
+            history[i].difficulty = level;
+            break;
+        }
+    }
 
     saveJSON(STORAGE_KEYS.history, history);
 
@@ -485,7 +505,7 @@ function setWorkoutDifficulty(level) {
 
 
 /* =========================================
-   ЗВУК / ГОЛОС / ВИБРАЦИЯ
+   ЗВУК
    ========================================= */
 
 
