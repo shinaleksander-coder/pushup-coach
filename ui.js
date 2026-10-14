@@ -145,6 +145,80 @@ let editingHistoryDraft = null;
 let achievementQueue = [];
 let achievementModalMode = "new";
 
+/* =========================================
+   ВКЛАДКИ
+   ========================================= */
+
+
+const TAB_STORAGE_PREFIX = "activeTab:";
+
+
+function initTabs() {
+
+    document.querySelectorAll(".tabs").forEach(group => {
+
+        const groupName = group.dataset.tabsGroup;
+        const screen = group.closest(".screen");
+        if (!groupName || !screen) return;
+
+        const buttons = group.querySelectorAll(".tab-btn");
+        const panels = screen.querySelectorAll(
+            `.tab-panel[data-tabs-group="${groupName}"]`
+        );
+
+        if (buttons.length === 0 || panels.length === 0) return;
+
+        function activate(tabName) {
+
+            buttons.forEach(btn => {
+                btn.classList.toggle(
+                    "active",
+                    btn.dataset.tab === tabName
+                );
+            });
+
+            panels.forEach(panel => {
+                panel.classList.toggle(
+                    "hidden",
+                    panel.dataset.tabPanel !== tabName
+                );
+            });
+
+            try {
+                localStorage.setItem(
+                    TAB_STORAGE_PREFIX + groupName,
+                    tabName
+                );
+            } catch (e) { /* ignore */ }
+        }
+
+        buttons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                activate(btn.dataset.tab);
+            });
+        });
+
+        // Восстанавливаем сохранённую вкладку
+        let saved = null;
+        try {
+            saved = localStorage.getItem(
+                TAB_STORAGE_PREFIX + groupName
+            );
+        } catch (e) { /* ignore */ }
+
+        const validNames = Array.from(buttons)
+            .map(b => b.dataset.tab);
+
+        const defaultTab = group.querySelector(".tab-btn.active")
+            ?.dataset.tab || validNames[0];
+
+        const initialTab = (saved && validNames.includes(saved))
+            ? saved
+            : defaultTab;
+
+        activate(initialTab);
+    });
+}
 
 function showScreen(id) {
 

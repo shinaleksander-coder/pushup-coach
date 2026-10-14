@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=47">
+    <link rel="stylesheet" href="styles.css?v=49">
 
 </head>
 
@@ -329,224 +329,271 @@
 
         <section id="screenProgram" class="screen" hidden>
 
-            <section class="progress-card">
-                <div class="section-title">Режим программы</div>
-                <div class="mode-selector">
-                    <button class="mode-button" data-mode="base">
-                        <span class="mode-button-title">Базовая</span>
-                        <span class="mode-button-desc">3 подхода · 24 недели</span>
-                    </button>
-                    <button class="mode-button" data-mode="strength">
-                        <span class="mode-button-title">Усиленная</span>
-                        <span class="mode-button-desc">4 подхода · больше объёма</span>
-                    </button>
-                    <button class="mode-button" data-mode="custom">
-                        <span class="mode-button-title">Своя</span>
-                        <span class="mode-button-desc">настроить вручную</span>
-                    </button>
-                </div>
-            </section>
+    <div class="tabs" data-tabs-group="program">
+        <button class="tab-btn active" data-tab="mode">
+            🎛 Режим
+        </button>
+        <button class="tab-btn" data-tab="list">
+            📅 Программа
+        </button>
+    </div>
 
+    <div class="tab-panel" data-tabs-group="program" data-tab-panel="mode">
 
-
-            <section id="customConfig" class="progress-card hidden">
-                <div class="section-title">Индивидуальные настройки</div>
-
-                <label class="setting-row">
-                    <span>Дней в неделю</span>
-                    <select id="customDays">
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                    </select>
-                </label>
-
-                <label class="setting-row">
-                    <span>Подходов</span>
-                    <select id="customSets">
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                    </select>
-                </label>
-
-                <label class="setting-row">
-                    <span>Старт, повторов</span>
-                    <input id="customRepBase" type="number" min="3" max="20" step="1">
-                </label>
-
-                <label class="setting-row">
-                    <span>Рост в неделю</span>
-                    <select id="customGrowth">
-                        <option value="0">без роста</option>
-                        <option value="1">+1 повтор</option>
-                        <option value="2">+2 повтора</option>
-                    </select>
-                </label>
-
-                <button class="primary-button" id="saveCustom">Применить</button>
-            </section>
-
-
-
-            <section class="progress-card">
-                <div class="section-title">Программа</div>
-                <p class="program-summary">
-                    Пройдено:
-                    <strong id="programProgress">0 / 72</strong>
-                    <span id="programExtras" class="program-extras hidden"></span>
-                </p>
-                <p id="programMissedRow" class="program-missed hidden"></p>
-                <div id="programList"></div>
-            </section>
-
+        <section class="progress-card">
+            <div class="section-title">Режим программы</div>
+            <div class="mode-selector">
+                <button class="mode-button" data-mode="base">
+                    <span class="mode-button-title">Базовая</span>
+                    <span class="mode-button-desc">3 подхода · 24 недели</span>
+                </button>
+                <button class="mode-button" data-mode="strength">
+                    <span class="mode-button-title">Усиленная</span>
+                    <span class="mode-button-desc">4 подхода · больше объёма</span>
+                </button>
+                <button class="mode-button" data-mode="custom">
+                    <span class="mode-button-title">Своя</span>
+                    <span class="mode-button-desc">настроить вручную</span>
+                </button>
+            </div>
         </section>
+
+        <section id="customConfig" class="progress-card hidden">
+            <div class="section-title">Индивидуальные настройки</div>
+
+            <label class="setting-row">
+                <span>Дней в неделю</span>
+                <select id="customDays">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+            </label>
+
+            <label class="setting-row">
+                <span>Подходов</span>
+                <select id="customSets">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </label>
+
+            <label class="setting-row">
+                <span>Старт, повторов</span>
+                <input id="customRepBase" type="number" min="3" max="20" step="1">
+            </label>
+
+            <label class="setting-row">
+                <span>Рост в неделю</span>
+                <select id="customGrowth">
+                    <option value="0">без роста</option>
+                    <option value="1">+1 повтор</option>
+                    <option value="2">+2 повтора</option>
+                </select>
+            </label>
+
+            <button class="primary-button" id="saveCustom">Применить</button>
+        </section>
+
+    </div>
+
+    <div class="tab-panel hidden" data-tabs-group="program" data-tab-panel="list">
+
+        <section class="progress-card">
+            <div class="section-title">Программа</div>
+            <p class="program-summary">
+                Пройдено:
+                <strong id="programProgress">0 / 72</strong>
+                <span id="programExtras" class="program-extras hidden"></span>
+            </p>
+            <p id="programMissedRow" class="program-missed hidden"></p>
+            <div id="programList"></div>
+        </section>
+
+    </div>
+
+</section>
 
 
 
         <section id="screenSettings" class="screen" hidden>
 
-            <section class="progress-card">
-                <div class="section-title">Настройки</div>
+    <div class="tabs" data-tabs-group="settings">
+        <button class="tab-btn active" data-tab="main">Основные</button>
+        <button class="tab-btn" data-tab="notif">Уведомления</button>
+        <button class="tab-btn" data-tab="data">Данные</button>
+        <button class="tab-btn" data-tab="about">Инфо</button>
+    </div>
 
-                <label class="setting-row">
-                    <span>Имя</span>
-                    <input id="nameInput" type="text" maxlength="30" placeholder="Как тебя зовут">
-                </label>
 
-                <label class="setting-row">
-                    <span>Вес</span>
-                    <input id="weightInput" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="кг">
-                </label>
+    <div class="tab-panel" data-tabs-group="settings" data-tab-panel="main">
 
-                <label class="setting-row">
-                    <span>Голосовой отсчёт</span>
-                    <input id="voiceInput" type="checkbox">
-                </label>
-                <label class="setting-row">
-                    <span>Агрессивная прогрессия</span>
-                    <input id="aggressiveInput" type="checkbox">
-                </label>
+        <section class="progress-card">
+            <div class="section-title">Основные</div>
 
+            <label class="setting-row">
+                <span>Имя</span>
+                <input id="nameInput" type="text" maxlength="30" placeholder="Как тебя зовут">
+            </label>
+
+            <label class="setting-row">
+                <span>Вес</span>
+                <input id="weightInput" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="кг">
+            </label>
+
+            <label class="setting-row">
+                <span>Агрессивная прогрессия</span>
+                <input id="aggressiveInput" type="checkbox">
+            </label>
+
+            <label class="setting-row">
+                <span>Отдых между подходами</span>
+                <select id="restInput">
+                    <option value="program">По программе</option>
+                    <option value="45">45 сек</option>
+                    <option value="60">60 сек</option>
+                    <option value="75">75 сек</option>
+                    <option value="90">90 сек</option>
+                    <option value="105">105 сек</option>
+                    <option value="120">120 сек</option>
+                    <option value="150">150 сек</option>
+                    <option value="180">180 сек</option>
+                </select>
+            </label>
+
+            <div class="setting-row setting-days">
+                <span>Дни тренировок</span>
+                <div class="days-grid">
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="1"> Пн</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="2"> Вт</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="3"> Ср</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="4"> Чт</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="5"> Пт</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="6"> Сб</label>
+                    <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="7"> Вс</label>
+                </div>
+            </div>
+
+            <button class="primary-button" id="saveSettings">Сохранить</button>
+        </section>
+
+    </div>
+
+
+    <div class="tab-panel hidden" data-tabs-group="settings" data-tab-panel="notif">
+
+        <section class="progress-card">
+            <div class="section-title">🔊 Звук</div>
+
+            <label class="setting-row">
+                <span>Голосовой отсчёт</span>
+                <input id="voiceInput" type="checkbox">
+            </label>
+        </section>
+
+        <section class="progress-card">
+            <div class="section-title">🔔 Напоминания</div>
+
+            <p id="pushStatus" class="push-status"></p>
+
+            <div id="pushDisabled" class="hidden">
+                <p class="push-hint">
+                    Приложение будет напоминать о тренировках
+                    в выбранные дни и время.
+                </p>
+                <button class="primary-button" id="pushEnable">
+                    Включить напоминания
+                </button>
+            </div>
+
+            <div id="pushEnabled" class="hidden">
                 <label class="setting-row">
-                    <span>Отдых между подходами</span>
-                    <select id="restInput">
-                        <option value="program">По программе</option>
-                        <option value="45">45 сек</option>
-                        <option value="60">60 сек</option>
-                        <option value="75">75 сек</option>
-                        <option value="90">90 сек</option>
-                        <option value="105">105 сек</option>
-                        <option value="120">120 сек</option>
-                        <option value="150">150 сек</option>
-                        <option value="180">180 сек</option>
-                    </select>
+                    <span>Время напоминания</span>
+                    <input id="pushTime" type="time" value="19:00">
                 </label>
 
                 <div class="setting-row setting-days">
-                    <span>Дни тренировок</span>
+                    <span>Дни напоминаний</span>
                     <div class="days-grid">
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="1"> Пн</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="2"> Вт</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="3"> Ср</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="4"> Чт</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="5"> Пт</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="6"> Сб</label>
-                        <label class="day-label"><input type="checkbox" class="day-checkbox" data-day="7"> Вс</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="1"> Пн</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="2"> Вт</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="3"> Ср</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="4"> Чт</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="5"> Пт</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="6"> Сб</label>
+                        <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="7"> Вс</label>
                     </div>
                 </div>
 
-                <button class="primary-button" id="saveSettings">Сохранить</button>
+                <button class="secondary-button" id="pushTest">
+                    Проверить уведомление
+                </button>
 
-                <button class="secondary-button hidden" id="installApp">📲 Установить приложение</button>
-                <button class="secondary-button" id="checkUpdate">🔄 Проверить обновление</button>
-                <button class="secondary-button" id="shareApp">🔗 Поделиться приложением</button>
-                <button class="secondary-button" id="exportData">💾 Сохранить данные (бэкап)</button>
-                <button class="secondary-button" id="importData">📥 Загрузить данные из файла</button>
-
-                <input id="importFile" type="file" accept="application/json,.json" style="display:none">
-
-                <button class="secondary-button" id="showWelcomeAgain">👋 Показать инструкцию</button>
-                <button class="secondary-button" id="resetProgress">Сбросить прогресс</button>
-            </section>
-
-
-
-            <section class="progress-card">
-                <div class="section-title">🔔 Напоминания</div>
-
-                <p id="pushStatus" class="push-status"></p>
-
-                <div id="pushDisabled" class="hidden">
-                    <p class="push-hint">
-                        Приложение будет напоминать о тренировках
-                        в выбранные дни и время.
-                    </p>
-                    <button class="primary-button" id="pushEnable">
-                        Включить напоминания
-                    </button>
-                </div>
-
-                <div id="pushEnabled" class="hidden">
-                    <label class="setting-row">
-                        <span>Время напоминания</span>
-                        <input id="pushTime" type="time" value="19:00">
-                    </label>
-
-                    <div class="setting-row setting-days">
-                        <span>Дни напоминаний</span>
-                        <div class="days-grid">
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="1"> Пн</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="2"> Вт</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="3"> Ср</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="4"> Чт</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="5"> Пт</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="6"> Сб</label>
-                            <label class="day-label"><input type="checkbox" class="push-day-checkbox" data-push-day="7"> Вс</label>
-                        </div>
-                    </div>
-
-                    <button class="secondary-button" id="pushTest">
-                        Проверить уведомление
-                    </button>
-
-                    <button class="secondary-button" id="pushDisable">
-                        Выключить напоминания
-                    </button>
-                </div>
-            </section>
-
-
-
-            <section class="progress-card">
-                <div class="section-title">О приложении</div>
-
-                <div class="about-grid">
-                    <div class="about-row"><span>Версия</span><strong id="aboutVersion">—</strong></div>
-                    <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
-                    <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
-                    <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
-                    <div class="about-row"><span>Автор</span><strong>Александр Шин</strong></div>
-                </div>
-
-                <p class="about-note">
-                    Push-Up Coach — персональный тренер
-                    по отжиманиям. Программа на 24 недели
-                    с автоматической адаптацией нагрузки.
-                </p>
-
-                <p class="about-credit">
-                    Разработано Александром Шин
-                    совместно с DeepSeek.
-                </p>
-            </section>
-
+                <button class="secondary-button" id="pushDisable">
+                    Выключить напоминания
+                </button>
+            </div>
         </section>
+
+    </div>
+
+
+    <div class="tab-panel hidden" data-tabs-group="settings" data-tab-panel="data">
+
+        <section class="progress-card">
+            <div class="section-title">📦 Данные</div>
+
+            <button class="secondary-button hidden" id="installApp">📲 Установить приложение</button>
+            <button class="secondary-button" id="shareApp">🔗 Поделиться приложением</button>
+            <button class="secondary-button" id="exportData">💾 Сохранить данные (бэкап)</button>
+            <button class="secondary-button" id="importData">📥 Загрузить данные из файла</button>
+
+            <input id="importFile" type="file" accept="application/json,.json" style="display:none">
+
+            <button class="secondary-button" id="resetProgress">Сбросить прогресс</button>
+        </section>
+
+    </div>
+
+
+    <div class="tab-panel hidden" data-tabs-group="settings" data-tab-panel="about">
+
+        <section class="progress-card">
+            <div class="section-title">ℹ️ О приложении</div>
+
+            <div class="about-grid">
+                <div class="about-row"><span>Версия</span><strong id="aboutVersion">—</strong></div>
+                <div class="about-row"><span>Имя</span><strong id="aboutName">—</strong></div>
+                <div class="about-row"><span>Тренировок пройдено</span><strong id="aboutWorkouts">0</strong></div>
+                <div class="about-row"><span>Первая тренировка</span><strong id="aboutFirstDate">—</strong></div>
+                <div class="about-row"><span>Автор</span><strong>Александр Шин</strong></div>
+            </div>
+
+            <p class="about-note">
+                Push-Up Coach — персональный тренер
+                по отжиманиям. Программа на 24 недели
+                с автоматической адаптацией нагрузки.
+            </p>
+
+            <p class="about-credit">
+                Разработано Александром Шин
+                совместно с DeepSeek.
+            </p>
+
+            <button class="secondary-button" id="showWelcomeAgain">👋 Показать инструкцию</button>
+            <button class="secondary-button" id="checkUpdate">🔄 Проверить обновление</button>
+        </section>
+
+    </div>
+
+</section>
+
 
     </main>
 
@@ -718,14 +765,14 @@
 
 
 
-    <script src="storage.js?v=47"></script>
-    <script src="grips.js?v=47"></script>
-    <script src="program.js?v=47"></script>
-    <script src="workout.js?v=47"></script>
-    <script src="push.js?v=47"></script>
-    <script src="leaderboard.js?v=47"></script>
-    <script src="ui.js?v=47"></script>
-    <script src="app.js?v=47"></script>
+    <script src="storage.js?v=49"></script>
+    <script src="grips.js?v=49"></script>
+    <script src="program.js?v=49"></script>
+    <script src="workout.js?v=49"></script>
+    <script src="push.js?v=49"></script>
+    <script src="leaderboard.js?v=49"></script>
+    <script src="ui.js?v=49"></script>
+    <script src="app.js?v=49"></script>
 
 </body>
 

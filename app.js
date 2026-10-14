@@ -790,6 +790,7 @@ safeRun("ensureWeightHistory", ensureWeightHistory);
 safeRun("rebuildProgram", rebuildProgram);
 safeRun("checkAchievements", () => checkAchievements(true));
 safeRun("renderHome", renderHome);
+safeRun("initTabs", initTabs);
 safeRun("showScreen", () => showScreen("screenHome"));
 safeRun("showInstallButton", showInstallButton);
 safeRun("runSplash", runSplash);
