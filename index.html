@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=49">
+    <link rel="stylesheet" href="styles.css?v=50">
 
 </head>
 
@@ -321,6 +321,12 @@
                 <div class="section-title">История тренировок</div>
                 <p class="history-hint">Нажми на запись, чтобы отредактировать</p>
                 <div id="historyList"></div>
+            </section>
+
+            <section class="progress-card">
+                <button class="secondary-button" id="manualAddWorkout">
+                    ➕ Добавить тренировку вручную
+                </button>
             </section>
 
         </section>
@@ -632,7 +638,46 @@
         </div>
     </div>
 
+    <div id="manualWorkoutModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content modal-wide">
 
+            <h2 class="modal-title">Добавить тренировку</h2>
+
+            <p class="extra-hint" id="manualHint">
+                Запиши тренировку, которую сделал без приложения.
+                Она будет добавлена как дополнительная и попадёт в статистику.
+            </p>
+
+            <label class="setting-row">
+                <span>Дата и время</span>
+                <input id="manualDate" type="datetime-local">
+            </label>
+
+            <label class="setting-row">
+                <span>Хват</span>
+                <select id="manualGrip">
+                    <option value="Обычный">Обычный</option>
+                    <option value="Узкий">Узкий</option>
+                    <option value="Широкий">Широкий</option>
+                    <option value="Ноги выше">Ноги выше</option>
+                </select>
+            </label>
+
+            <label class="setting-row">
+                <span>Подходов</span>
+                <select id="manualSets"></select>
+            </label>
+
+            <div class="edit-section-label">Повторения по подходам</div>
+            <div id="manualRepsList" class="edit-sets"></div>
+
+            <div id="manualTotals" class="delta-line"></div>
+
+            <button class="primary-button" id="manualSave">Сохранить</button>
+            <button class="secondary-button" id="manualCancel">Отмена</button>
+
+        </div>
+    </div>
 
     <div id="achievementModal" class="modal hidden" role="dialog" aria-modal="true">
         <div id="confettiContainer" class="confetti-container"></div>
@@ -765,14 +810,14 @@
 
 
 
-    <script src="storage.js?v=49"></script>
-    <script src="grips.js?v=49"></script>
-    <script src="program.js?v=49"></script>
-    <script src="workout.js?v=49"></script>
-    <script src="push.js?v=49"></script>
-    <script src="leaderboard.js?v=49"></script>
-    <script src="ui.js?v=49"></script>
-    <script src="app.js?v=49"></script>
+    <script src="storage.js?v=50"></script>
+    <script src="grips.js?v=50"></script>
+    <script src="program.js?v=50"></script>
+    <script src="workout.js?v=50"></script>
+    <script src="push.js?v=50"></script>
+    <script src="leaderboard.js?v=50"></script>
+    <script src="ui.js?v=50"></script>
+    <script src="app.js?v=50"></script>
 
 </body>
 

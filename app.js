@@ -660,6 +660,44 @@ on("historyModal", "click", event => {
 
 
 /* =========================================
+   РУЧНАЯ ЗАПИСЬ ТРЕНИРОВКИ
+   ========================================= */
+
+
+on("manualAddWorkout", "click", () => {
+    if (typeof openManualWorkoutModal === "function") {
+        openManualWorkoutModal();
+    }
+});
+
+on("manualCancel", "click", () => {
+    if (typeof closeManualWorkoutModal === "function") {
+        closeManualWorkoutModal();
+    }
+});
+
+on("manualSave", "click", () => {
+    if (typeof saveManualWorkout === "function") {
+        saveManualWorkout();
+    }
+});
+
+on("manualSets", "change", () => {
+    if (typeof syncManualRepsToSets === "function") {
+        syncManualRepsToSets();
+    }
+});
+
+on("manualWorkoutModal", "click", event => {
+    if (event.target.id === "manualWorkoutModal" &&
+        typeof closeManualWorkoutModal === "function") {
+        closeManualWorkoutModal();
+    }
+});
+
+
+
+/* =========================================
    СЛОЖНОСТЬ
    ========================================= */
 
@@ -788,6 +826,7 @@ document.addEventListener("visibilitychange", () => {
 safeRun("migrateToV12", migrateToV12);
 safeRun("ensureWeightHistory", ensureWeightHistory);
 safeRun("rebuildProgram", rebuildProgram);
+safeRun("recalcHistoryAfterExtraFix", recalcHistoryAfterExtraFix);
 safeRun("checkAchievements", () => checkAchievements(true));
 safeRun("renderHome", renderHome);
 safeRun("initTabs", initTabs);

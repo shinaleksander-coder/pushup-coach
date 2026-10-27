@@ -1554,6 +1554,20 @@ select:focus-visible {
     vertical-align: middle;
 }
 
+.history-manual-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+    border-radius: 5px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    vertical-align: middle;
+    border: 1px solid var(--border-strong);
+}
 
 .history-item.history-extra {
     padding-left: 10px;
@@ -3077,6 +3091,7 @@ select:focus-visible {
         background: var(--bg-muted);
         color: var(--text);
     }
+    
 }
 
 /* =========================================
@@ -3207,6 +3222,12 @@ select:focus-visible {
 
     .history-item.history-rest .history-main {
         color: #64B5F6;
+    }
+    
+    .history-manual-tag {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-tertiary);
+        border-color: rgba(255, 255, 255, 0.14);
     }
 
 

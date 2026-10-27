@@ -1576,9 +1576,13 @@ function renderHistory() {
 
         const diffText = difficultyLabels[record.difficulty] || "";
 
-        const extraTag = record.isExtra
-            ? '<span class="history-extra-tag">доп</span>'
-            : "";
+        const extraTag =
+            (record.isExtra
+                ? '<span class="history-extra-tag">доп</span>'
+                : "") +
+            (record.manual
+                ? '<span class="history-manual-tag">вручную</span>'
+                : "");
 
         item.innerHTML = `
             <div class="history-date">
@@ -1963,6 +1967,133 @@ function renderProgramList() {
     }
 
     document.getElementById("programList").innerHTML = html;
+}
+
+/* =========================================
+   ПЕРЕСЧЁТ ИСТОРИИ ПОСЛЕ ФИКСА ДОПОВ
+   ========================================= */
+
+function recalcHistoryAfterExtraFix() {
+
+    const MIGRATION_KEY = "migrationExtraFixV1";
+
+    if (loadJSON(MIGRATION_KEY, false)) return;
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    if (history.length === 0) {
+        saveJSON(MIGRATION_KEY, true);
+        return;
+    }
+
+    // Сортируем по дате — движок должен идти хронологически
+    const sorted = [...history].sort((a, b) =>
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const newHistory = [];
+    let updated = 0;
+
+    for (const record of sorted) {
+
+        // Отдых, допы и тесты не пересчитываем — они не участвуют
+        // в прогрессии плана
+        if (record.isRest || record.isExtra || record.isTest) {
+            newHistory.push(record);
+            continue;
+        }
+
+        // Плановая запись — пересчитываем через движок
+        const refTime = new Date(record.date).getTime();
+
+        const computed = getNextWorkoutFor(
+            newHistory,
+            false,
+            refTime
+        );
+
+        let newReps = null;
+
+        if (computed &&
+            computed.week === record.week &&
+            computed.day === record.day) {
+
+            // Обычная плановая запись
+            newReps = computed.reps;
+
+        } else {
+
+            // Похоже на запись «Повторить последнюю» — у неё week/day
+            // совпадают с предыдущей плановой, а не со своим слотом
+            const planRecords = getPlanRecords(newHistory);
+            const lastPlan = planRecords[planRecords.length - 1];
+
+            if (lastPlan &&
+                lastPlan.week === record.week &&
+                lastPlan.day === record.day &&
+                lastPlan.grip === record.grip) {
+
+                const prevPlanned =
+                    Number(lastPlan.plannedReps) || 3;
+                const prevEffective = getEffectiveReps(lastPlan);
+
+                const anchor = Math.min(
+                    prevPlanned + 1,
+                    Math.max(prevPlanned, prevEffective)
+                );
+
+                newReps = Math.max(3, anchor);
+            }
+        }
+
+        if (newReps !== null) {
+
+            record.plannedReps = newReps;
+
+            const sets =
+                record.plannedSets ||
+                (Array.isArray(record.results)
+                    ? record.results.length
+                    : 3);
+
+            record.plannedSets = sets;
+            record.totalPlanned = newReps * sets;
+
+            if (Array.isArray(record.results)) {
+                record.results.forEach(r => {
+                    r.planned = newReps;
+                });
+            }
+
+            // Пересобираем агрегаты по ФАКТУ (actual не трогаем)
+            let totalActual = 0;
+            let bestSet = 0;
+
+            if (Array.isArray(record.results)) {
+                record.results.forEach(r => {
+                    const a = Number(r.actual) || 0;
+                    totalActual += a;
+                    if (a > bestSet) bestSet = a;
+                });
+            }
+
+            record.totalActual = totalActual;
+            record.bestSet = bestSet;
+
+            updated++;
+        }
+
+        newHistory.push(record);
+    }
+
+    saveJSON(STORAGE_KEYS.history, newHistory);
+    saveJSON(MIGRATION_KEY, true);
+
+    console.log(
+        "✅ Пересчитано плановых тренировок: " +
+        updated + " из " +
+        newHistory.filter(r => !r.isRest && !r.isExtra && !r.isTest).length
+    );
 }
 
 
@@ -3277,4 +3408,234 @@ async function checkForUpdates() {
         console.warn("Ошибка обновления:", error);
         location.reload();
     }
+}
+
+/* =========================================
+   РУЧНАЯ ЗАПИСЬ ТРЕНИРОВКИ
+   ========================================= */
+
+
+let manualReps = [];
+
+
+function toDatetimeLocalValue(date) {
+    const pad = n => String(n).padStart(2, "0");
+    return (
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+        `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+    );
+}
+
+
+function openManualWorkoutModal() {
+
+    const dateEl = document.getElementById("manualDate");
+    const gripEl = document.getElementById("manualGrip");
+    const setsEl = document.getElementById("manualSets");
+
+    if (!dateEl || !gripEl || !setsEl) return;
+
+    // Дата по умолчанию — сейчас
+    dateEl.value = toDatetimeLocalValue(new Date());
+
+    // Хват по умолчанию — следующий по программе (если есть)
+    const next = getNextWorkout(false);
+    gripEl.value = (next && next.grip) ? next.grip : "Обычный";
+
+    // Селект «Подходов»
+    let html = "";
+    for (let i = 1; i <= 10; i++) {
+        html += `<option value="${i}" ${i === 3 ? "selected" : ""}>${i}</option>`;
+    }
+    setsEl.innerHTML = html;
+
+    // Дефолтные повторения — 10 на подход
+    manualReps = [10, 10, 10];
+
+    renderManualRepsList();
+    updateManualTotals();
+
+    document.getElementById("manualWorkoutModal")
+        .classList.remove("hidden");
+}
+
+
+function closeManualWorkoutModal() {
+    document.getElementById("manualWorkoutModal")
+        .classList.add("hidden");
+    manualReps = [];
+}
+
+
+function syncManualRepsToSets() {
+
+    const setsEl = document.getElementById("manualSets");
+    if (!setsEl) return;
+
+    const target = Number(setsEl.value) || 1;
+
+    if (target > manualReps.length) {
+        const fallback = manualReps.length > 0
+            ? manualReps[manualReps.length - 1]
+            : 10;
+
+        while (manualReps.length < target) {
+            manualReps.push(fallback);
+        }
+    } else if (target < manualReps.length) {
+        manualReps = manualReps.slice(0, target);
+    }
+
+    renderManualRepsList();
+    updateManualTotals();
+}
+
+
+function renderManualRepsList() {
+
+    const container = document.getElementById("manualRepsList");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    manualReps.forEach((reps, i) => {
+        const row = document.createElement("div");
+        row.className = "edit-set-row";
+
+        row.innerHTML = `
+            <span class="edit-set-label">Подход ${i + 1}</span>
+            <button class="edit-set-button" data-action="minus" data-index="${i}">−</button>
+            <span class="edit-set-value">${reps}</span>
+            <button class="edit-set-button" data-action="plus" data-index="${i}">+</button>
+        `;
+
+        container.appendChild(row);
+    });
+
+    container.querySelectorAll(".edit-set-button").forEach(btn => {
+        btn.addEventListener("click", () => {
+
+            const i = Number(btn.dataset.index);
+            const action = btn.dataset.action;
+
+            if (action === "minus" && manualReps[i] > 0) {
+                manualReps[i]--;
+            }
+
+            if (action === "plus") {
+                manualReps[i]++;
+            }
+
+            renderManualRepsList();
+            updateManualTotals();
+        });
+    });
+}
+
+
+function updateManualTotals() {
+
+    const el = document.getElementById("manualTotals");
+    if (!el) return;
+
+    const total = manualReps.reduce((sum, r) => sum + r, 0);
+    const best = manualReps.reduce((m, r) => Math.max(m, r), 0);
+
+    if (total === 0) {
+        el.textContent = "Заполни хотя бы один подход";
+        el.className = "delta-line";
+        return;
+    }
+
+    el.textContent = `Всего: ${total} · Лучший подход: ${best}`;
+    el.className = "delta-line";
+}
+
+
+function saveManualWorkout() {
+
+    const dateEl = document.getElementById("manualDate");
+    const gripEl = document.getElementById("manualGrip");
+
+    if (!dateEl || !gripEl) return;
+
+    const rawDate = dateEl.value;
+    if (!rawDate) {
+        alert("Укажи дату и время.");
+        return;
+    }
+
+    const date = new Date(rawDate);
+    if (!Number.isFinite(date.getTime())) {
+        alert("Некорректная дата.");
+        return;
+    }
+
+    const grip = gripEl.value || "Обычный";
+
+    const results = manualReps.map((reps, i) => ({
+        set: i + 1,
+        planned: reps,
+        actual: reps
+    }));
+
+    const totalActual = results.reduce(
+        (sum, r) => sum + Number(r.actual), 0
+    );
+
+    const bestSet = results.reduce(
+        (m, r) => Math.max(m, Number(r.actual)), 0
+    );
+
+    if (totalActual === 0) {
+        alert("Нужно указать хотя бы одно повторение.");
+        return;
+    }
+
+    const record = {
+        date: date.toISOString(),
+        startedAt: date.getTime(),
+        finishedAt: date.getTime(),
+        durationMs: 0,
+
+        week: null,
+        day: null,
+        grip,
+
+        isTest: false,
+        isExtra: true,
+        isMax: false,
+
+        plannedSets: results.length,
+        plannedReps: bestSet,
+
+        totalPlanned: totalActual,
+        totalActual,
+        bestSet,
+        results,
+
+        manual: true
+    };
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+    history.push(record);
+    saveJSON(STORAGE_KEYS.history, history);
+
+    closeManualWorkoutModal();
+
+    renderHistory();
+    renderHome();
+
+    // Обновляем рейтинг и достижения на всякий случай
+    setTimeout(() => {
+        if (typeof submitToLeaderboard === "function") {
+            submitToLeaderboard().catch(() => {});
+        }
+    }, 800);
+
+    setTimeout(() => {
+        if (typeof checkAchievements === "function") {
+            checkAchievements(false);
+        }
+    }, 400);
 }

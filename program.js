@@ -413,7 +413,7 @@ function getLastWorkoutDate() {
 }
 
 
-function getMissedInfoFor(history) {
+function getMissedInfoFor(history, referenceTime) {
 
     const empty = {
         level: "none",
@@ -428,8 +428,12 @@ function getMissedInfoFor(history) {
     const last = getLastWorkoutDateFor(history);
     if (!last) return empty;
 
+    const now = referenceTime !== undefined
+        ? referenceTime
+        : Date.now();
+
     const daysSince = Math.floor(
-        (Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)
+        (now - last.getTime()) / (24 * 60 * 60 * 1000)
     );
 
     const weeklyTarget = getActiveConfig().daysPerWeek || 3;
@@ -539,7 +543,7 @@ function getProgramStats() {
    ========================================= */
 
 
-function getNextWorkoutFor(history, forceRepeatLast) {
+function getNextWorkoutFor(history, forceRepeatLast, referenceTime) {
 
     const planRecords = getPlanRecords(history);
     const programIndex = planRecords.length;
@@ -599,7 +603,8 @@ function getNextWorkoutFor(history, forceRepeatLast) {
     const sameGrip = history.filter(
         r => r.grip === base.grip &&
              !r.isTest &&
-             !r.isRest
+             !r.isRest &&
+             !r.isExtra
     );
 
     if (sameGrip.length === 0) {
@@ -672,7 +677,7 @@ function getNextWorkoutFor(history, forceRepeatLast) {
 
     // После перерыва — считаем от переданной истории,
     // чтобы работало и для реального движка, и для прогноза
-    const missedInfo = getMissedInfoFor(history);
+    const missedInfo = getMissedInfoFor(history, referenceTime);
 
     if (missedInfo.level === "strong") {
         reps = Math.max(3, reps - 1);
