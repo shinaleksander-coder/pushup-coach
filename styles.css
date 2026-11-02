@@ -467,6 +467,16 @@ select:focus-visible {
     margin-top: 6px;
 }
 
+.finish-test-button {
+    background: linear-gradient(180deg, #FF3B30 0%, #C62828 100%);
+    box-shadow: 0 6px 20px rgba(255, 59, 48, 0.35);
+    margin-top: 8px;
+}
+
+.finish-test-button:active {
+    box-shadow: 0 3px 12px rgba(255, 59, 48, 0.5);
+    background: linear-gradient(180deg, #E53935 0%, #B71C1C 100%);
+}
 
 .primary-button:active {
     box-shadow: 0 3px 12px var(--accent-glow);
@@ -528,6 +538,7 @@ select:focus-visible {
 .danger-button:active {
     background: rgba(255, 59, 48, 0.15);
 }
+
 
 
 /* =========================================

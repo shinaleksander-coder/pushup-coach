@@ -353,7 +353,7 @@ function renderHome() {
         gripEl.textContent = preview.grip;
 
         setsEl.textContent = preview.isTest
-            ? "макс"
+            ? `тест · цель ${preview.reps}`
             : `${preview.sets} × ${preview.reps}`;
 
         restEl.textContent = `${preview.rest} сек`;
@@ -835,16 +835,18 @@ function renderSetScreen() {
     clearRestTimer();
 
     document.getElementById("currentSet").textContent =
-        `${currentSet + 1} / ${workout.sets}`;
+        workout.isTest
+            ? String(currentSet + 1)
+            : `${currentSet + 1} / ${workout.sets}`;
 
     document.getElementById("plannedReps").textContent =
-        workout.isTest ? "макс" : workout.reps;
+        workout.reps;
 
     updateActualReps();
 
     document.getElementById("workoutStatus").textContent =
         workout.isTest
-            ? "Тест на максимум. Сделай сколько сможешь."
+            ? `Тест. Цель — ${workout.reps}. Сделай сколько сможешь и жми «Готово».`
             : `Сделай ${workout.reps} чистых повторений`;
 
     document
@@ -859,8 +861,18 @@ function showSetControls() {
 
     document.getElementById("repControls").classList.remove("hidden");
     document.getElementById("completeSet").classList.remove("hidden");
-    document.getElementById("failedSet").classList.remove("hidden");
     document.getElementById("restControls").classList.add("hidden");
+
+    const failedBtn = document.getElementById("failedSet");
+    const finishBtn = document.getElementById("finishTest");
+
+    if (workout && workout.isTest) {
+        failedBtn.classList.add("hidden");
+        finishBtn.classList.remove("hidden");
+    } else {
+        failedBtn.classList.remove("hidden");
+        finishBtn.classList.add("hidden");
+    }
 
     // Скрываем круг таймера, показываем обычный статус
     document.getElementById("workoutStatus").classList.remove("hidden");
@@ -876,6 +888,13 @@ function showRestControls() {
     document.getElementById("completeSet").classList.add("hidden");
     document.getElementById("failedSet").classList.add("hidden");
     document.getElementById("restControls").classList.remove("hidden");
+
+    const finishBtn = document.getElementById("finishTest");
+    if (workout && workout.isTest) {
+        finishBtn.classList.remove("hidden");
+    } else {
+        finishBtn.classList.add("hidden");
+    }
 
     // Прячем текстовый статус, показываем круг таймера
     document.getElementById("workoutStatus").classList.add("hidden");
@@ -1102,10 +1121,13 @@ function submitExtraConfig() {
 
     // Тест на максимум — особый случай
     if (record.isTest) {
+        const sets = record.results ? record.results.length : 1;
         return {
             emoji: "🎓",
             title: "Тест пройден!",
-            praise: `Твой максимум: ${record.bestSet} повторений. Так держать!`
+            praise:
+                `Подходов: ${sets} · Лучший подход: ${record.bestSet} · ` +
+                `Всего: ${record.totalActual}. Результат учтён в программе.`
         };
     }
 

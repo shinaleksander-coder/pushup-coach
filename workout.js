@@ -40,7 +40,7 @@ function startNewWorkout() {
     workout = next;
     currentSet = 0;
     workoutResults = [];
-    actualReps = workout.isTest ? 0 : workout.reps;
+    actualReps = workout.reps;
     restEndsAt = 0;
     remainingSeconds = 0;
     startedAt = Date.now();
@@ -183,7 +183,7 @@ function startSet() {
 
     restEndsAt = 0;
     remainingSeconds = 0;
-    actualReps = workout.isTest ? 0 : workout.reps;
+    actualReps = workout.reps;
     lastCountdownSecond = -1;
 
     renderSetScreen();
@@ -193,9 +193,7 @@ function startSet() {
 
 function completeCurrentSet() {
 
-    const planned = workout.isTest
-        ? actualReps
-        : workout.reps;
+    const planned = workout.reps;
 
     workoutResults.push({
         set: currentSet + 1,
@@ -212,6 +210,31 @@ function completeCurrentSet() {
     }
 
     enterRestPhase();
+}
+
+function finishTest() {
+
+    if (!workout || !workout.isTest) return;
+
+    // Если сейчас идёт отдых — подход уже залогирован,
+    // просто завершаем тест
+    if (restEndsAt > 0) {
+        finishWorkout();
+        return;
+    }
+
+    // Если сейчас подход в процессе — логируем его,
+    // но только если пользователь реально что-то сделал
+    if (actualReps > 0) {
+        workoutResults.push({
+            set: currentSet + 1,
+            planned: workout.reps,
+            actual: actualReps,
+            isTest: true
+        });
+    }
+
+    finishWorkout();
 }
 
 
@@ -359,6 +382,20 @@ function clearRestTimer() {
 function finishWorkout() {
 
     clearRestTimer();
+
+    // Ни одного подхода — не сохраняем
+    if (workoutResults.length === 0) {
+        alert("Не было выполнено ни одного подхода. Тренировка не сохранена.");
+        removeStorage(STORAGE_KEYS.activeWorkout);
+        currentSet = 0;
+        workoutResults = [];
+        actualReps = 0;
+        startedAt = 0;
+        workout = null;
+        isExtraWorkout = false;
+        goHome();
+        return;
+    }
 
     restEndsAt = 0;
     remainingSeconds = 0;

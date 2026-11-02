@@ -105,6 +105,10 @@ on("saveSettings", "click", () => {
     if (typeof handleSaveSettings === "function") handleSaveSettings();
 });
 
+on("finishTest", "click", () => {
+    if (typeof finishTest === "function") finishTest();
+});
+
 on("resetProgress", "click", () => {
     if (typeof resetProgress === "function") resetProgress();
 });

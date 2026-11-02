@@ -62,20 +62,20 @@ function buildProgram(config) {
         const weekInBlock = week % BLOCK_WEEKS;
 
         const isTestWeek = weekInBlock === BLOCK_WEEKS - 1;
-        const isTest = isTestWeek && dayInWeek === 0;
+        const isFirstDayOfNewBlock =
+            block > 0 && weekInBlock === 0 && dayInWeek === 0;
+
+        // Все дни тестовой недели + 1-й день нового блока (переход на хват)
+        const isTest = isTestWeek || isFirstDayOfNewBlock;
 
         let s = sets;
         let r;
         let rt = rest;
 
         if (isTest) {
-            s = 1;
-            r = 0;
+            s = 999;   // «бесконечно», стоп — по кнопке
+            r = 0;     // маркер, заменим на реальную цель в getNextWorkoutFor
             rt = 180;
-        } else if (isTestWeek) {
-            s = sets;
-            r = repBase;
-            rt = rest;
         } else {
             s = sets;
             r = Math.min(
@@ -585,10 +585,36 @@ function getNextWorkoutFor(history, forceRepeatLast, referenceTime) {
     const base = PROGRAM[programIndex];
 
     if (base.isTest) {
+
+        // Цель теста — plannedReps последней РЕГУЛЯРНОЙ (не теста)
+        // тренировки того же хвата, либо repBase, если её ещё не было
+        const sameGripRegular = history.filter(
+            r => r.grip === base.grip &&
+                 !r.isTest &&
+                 !r.isRest &&
+                 !r.isExtra
+        );
+
+        const config = getActiveConfig();
+        const repBase = config.repBase || 5;
+
+        let targetReps = repBase;
+
+        if (sameGripRegular.length > 0) {
+            const prev = sameGripRegular[sameGripRegular.length - 1];
+            const prevPlanned = Number(prev.plannedReps) || repBase;
+            targetReps = Math.max(repBase, prevPlanned);
+        }
+
+        // Отдых для теста — 180 с, но не меньше 90 и с учётом override
+        const testRest = Math.max(90, applyRestOverride(180));
+
         return {
             ...base,
-            rest: applyRestOverride(base.rest),
-            reason: "Контрольный тест на максимум"
+            sets: 999,
+            reps: targetReps,
+            rest: testRest,
+            reason: `Тест: цель ${targetReps}, делай подходы до отказа`
         };
     }
 
@@ -602,7 +628,6 @@ function getNextWorkoutFor(history, forceRepeatLast, referenceTime) {
 
     const sameGrip = history.filter(
         r => r.grip === base.grip &&
-             !r.isTest &&
              !r.isRest &&
              !r.isExtra
     );
@@ -631,9 +656,11 @@ function getNextWorkoutFor(history, forceRepeatLast, referenceTime) {
     // Также не ниже базы программы
     const anchor = Math.max(base.reps, anchorCapped);
 
-    const allDone = prev.results.every(
-        r => Number(r.actual) >= Number(r.planned)
-    );
+    const allDone = prev.isTest
+        ? Number(prev.bestSet) >= Number(prev.plannedReps)
+        : prev.results.every(
+              r => Number(r.actual) >= Number(r.planned)
+          );
 
     const diff = prev.difficulty || "normal";
 
