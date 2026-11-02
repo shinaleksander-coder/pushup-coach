@@ -154,7 +154,7 @@ function rebuildProgram() {
 
 // Только плановые тренировки (не допы, не тесты, не отдых)
 function getPlanRecords(history) {
-    return history.filter(r => !r.isExtra && !r.isTest && !r.isRest);
+    return history.filter(r => !r.isExtra && !r.isRest);
 }
 
 
