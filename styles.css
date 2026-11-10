@@ -2603,18 +2603,24 @@ select:focus-visible {
    ========================================= */
 
 .stat-weight-editable {
-    padding-bottom: 10px;
+    position: relative;
+    padding: 14px 52px 14px 14px;
+}
+
+.stat-weight-editable > span {
+    text-align: left;
+    margin-top: 2px;
 }
 
 .weight-now-input {
     display: block;
     width: 100%;
     font-family: var(--font);
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.1;
-    text-align: center;
+    text-align: left;
     border: 0;
     background: transparent;
     color: var(--text);
@@ -2643,20 +2649,24 @@ select:focus-visible {
 }
 
 .weight-step-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    bottom: 8px;
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
 }
 
 .weight-step-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 8px;
     background: rgba(0, 0, 0, 0.06);
     color: var(--text);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
     display: flex;
     align-items: center;
