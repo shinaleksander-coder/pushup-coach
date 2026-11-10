@@ -2601,30 +2601,127 @@ select:focus-visible {
 
 .grip-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
 }
 
-
-.grip-item {
+.grip-stat-card {
     background: var(--bg-muted);
     border-radius: var(--r-md);
-    padding: 14px;
+    padding: 14px 16px;
+    border: 2px solid transparent;
+    transition: border-color var(--duration-fast) var(--ease);
 }
 
-
-.grip-name {
-    font-size: 12px;
-    color: var(--text-secondary);
+.grip-stat-card-current {
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
+.grip-stat-card-empty {
+    opacity: 0.6;
+}
 
-.grip-value {
-    margin-top: 4px;
-    font-size: 22px;
+.grip-stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.grip-stat-name {
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+}
+
+.grip-stat-current-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: var(--accent);
+    color: white;
+}
+
+.grip-stat-plan {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.grip-stat-plan strong {
+    color: var(--text);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
+}
+
+.grip-stat-rows {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.grip-stat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.grip-stat-row span {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.grip-stat-row strong {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.015em;
+}
+
+.grip-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 3px;
+    background: var(--bg-muted);
+    border-radius: var(--r-md);
+}
+
+.grip-filter-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+
+.grip-filter-btn.active {
+    background: var(--bg-elevated);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+    .grip-filter-btn.active {
+        background: var(--bg-muted);
+    }
 }
 
 

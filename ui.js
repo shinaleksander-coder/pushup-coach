@@ -707,20 +707,21 @@ function renderCompare() {
     const el = document.getElementById("homeCompare");
     if (!el) return;
 
-    const history = loadJSON(STORAGE_KEYS.history, []);
-
-    if (history.length === 0) {
+    const next = getNextWorkout(false);
+    if (!next) {
         el.classList.add("hidden");
         return;
     }
 
-    const nowMax = getRecord();
+    const grip = next.grip;
+
+    const nowMax = getRecord(grip);
     if (nowMax === 0) {
         el.classList.add("hidden");
         return;
     }
 
-    const weekAgo = getBestSetBefore(7);
+    const weekAgo = getBestSetBefore(7, grip);
 
     if (!weekAgo || weekAgo === nowMax) {
         el.classList.add("hidden");
@@ -732,11 +733,11 @@ function renderCompare() {
 
     el.classList.remove("hidden");
     el.textContent =
-        `📊 Неделю назад: ${weekAgo} · Сейчас: ${nowMax} (${sign}${diff})`;
+        `📊 ${grip}: неделю назад ${weekAgo} · сейчас ${nowMax} (${sign}${diff})`;
 }
 
 
-function getBestSetBefore(daysAgo) {
+function getBestSetBefore(daysAgo, grip) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     if (history.length === 0) return null;
@@ -748,6 +749,7 @@ function getBestSetBefore(daysAgo) {
 
     for (let i = history.length - 1; i >= 0; i--) {
         if (history[i].isRest) continue;
+        if (grip && history[i].grip !== grip) continue;
         const t = new Date(history[i].date).getTime();
         if (t <= target) { record = history[i]; break; }
     }
@@ -764,12 +766,14 @@ function getBestSetBefore(daysAgo) {
 }
 
 
-function getRecord() {
+function getRecord(grip) {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
     let max = 0;
 
     history.forEach(record => {
+        if (record.isRest) return;
+        if (grip && record.grip !== grip) return;
         record.results?.forEach(r => {
             const a = Number(r.actual);
             if (a > max) max = a;
@@ -785,10 +789,12 @@ function renderWorkoutRecord() {
     const recordEl = document.getElementById("workoutRecord");
     if (!recordEl) return;
 
-    const record = getRecord();
+    const grip = workout ? workout.grip : null;
+    const record = getRecord(grip);
 
     if (record > 0) {
-        recordEl.textContent = `🏆 Рекорд: ${record} повторений`;
+        recordEl.textContent =
+            `🏆 Рекорд (${grip}): ${record} повторений`;
         recordEl.classList.remove("hidden");
     } else {
         recordEl.textContent = "";
@@ -2718,11 +2724,68 @@ function getMaxByGrip() {
     return max;
 }
 
-
-function getWeeklyVolume() {
+function getGripStats() {
 
     const history = loadJSON(STORAGE_KEYS.history, []);
-    const map = buildWeeklyVolumeMap(history);
+    const next = getNextWorkout(false);
+    const currentGrip = next ? next.grip : null;
+
+    const grips = ["Обычный", "Узкий", "Широкий", "Ноги выше"];
+    const result = {};
+
+    grips.forEach(grip => {
+
+        // Здесь допы ВКЛЮЧЕНЫ — это статистика хвата
+        const records = history.filter(r =>
+            r.grip === grip && !r.isRest
+        );
+
+        const workouts = records.length;
+
+        let bestSet = 0;
+        let totalVolume = 0;
+
+        records.forEach(r => {
+            totalVolume += Number(r.totalActual) || 0;
+            r.results?.forEach(res => {
+                const a = Number(res.actual);
+                if (a > bestSet) bestSet = a;
+            });
+        });
+
+        let planText = "—";
+        let isCurrent = false;
+
+        if (currentGrip === grip && next) {
+            isCurrent = true;
+            planText = next.isTest
+                ? `тест · цель ${next.reps}`
+                : `${next.sets} × ${next.reps}`;
+        } else if (workouts === 0) {
+            const cfg = getActiveConfig();
+            planText = `${cfg.sets} × ${cfg.repBase}`;
+        }
+
+        result[grip] = {
+            workouts,
+            bestSet,
+            totalVolume,
+            planText,
+            isCurrent
+        };
+    });
+
+    return result;
+}
+
+function getWeeklyVolume(grip) {
+
+    const history = loadJSON(STORAGE_KEYS.history, []);
+
+    const map = buildWeeklyVolumeMap(history, {
+        grip: grip || null,
+        includeExtras: !!grip
+    });
 
     return Object.entries(map)
         .map(([dateStr, volume]) => ({
@@ -2757,7 +2820,7 @@ const CHART_PERIODS = {
 
 const chartState = {
     weight: { period: "3m" },
-    volume: { period: "all" }
+    volume: { period: "all", grip: "Все" }
 };
 
 
@@ -3172,12 +3235,39 @@ function renderWeightChart() {
 
 function renderVolumeChart() {
 
-    const volume = getWeeklyVolume();
+    if (!chartState.volume.grip) {
+        chartState.volume.grip = "Все";
+    }
+
+    const filterEl = document.getElementById("volumeGripFilter");
+
+    if (filterEl) {
+
+        const grips = ["Все", "Обычный", "Узкий", "Широкий", "Ноги выше"];
+        const currentGrip = chartState.volume.grip;
+
+        filterEl.innerHTML = grips.map(g =>
+            `<button class="grip-filter-btn ${currentGrip === g ? "active" : ""}" data-grip="${g}">${g}</button>`
+        ).join("");
+
+        filterEl.querySelectorAll(".grip-filter-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                chartState.volume.grip = btn.dataset.grip;
+                renderVolumeChart();
+            });
+        });
+    }
+
+    const grip = chartState.volume.grip === "Все"
+        ? null
+        : chartState.volume.grip;
+
+    const volume = getWeeklyVolume(grip);
 
     renderInteractiveChart("volumeChartContainer", volume, {
         stateKey: "volume",
         unit: "",
-        label: "Объём за неделю",
+        label: grip ? `Объём · ${grip}` : "Объём · программа",
         valueFormatter: v => Math.round(v).toString()
     });
 }
@@ -3259,7 +3349,7 @@ function renderProgress() {
     renderVolumeChart();
 
 
-    const maxByGrip = getMaxByGrip();
+    const gripStats = getGripStats();
 
     const grips = [
         "Обычный",
@@ -3269,14 +3359,44 @@ function renderProgress() {
     ];
 
     document.getElementById("gripProgress").innerHTML =
-        grips.map(grip => `
-            <div class="grip-item">
-                <div class="grip-name">${grip}</div>
-                <div class="grip-value">
-                    ${maxByGrip[grip] ? maxByGrip[grip] : "—"}
+        grips.map(grip => {
+
+            const s = gripStats[grip];
+            const emptyClass = s.workouts === 0 && !s.isCurrent
+                ? "grip-stat-card-empty"
+                : "";
+            const currentClass = s.isCurrent
+                ? "grip-stat-card-current"
+                : "";
+
+            return `
+                <div class="grip-stat-card ${emptyClass} ${currentClass}">
+                    <div class="grip-stat-head">
+                        <div class="grip-stat-name">${grip}</div>
+                        ${s.isCurrent
+                            ? '<span class="grip-stat-current-tag">сейчас</span>'
+                            : ""}
+                    </div>
+                    <div class="grip-stat-plan">
+                        ${s.isCurrent ? "Следующая" : "План"}: <strong>${s.planText}</strong>
+                    </div>
+                    <div class="grip-stat-rows">
+                        <div class="grip-stat-row">
+                            <span>Рекорд</span>
+                            <strong>${s.bestSet || "—"}</strong>
+                        </div>
+                        <div class="grip-stat-row">
+                            <span>Всего</span>
+                            <strong>${s.totalVolume || "—"}</strong>
+                        </div>
+                        <div class="grip-stat-row">
+                            <span>Тренировок</span>
+                            <strong>${s.workouts}</strong>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `).join("");
+            `;
+        }).join("");
 
 
     renderAchievements();

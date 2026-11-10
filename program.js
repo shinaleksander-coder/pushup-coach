@@ -262,12 +262,18 @@ function isDateInCurrentWeek(dateInput) {
 
 
 // Карта: ключ понедельника → суммарный объём за неделю
-function buildWeeklyVolumeMap(history) {
+function buildWeeklyVolumeMap(history, options) {
+
+    options = options || {};
+    const grip = options.grip || null;
+    const includeExtras = options.includeExtras === true;
 
     const map = {};
 
     history.forEach(record => {
         if (record.isRest) return;
+        if (grip && record.grip !== grip) return;
+        if (!includeExtras && record.isExtra) return;
 
         const key = getWeekStartKey(record.date);
         if (!key) return;

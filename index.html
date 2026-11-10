@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=52">
+    <link rel="stylesheet" href="styles.css?v=53">
 
 </head>
 
@@ -272,6 +272,7 @@
 
             <section class="progress-card">
                 <div class="section-title">Объём по неделям</div>
+                <div id="volumeGripFilter" class="grip-filter"></div>
                 <div id="volumeChartContainer"></div>
             </section>
 
@@ -322,15 +323,15 @@
         <section id="screenHistory" class="screen" hidden>
 
             <section class="progress-card">
-                <div class="section-title">История тренировок</div>
-                <p class="history-hint">Нажми на запись, чтобы отредактировать</p>
-                <div id="historyList"></div>
+                <button class="primary-button" id="manualAddWorkout">
+                    ➕ Добавить тренировку вручную
+                </button>
             </section>
 
             <section class="progress-card">
-                <button class="secondary-button" id="manualAddWorkout">
-                    ➕ Добавить тренировку вручную
-                </button>
+                <div class="section-title">История тренировок</div>
+                <p class="history-hint">Нажми на запись, чтобы отредактировать</p>
+                <div id="historyList"></div>
             </section>
 
         </section>
@@ -814,14 +815,14 @@
 
 
 
-    <script src="storage.js?v=52"></script>
-    <script src="grips.js?v=52"></script>
-    <script src="program.js?v=52"></script>
-    <script src="workout.js?v=52"></script>
-    <script src="push.js?v=52"></script>
-    <script src="leaderboard.js?v=52"></script>
-    <script src="ui.js?v=52"></script>
-    <script src="app.js?v=52"></script>
+    <script src="storage.js?v=53"></script>
+    <script src="grips.js?v=53"></script>
+    <script src="program.js?v=53"></script>
+    <script src="workout.js?v=53"></script>
+    <script src="push.js?v=53"></script>
+    <script src="leaderboard.js?v=53"></script>
+    <script src="ui.js?v=53"></script>
+    <script src="app.js?v=53"></script>
 
 </body>
 
