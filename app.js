@@ -146,6 +146,39 @@ on("globalBack", "click", () => {
     if (typeof goHome === "function") goHome();
 });
 
+on("weightUp", "click", () => {
+    if (typeof stepWeight === "function") stepWeight(0.05);
+});
+
+on("weightDown", "click", () => {
+    if (typeof stepWeight === "function") stepWeight(-0.05);
+});
+
+on("weightNow", "change", (event) => {
+
+    const raw = String(event.target.value || "").trim();
+
+    if (raw === "") {
+        event.target.value = settings.weight
+            ? String(settings.weight)
+            : "";
+        return;
+    }
+
+    const normalized = raw.replace(",", ".");
+    const w = Number(normalized);
+
+    if (Number.isFinite(w) && w >= 30 && w <= 250) {
+        if (typeof setCurrentWeight === "function") {
+            setCurrentWeight(w);
+        }
+    } else {
+        event.target.value = settings.weight
+            ? String(settings.weight)
+            : "";
+    }
+});
+
 on("gripVisual", "click", () => {
     if (typeof openGripModal === "function") openGripModal();
 });

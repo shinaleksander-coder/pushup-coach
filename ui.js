@@ -3342,8 +3342,14 @@ function renderProgress() {
     document.getElementById("weightStart").textContent =
         startWeight ? `${startWeight} кг` : "—";
 
-    document.getElementById("weightNow").textContent =
-        nowWeight ? `${nowWeight} кг` : "—";
+    const weightNowEl = document.getElementById("weightNow");
+    if (weightNowEl) {
+        if (weightNowEl.tagName === "INPUT") {
+            weightNowEl.value = nowWeight ? String(nowWeight) : "";
+        } else {
+            weightNowEl.textContent = nowWeight ? `${nowWeight} кг` : "—";
+        }
+    }
 
     renderWeightChart();
     renderVolumeChart();
@@ -3424,6 +3430,99 @@ function ensureWeightHistory() {
         saveJSON(STORAGE_KEYS.weightHistory, []);
     }
 }
+
+/* =========================================
+   РЕДАКТИРОВАНИЕ ТЕКУЩЕГО ВЕСА
+   ========================================= */
+
+
+function setCurrentWeight(newWeight) {
+
+    let w = Number(newWeight);
+
+    if (!Number.isFinite(w)) return false;
+
+    // Округление до 0.05
+    w = Math.round(w * 20) / 20;
+
+    if (w < 30 || w > 250) return false;
+
+    settings.weight = w;
+    saveJSON(STORAGE_KEYS.settings, settings);
+
+    const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
+    const today = new Date().toDateString();
+    const last = wh[wh.length - 1];
+    const lastIsToday = last &&
+        new Date(last.date).toDateString() === today;
+
+    if (lastIsToday) {
+        last.weight = w;
+        last.date = new Date().toISOString();
+    } else {
+        wh.push({
+            date: new Date().toISOString(),
+            weight: w
+        });
+    }
+
+    saveJSON(STORAGE_KEYS.weightHistory, wh);
+
+    updateWeightUI(w, wh);
+
+    return true;
+}
+
+
+function stepWeight(delta) {
+
+    let base = Number(settings.weight);
+
+    if (!Number.isFinite(base)) {
+        const wh = loadJSON(STORAGE_KEYS.weightHistory, []);
+        if (wh.length > 0) {
+            base = Number(wh[0].weight);
+        }
+    }
+
+    if (!Number.isFinite(base)) {
+        setCurrentWeight(80);
+        return;
+    }
+
+    setCurrentWeight(base + delta);
+}
+
+
+function updateWeightUI(w, wh) {
+
+    const nowEl = document.getElementById("weightNow");
+
+    if (nowEl) {
+        if (nowEl.tagName === "INPUT") {
+            nowEl.value = (w !== null && w !== undefined && w !== "")
+                ? String(w)
+                : "";
+        } else {
+            nowEl.textContent = w ? `${w} кг` : "—";
+        }
+    }
+
+    const homeEl = document.getElementById("currentWeight");
+    if (homeEl) {
+        homeEl.textContent = w ? `${w} кг` : "—";
+    }
+
+    const startEl = document.getElementById("weightStart");
+    if (startEl && wh && wh.length > 0) {
+        startEl.textContent = `${wh[0].weight} кг`;
+    }
+
+    if (typeof renderWeightChart === "function") {
+        renderWeightChart();
+    }
+}
+
 
 
 function goHome() {

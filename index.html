@@ -19,7 +19,7 @@
 
     <title>Push-Up Coach</title>
 
-    <link rel="stylesheet" href="styles.css?v=53">
+    <link rel="stylesheet" href="styles.css?v=54">
 
 </head>
 
@@ -264,8 +264,27 @@
             <section class="progress-card">
                 <div class="section-title">Вес</div>
                 <div class="progress-grid">
-                    <div class="stat"><strong id="weightStart">—</strong><span>начало</span></div>
-                    <div class="stat"><strong id="weightNow">—</strong><span>сейчас</span></div>
+                    <div class="stat">
+                        <strong id="weightStart">—</strong>
+                        <span>начало</span>
+                    </div>
+                    <div class="stat stat-weight-editable">
+                        <input
+                            type="number"
+                            id="weightNow"
+                            class="weight-now-input"
+                            inputmode="decimal"
+                            min="30"
+                            max="250"
+                            step="0.05"
+                            placeholder="—"
+                        >
+                        <span>сейчас, кг</span>
+                        <div class="weight-step-controls">
+                            <button type="button" class="weight-step-btn" id="weightDown" aria-label="Уменьшить вес">−</button>
+                            <button type="button" class="weight-step-btn" id="weightUp" aria-label="Увеличить вес">+</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="weightChartContainer"></div>
             </section>
@@ -815,14 +834,14 @@
 
 
 
-    <script src="storage.js?v=53"></script>
-    <script src="grips.js?v=53"></script>
-    <script src="program.js?v=53"></script>
-    <script src="workout.js?v=53"></script>
-    <script src="push.js?v=53"></script>
-    <script src="leaderboard.js?v=53"></script>
-    <script src="ui.js?v=53"></script>
-    <script src="app.js?v=53"></script>
+    <script src="storage.js?v=54"></script>
+    <script src="grips.js?v=54"></script>
+    <script src="program.js?v=54"></script>
+    <script src="workout.js?v=54"></script>
+    <script src="push.js?v=54"></script>
+    <script src="leaderboard.js?v=54"></script>
+    <script src="ui.js?v=54"></script>
+    <script src="app.js?v=54"></script>
 
 </body>
 
