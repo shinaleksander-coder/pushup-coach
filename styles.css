@@ -2659,6 +2659,14 @@ select:focus-visible {
     gap: 6px;
 }
 
+#weightUp {
+    order: 1;
+}
+
+#weightDown {
+    order: 2;
+}
+
 .weight-step-btn {
     width: 32px;
     height: 32px;
